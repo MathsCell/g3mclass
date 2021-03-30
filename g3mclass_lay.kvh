@@ -1,0 +1,67 @@
+wx.Frame
+	varname	mainframe
+	param	None, wx.ID_ANY, me, size=(800,600)
+	wx.MenuBar
+		varname	menubar
+		wx.Menu
+			varname	file_menu
+			callmeth
+				Append(wx.ID_OPEN, "&Open data file\\tCtrl-O", "data file defines ref, test and optionally query columns")
+				Append(wx.ID_SAVE, "&Save results\\tCtrl-S", "Store classification results in a file")
+				AppendSeparator()
+				Append(wx.ID_EXIT, "&Quit\\tCtrl-Q", "Exit the program")
+		wx.Menu
+			varname	help_menu
+			callmeth
+				Append(wx.ID_ABOUT, "&About")
+		callmeth
+			Append(gui.file_menu, '&File           ')
+			Append(gui.help_menu, '&Help')
+	wx.Notebook
+		varname	nb
+		param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
+		wx.html.HtmlWindow
+			varname	win_welc
+			param	.parent, wx.ID_ANY, size=(400,300)
+			callmeth
+				SetBackgroundColour("WHITE")
+				SetPage(welc_text)
+				Bind(wx.html.EVT_HTML_LINK_CLICKED, OnLinkClicked)
+				Bind(wx.EVT_SIZE, OnSize)
+		wx.ScrolledWindow
+			varname	sw_data
+			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			callmeth
+				SetScrollRate(20,20)
+				SetBackgroundColour("WHITE")
+				Bind(wx.EVT_SIZE, OnSize)
+		wx.ScrolledWindow
+			varname	pan_plot
+			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			callmeth
+				SetScrollRate(20,20)
+				SetBackgroundColour("WHITE")
+				Bind(wx.EVT_SIZE, OnSize)
+		wx.ScrolledWindow
+			varname	sw_res
+			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			callmeth
+				SetScrollRate(20,20)
+				SetBackgroundColour("WHITE")
+				Bind(wx.EVT_SIZE, OnSize)
+		callmeth
+			AddPage(gui.win_welc, "Welcome")
+			AddPage(gui.sw_data, "Data")
+			AddPage(gui.pan_plot, "Plots")
+			AddPage(gui.sw_res, "Results")
+	callmeth
+		SetMenuBar(gui.menubar)
+		CreateStatusBar()
+		SetStatusText("Welcome to "+me)
+		Bind(wx.EVT_MENU, OnOpen, id=wx.ID_OPEN)
+		Bind(wx.EVT_MENU, OnExit, id=wx.ID_EXIT)
+		Bind(wx.EVT_MENU, OnSave, id=wx.ID_SAVE)
+		Bind(wx.EVT_MENU, OnAbout, id=wx.ID_ABOUT)
+		Bind(wx.EVT_CLOSE, OnExit)
+		Bind(wx.EVT_SIZE, OnSize)
+		Show(True)

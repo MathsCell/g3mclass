@@ -1,0 +1,29 @@
+LICENCE of G3Mclass software
+
+G3Mclass is a scientific software designed to
+classify biomedical markers
+
+All its parts are freely distributed according to GPL2 terms
+http://www.gnu.org/licenses/gpl-2.0.txt (permission to
+execute, to copy, to modify and to redistribute;
+obligation to preserve the original copyright notice
+and to keep your modifications OpenSource only if you
+redistribute them alone or as part of other software)
+
+WARRANTY
+
+BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO
+WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
+APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE
+COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM
+"AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR
+IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE
+OF THE PROGRAM IS WITH YOU. SHOULD THE PROGRAM PROVE
+DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
+REPAIR OR CORRECTION. 
+
+COPYRIGHT 2021, INRAE/INSA/CNRS, Marina Guvakova
+
+AUTHORS: Serguei SOKOL, Marina GUVAKOVA
