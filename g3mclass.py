@@ -113,6 +113,7 @@ gui=wx.Object();
 dogui=False;
 fdata=""; # name of data file
 data=None;
+dcols={};
 settings={
     "param1": 10,
     "param2": 10,
@@ -162,6 +163,10 @@ def OnSave(evt):
     under the 'File' menu. Results are stored in data_res.tsv.
     """
     global fdata;
+    if not fdata:
+        # data is not yet choosed
+        err_mes("no data yet chosen.\nRead a data file first.");
+        return;
     win=evt.GetEventObject();
     win=win.GetWindow();
     with wx.FileDialog(win, "Save TSV file", wildcard="TSV files (*.tsv)|*.tsv", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
@@ -175,17 +180,6 @@ def OnSave(evt):
             gui.mainframe.SetStatusText("Written '"+os.path.basename(fpath)+"'");
         except IOError:
             wx.LogError("Cannot save results in file '%s'." % fpath)
-    if False:
-        if not fdata:
-            # data is not yet choosed
-            dlg=wx.MessageDialog(None, "No data yet chosen.\nChoose a data file first.", 'Error', wx.OK | 
-                wx.ICON_ERROR);
-            dlg.ShowModal();
-            dlg.Destroy();
-            return;
-        # file name
-        fn=re.sub("\.tsv$", "", fdata)+"_res.tsv";
-        fpath=os.path.join(wd, fn);
 
 def OnAbout(evt):
     "show about dialog"
@@ -228,21 +222,62 @@ def ToDo(evt):
                          wx.OK | wx.ICON_INFORMATION);
     dlg.ShowModal();
     dlg.Destroy();
-
+def err_mes(mes):
+    "Show error dialog in GUI mode or raise exception"
+    if dogui:
+        dlg=wx.MessageDialog(None, mes, "Error", wx.OK | wx.ICON_ERROR);
+        dlg.ShowModal()
+        dlg.Destroy();
+    else:
+        raise Exception(me+": "+mes);
 ## working functions
 def file2data(fn):
     "Read file name 'fn' intto data.frame"
-    global data;
+    global data, dcols;
     try:
-        data=pa.read_csv(fn, sep="\t")
+        data=pa.read_csv(fn, header=None, sep="\t")
     except:
-        if dogui:
-            dlg=wx.MessageDialog(None, "File "+fn+" could not be read\nChoose another TSV file", "Error", wx.OK | wx.ICON_ERROR);
-            if dlg.ShowModal() == wx.ID_OK:
-                dlg.Destroy();
+        err_mes("file '"+fn+"' could not be read");
+        return;
+    cols=[str(v).strip() if v==v else "" for v in data.iloc[0, :]];
+    # search for (ref) and (test)
+    dcols={} # reinit
+    suff=" (ref)";
+    dcols["inm"]=dict((i, re.sub(tls.escape(suff, "()")+"$", "", v).strip()) for i,v in enumerate(cols) if v.endswith(suff))
+    if not dcols["inm"]:
+        err_mes("not found '"+suff+"' in column names");
+        return;
+    # check that varnames are unique and non empty
+    cnt=tls.list2count(dcols["inm"].values());
+    if len(cnt) != len(dcols["inm"]):
+        vbad=[v for v,i in cnt.items() if i > 1];
+        err_mes("following column name is not unique in ' (ref)' set: '"+vbad[0]+"'");
+        return;
+    # check that every ref has its test pair
+    for ir in dcols["inm"].keys():
+        nm=dcols["inm"][ir];
+        itest=[i for i,v in enumerate(cols) if v.startswith(nm) and v.endswith(" (test)") and re.match("^ *$", v[len(nm):-7])]
+        if not itest:
+            err_mes("column '"+nm+" (ref)' has not its counter part '"+nm+" (test)'");
+            return;
+        elif len(itest) > 1:
+            err_mes("following column name is not unique in '( test)' set: '"+nm+"'");
+            return;
         else:
-            pass;
-    data.columns=[v if not v[:9] == "Unnamed: " else "" for v in data.columns];
+            dcols["inm"][ir]=(nm,itest[0]);
+        # get query (if any)
+        dqry=dict((i,v[len(nm)+1:].strip()) for i,v in enumerate(cols) if v.startswith(nm+" ") and not v.endswith(" (test)") and not v.endswith(" (ref)"));
+        # check that qry names are unique
+        cnt=tls.list2count(dqry.values());
+        if len(cnt) < len(dqry):
+            err_mes("following column name is not unique in ' (query)' set: '"+nm+" "+[v for v,i in cnt.items() if i > 1][0]+"'");
+            return;
+        dcols["inm"][ir]=(*dcols["inm"][ir], dqry);
+        
+    
+    tls.aff("dcols", dcols);
+    data.columns=cols
+    data=data.iloc[1:,:]
     ## create and fill the data table
     if dogui:
         if "grid" in dir(gui.sw_data):
@@ -325,7 +360,7 @@ def make_gui():
 def main():
     global fdata, wd, gui, dogui;
     try:
-        opts,args=getopt.getopt(sys.argv[1:], "hw", ["help", "DEBUG"]);
+        opts,args=getopt.getopt(sys.argv[1:], "hwv", ["help", "DEBUG"]);
     except getopt.GetoptError as err:
         print((str(err)));
         usage();
@@ -336,9 +371,12 @@ def main():
     for o,a in opts:
         if o in ("-h", "--help"):
             usage();
-            sys.exit(0);
+            return(0);
         elif o=="--DEBUG":
             DEBUG=True;
+        elif o=="-v":
+            print(me+": "+version);
+            return(0);
         elif o=="-w":
             dogui=False;
             write_res=True;
