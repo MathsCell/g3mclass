@@ -75,35 +75,8 @@ with open(os.path.join(diri, "g3mclass", "version.txt"), "r") as fp:
 #me=os.path.basename(sys.argv[0]);
 me="G3Mclass";
 # message in welcome tab
-welc_text="""
-<html>
-<h1>Welcome to <tt>%(me)s</tt>!</h1>
-
-<p>
-<b><tt>%(me)s</tt></b> is a software for Gaussian Mixture Model for Marker Classification.
-</p>
-
-<h3>Usage:</h3>
-<ol>
-<li>Open a data file: <i>File > Open > ...</i>(choose some file, let call it <tt>data.tsv</tt>)
-
-<tt>data.tsv</tt> must contain duplicate or triplicate columns relative to some biomedical markers. If we have a marker 'geneA'
-then we should have following columns: <tt>geneA (ref)</tt>, <tt>geneA (test)</tt> and optionally <tt>geneB (query)</tt>.
-The first column <tt>geneA (ref)</tt> contains blablabla ... </li>
-
-<li>Data from columns <tt>(test)</tt> are used to learn Gaussian mixtures, one mixture per marker.</li>
-
-<li>Data from columns <tt>(test)</tt> and <tt>(query)</tt> (if present) are automatically classified with detection of multiple cut-offs.
-The classification results can be examined in tabs <i>Plots</i> and <i>Results</i></li>
-
-<li>If results are satisfactory, they can be saved in a TSV file (<i>File > Save results</i>)</li>
-</ol>
-
-<p>
-For legal information see <i>Help > About</i>
-</p>
-</html>
-""" % {"me": me};
+with open(os.path.join(diri, "g3mclass", "welcome.html"), "r") as fp:
+    welc_text=fp.read() % {"me": me};
 welc_text=re.sub("\n\n", "<br>\n", welc_text);
 with open(os.path.join(diri, "g3mclass", "licence_en.txt"), "r") as fp:
     licenseText=fp.read();
@@ -235,7 +208,7 @@ def file2data(fn):
     "Read file name 'fn' intto data.frame"
     global data, dcols;
     try:
-        data=pa.read_csv(fn, header=None, sep="\t")
+        data=pa.read_csv(fn, header=None, sep="\t");
     except:
         err_mes("file '"+fn+"' could not be read");
         return;

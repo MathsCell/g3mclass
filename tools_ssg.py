@@ -1,6 +1,12 @@
 import sys;
 import pandas as pa;
 import csv;
+import autograd.numpy as np;
+from autograd import grad;
+#import numpy as np;
+from math import erf, fabs, nan;
+DEBUG=False;
+import matplotlib.pyplot as plt;
 
 def aff(name, obj, ident=0, f=sys.stdout):
     saveout=sys.stdout
@@ -98,14 +104,14 @@ def kvh2tlist(fp, lev=[0], indent=[0]):
     key="";
     val="";
     if DEBUG:
-        pdb.set_trace();##
+        import pdb; pdb.set_trace();##
     while True:
         # current position is supposed to point to the begining of a key
         # so go through an appropriate tab number for the current level
         while indent[0] < lev[0]:
             char=fp.read(1);
-            if char!="\t":
-                if char!="":
+            if char != "\t":
+                if char != "":
                     fp.seek(fp.tell()-1,0);
                 break;
             indent[0]+=1;
@@ -241,7 +247,7 @@ def obj2kvh(o, oname=None, fp=sys.stdout, indent=0):
         fp.write("\t"*(indent+have_name)+"row_col\t"+"\t".join(escape(v, "\\\n") for v in o.columns)+"\n");
         s=o.to_csv(header=False, sep="\t", quoting=csv.QUOTE_NONE, na_rep="");
         li=s.split("\n");
-        if (len(li) == o.shape[0]+1):
+        if len(li) == o.shape[0]+1:
             fp.write("\t"*(indent+have_name)+("\n"+"\t"*(indent+have_name)).join(li[:-1])+"\n");
         else:
             raise Exception("Not yet implemented newline in data.frame")
@@ -328,3 +334,545 @@ def subset(l, i):
     "return an iterator over l[i] where i is an iterable of indexes"
     for ii in i:
         yield l[ii];
+def colSums(x):
+    return(x.sum(0));
+def rowSums(x):
+    return(x.sum(1).reshape((x.shape[0], 1)));
+def which(x):
+    "return array of indexes where 'x' is True. 'x' is supposed 1D."
+    return(np.where(x)[0]);
+def zcross(f, xleft, xright, *args, fromleft=True, nitvl=100, **kwargs):
+    "find interval [x1, x2] where f(x) changes its sign (zero crossing)"
+    #print("args=", args);
+    n1=nitvl+1;
+    xp=np.linspace(xleft, xright, n1);
+    y=np.vectorize(lambda x: f(x, *args, **kwargs))(xp);
+    yprod=y[:-1]*y[1:];
+    izcross=which(yprod <= 0.) if fromleft else nitvl-1-which(yprod[::-1] <= 0.);
+    if not len(izcross):
+        raise Exception(f"zero-cross point is not found in [{xleft}; {xright}]");
+    izcross=izcross[0];
+    return([xp[izcross], xp[izcross+1]]);
+def zeroin(f, ax, bx, *args, tol=sys.float_info.epsilon**0.25, **kwargs):
+    """
+ adapted from www.netlib.org/c/brent.shar zeroin.c
+ ************************************************************************
+ *	    		    C math library
+ * function ZEROIN - obtain a function zero within the given range
+ *
+ * Input
+ *	double zeroin(ax,bx,f,tol)
+ *	double ax; 			Root will be seeked for within
+ *	double bx;  			a range [ax,bx]
+ *	double (*f)(double x);		Name of the function whose zero
+ *					will be seeked for
+ *	double tol;			Acceptable tolerance for the root
+ *					value.
+ *					May be specified as 0.0 to cause
+ *					the program to find the root as
+ *					accurate as possible
+ *
+ * Output
+ *	Zeroin returns an estimate for the root with accuracy
+ *	4*EPSILON*abs(x) + tol
+ *
+ * Algorithm
+ *	G.Forsythe, M.Malcolm, C.Moler, Computer methods for mathematical
+ *	computations. M., Mir, 1980, p.180 of the Russian edition
+ *
+ *	The function makes use of the bissection procedure combined with
+ *	the linear or quadric inverse interpolation.
+ *	At every step program operates on three abscissae - a, b, and c.
+ *	b - the last and the best approximation to the root
+ *	a - the last but one approximation
+ *	c - the last but one or even earlier approximation than a that
+ *		1) |f(b)| <= |f(c)|
+ *		2) f(b) and f(c) have opposite signs, i.e. b and c confine
+ *		   the root
+ *	At every step Zeroin selects one of the two new approximations, the
+ *	former being obtained by the bissection procedure and the latter
+ *	resulting in the interpolation (if a,b, and c are all different
+ *	the quadric interpolation is utilized, otherwise the linear one).
+ *	If the latter (i.e. obtained by the interpolation) point is 
+ *	reasonable (i.e. lies within the current interval [b,c] not being
+ *	too close to the boundaries) it is accepted. The bissection result
+ *	is used in the other case. Therefore, the range of uncertainty is
+ *	ensured to be reduced at least by the factor 1.6
+ *
+ ************************************************************************
+ */
+"""
+    # double a,b,c;				# Abscissae, descr. see above	
+    # double fa;				# f(a)				
+    # double fb;				# f(b)				
+    # double fc;				# f(c)				
+    
+    a = float(ax);  b = float(bx);  fa = float(f(a, *args, **kwargs));  fb = float(f(b, *args, **kwargs));
+    c = a;   fc = fa;
+    EPSILON=sys.float_info.epsilon;
+    if fa*fb > tol:
+        raise Exception("function 'f' must be of opposite sign on interval limits");
+    
+    while True:         # Main iteration loop	
+        prev_step = b-a;        # Distance from the last but one
+                                # to the last approximation	
+        # double tol_act;       # Actual tolerance		
+        # double p;             # Interpolation step is calcu- 
+        # double q;             # lated in the form p/q; divi- 
+                                # sion operations is delayed   
+                                # until the last moment	
+        # double new_step;      		# Step at this iteration       
+       
+        if fabs(fc) < fabs(fb):
+            # Swap data for b to be the 	
+            a = b;  b = c;  c = a;          # best approximation		
+            fa=fb;  fb=fc;  fc=fa;
+        tol_act = 2*EPSILON*fabs(b) + tol*0.5;
+        new_step = (c-b)*0.5;
+
+        if fabs(new_step) <= tol_act or fb == 0.:
+          return(b);    # Acceptable approx. is found	
+
+        # Decide if the interpolation can be tried	
+        if fabs(prev_step) >= tol_act and fabs(fa) > fabs(fb):
+            # If prev_step was large enough and was in true direction,	
+            # Interpolatiom may be tried	
+            # register double t1,cb,t2;
+            cb = c-b;
+            if a==c:    # If we have only two distinct	
+                        # points linear interpolation 	
+                t1 = fb/fa;			# can only be applied		
+                p = cb*t1;
+                q = 1.0 - t1;
+            else:   # Quadric inverse interpolation
+                q = fa/fc;  t1 = fb/fc;  t2 = fb/fa;
+                p = t2 * ( cb*q*(q-t1) - (b-a)*(t1-1.0) );
+                q = (q-1.0) * (t1-1.0) * (t2-1.0);
+            if p > 0.:  # p was calculated with the op-
+              q = -q;   # posite sign; make p positive	
+            else:       # and assign possible minus to	
+              p = -p;   # q				
+
+            if p < (0.75*cb*q-fabs(tol_act*q)*0.5) and p < fabs(prev_step*q*0.5):
+                # If b+p/q falls in [b,c] and isn't too large	
+                new_step = p/q;			# it is accepted	
+                            # If p/q is too large then the	
+                            # bissection procedure can 	
+                            # reduce [b,c] range to more	
+                            # extent			
+
+        if fabs(new_step) < tol_act:
+            # Adjust the step to be not less than tolerance
+            if new_step > 0.:
+                new_step = tol_act;
+            else:
+                new_step = -tol_act;
+
+        a = b;  fa = fb;			# Save the previous approx.	
+        b += new_step;  fb = float(f(b, *args, **kwargs));	# Do step to a new approxim.	
+        if (fb > 0 and fc > 0) or (fb < 0 and fc < 0):
+            # Adjust c for it to have a sign opposite to that of b	
+            c = a;  fc = fa;
+def is_na_end(x): return((np.cumsum((x==x)[::-1]) == 0)[::-1]);
+def sd(x):
+    return(np.std(x, ddof=1));
+def ipeaks(x, decreasing=True):
+    """return a vector of indexes corresponding to peaks in a vector x
+    By default, the peaks are sorted in decreasing order.
+    The peaks are searched only in the form /\ (mountain) and in /-\ (plateau).
+    In case of plateau, (i1+i2)//2 is returned as peak position (i1 and i2 are limits of plateau)."""
+    d=np.sign(np.diff(x));
+    # make the same length as x (linear extrapolation)
+    d=np.hstack((1., d, -1.)); # doubt benefice on the ends
+    d=np.diff(d);
+    ip=which(d==-2);
+    ipl=which(np.abs(d)==1);
+    ipll=which(d[ipl[:-1]]+d[ipl[1:]] == -2); # left indexes of plateau in ipl
+    ipl=(ipl[ipll]+ipl[ipll+1])//2;
+    ip=np.append(ip, ipl);
+    o=np.argsort(x[ip]);
+    if decreasing:
+        o=o[::-1];
+    return(ip[o]);
+def smooth725(v, repet=1):
+   """smooth by convolution with 0.25;0.5;0.25
+   NB: the returned vector has the same length as original one.
+   Extreme points have weights 0.75, 0.25 on left and 0.25;0.75 on right"""
+   v=v.flatten();
+   n=len(v);
+   if n<2 or repet < 1:
+      # the vector is too short or no smoothing is asked
+      # send it back as is
+      return(v);
+   # extend v beyond interval and NA gaps
+   # indexes of valid value having NA on its left
+   nal=np.hstack((0, which((v[:-1] != v[:-1])*(v[1:] == v[1:]))+1));
+   # indexes of valid value having NA on its right
+   nar=np.hstack((which((v[1:] != v[1:])*(v[:-1] == v[:-1])), n-1));
+   ve=np.hstack((nan, v, nan));
+   ve[nal]=v[nal];
+   ve[nar+2]=v[nar];
+   ve=ve[:-1]+ve[1:];
+   ve=0.25*(ve[:-1]+ve[1:]);
+   if repet <= 1:
+      return(ve);
+   else:
+      return(smooth725(ve, repet-1));
+def outer(x, y, f=lambda x,y: x*y):
+    "Apply f() on every couple xi, yj form x and y respectivly. Return f(xi,yj) in higher dimensional array"
+    fv=np.vectorize(f);
+    res=fv(x.flatten()[:, None], y.flatten());
+    res.reshape((*x.shape, *y.shape));
+    return(res);
+def ncol(x):
+    return(x.shape[1]);
+# EM part
+erfv=np.vectorize(erf);
+def dnorm(x, mean=0, sd=1):
+    "Normal law density function"
+    return(np.exp( - 0.5*((x - mean)/sd)**2)/(sd * np.sqrt(2. * np.pi)));
+def dnorm_d1(x, mean=0, sd=1):
+    "first derivative by x of the normal law density function"
+    return(dnorm(x, mean, sd)*(mean-x)/(sd*sd));
+def dnorm_d2(x, mean=0, sd=1):
+    "second derivative by x of the normal law density function"
+    return(dnorm(x, mean, sd)*(((mean-x)/sd)**2-1.)/(sd*sd));
+def pnorm(x, mean=0., sd=1.):
+    "Normal law cumulative distribution function"
+    return(0.5*(1+erfv((x-mean)/(sd*np.sqrt(2.)))));
+def dgmmn(x, par, f=dnorm):
+    """return a matrix of Gaussian mixture model calculated in points x
+    and for components who's parameters are in 3-row matrix 'par', one
+    component per column with items named: "a", "mean", "sd".
+    The sum of positive 'a's is supposed to be 1 (not checked here).
+    In the result matrix res, we have nrow(res)=length(x) and ncol(res)=ncol(par)
+    """
+    if isinstance(x, (int, float)):
+        x=np.array([x]);
+    if type(par) != pa.DataFrame:
+        try:
+            par=par.to_frame();
+        except:
+            import pdb; pdb.set_trace();
+    return(np.hstack(list(par.loc["a", i]*f(x, par.loc["mean",i], par.loc["sd",i]) for i in par.columns)).reshape((-1, par.shape[1]), order="F"));
+def dgmm(x, par, f=dnorm):
+    if isinstance(x, (int, float)):
+        return(dgmmn(x, par, f).sum(1)[0]);
+    else:
+        return(dgmmn(x, par, f).sum(1).reshape(x.shape));
+def e_step1(x, mean=None, sd=None, a=None, par=None):
+    """E-step of EM algorithm for 1D gaussian mixture: estimate membership weights
+
+    @param x, numeric vector, N random samples from the mixture (without NA)
+    @param mu, numeric vector, K means
+    @param sd, numeric vector, K sd values
+    @param par, numeric 3xG matrix as an alternative to mu, sd, a
+    @value NxK numeric matrix of membership weights
+    """
+    if mean is None and par is None:
+        raise Exception("'mean' and 'par' cannot be both None");
+    if not mean is None and not par is None:
+        raise Exception("One of 'mean' or 'par' must be None");
+    if not mean is None and ("shape" in dir(mean) and len(mean.shape) != 1):
+        raise Exception("'mean' is supposed to be a vector. Confounded with 'par'?");
+    if par is None:
+        if sd is None:
+            raise Exception("'par' and 'sd' cannot be None simultaneously");
+        par=pa.DataFrame(np.array([a, mean, sd]), index=["a", "mean", "sd"]);
+    par.loc["a",:]=par.loc["a",:]/sum(par.loc["a",:]);
+    w=dgmmn(x, par);
+    w[w==np.inf]=sys.float_info.max;
+    rs=w.sum(1)[:,None];
+    iz=np.where(rs == 0.)[0]; # detect samples too far from any center
+    if len(iz):
+        im=[np.argmin(np.abs(x[i]-par.loc["mean",:])/par.loc["sd",:]) for i in iz];
+        w[iz, im]=1.; # assign them to the closest from centered/reduced point of view
+        rs[iz]=1.;
+    return(w/rs);
+def m_step1(x, w, imposed=pa.DataFrame(index=["a", "mean", "sd"]), inaa=None, inam=None, inas=None, tol=sys.float_info.epsilon*2**7):
+    """M-step of EM algorithm for 1D gaussian mixture: estimate a, mean and sd
+
+    @param x, numeric vector, N random samples from the mixture (without NA)
+    @param w, NxK numeric matrix of membership weights
+    @param gimp, integer scalar
+    @value par, 3xK numeric matrix of a, mean, sd estimated parameters
+    """
+    gimp=imposed.shape[1];
+    if gimp > 0:
+        if inaa is None:
+            inaa=np.isnan(imposed.loc["a", :]);
+        if inam is None:
+            inam=np.isnan(imposed.loc["mean", :]);
+        if inas is None:
+            inas=np.isnan(imposed.loc["sd", :]);
+    else:
+        if inaa is None:
+            inaa=np.full(0, True);
+        if inam is None:
+            inam=np.full(0, True);
+        if inas is None:
+            inas=np.full(0, True);
+    x=np.asarray(x);
+    n=len(x);
+    nk=w.sum(0);
+    a=nk/n;
+    if DEBUG and np.any(a <= tol):
+        import pdb; pdb.set_trace();
+    # renormalize a
+    if gimp > 0 and not all(inaa):
+        an=a.copy(); # 'a' new
+        an[:gimp][np.logical_not(inaa)]=imposed.loc["a", np.logical_not(inaa)] ;
+        simp=sum(imposed.loc["a", np.logical_not(inaa)]);
+        irest=np.full(w.shape[1], True);
+        irest[:gimp][np.logical_not(inaa)]=False;
+        srest=sum(an[irest]);
+        fa=(1.-simp)/srest;
+        an[irest]=fa*an[irest];
+        nk=an*n;
+        fa=an/a;
+        fa[np.isinf(fa)]=1.
+        w=w*fa;
+        a=an;
+    mean=np.dot(w.T, x)/nk;
+    if gimp > 0 and not all(inam):
+        mean[:gimp][np.logical_not(inam)]=imposed.loc["mean", np.logical_not(inam)];
+    #sd=(np.dot(w.T, x**2)-nk*mean**2)/(nk-1.);
+    sd=(w*(x.reshape((-1, 1))-mean.reshape((1, -1)))**2).sum(0)/(nk-1.);
+    sd[sd<=0.]=sys.float_info.min;
+    sd=np.sqrt(sd);
+    if gimp > 0 and not all(inas):
+        sd[:gimp][np.logical_not(inas)]=imposed.loc["sd", np.logical_not(inas)];
+    res=pa.DataFrame([a, mean, sd]);
+    res.index=["a", "mean", "sd"];
+    return(res);
+def em1(x, par=None, imposed=pa.DataFrame(index=["a", "mean", "sd"]), G=range(1,10), maxit=10, tol=1.e-7, restart=5, classify=False):
+    "EM algorithm for Gaussian Mixture Model fitting on a 1D sample x"
+    iva=np.isfinite(x);
+    xv=x[iva];
+    nv=len(xv);
+    gimp=imposed.shape[1];
+    inaa=np.isnan(imposed.loc["a",:]);
+    inam=np.isnan(imposed.loc["mean",:]);
+    inas=np.isnan(imposed.loc["sd",:]);
+    ninaa=np.logical_not(inaa);
+    ninam=np.logical_not(inam);
+    ninas=np.logical_not(inas);
+
+    res=dict();
+    if type(G) in (int, float):
+        G=[round(G)];
+    for g in G:
+        if g != G[0] and degen:
+            break; # there were too low classes with even lower class number
+        res_rest=dict();
+        for istart in range(restart):
+            if istart > 0 and (g == 1 or maxit == 0):
+                break;
+            # iterate e and m steps until convergence or maxit is reached
+            # init par
+            if DEBUG:
+                print("istart=", istart);
+            if istart > 0 or par is None or g != G[0]:
+                par=pa.DataFrame(np.full((3, g+gimp), 0.), index=["a", "mean", "sd"]);
+                # init means
+                par.loc["mean",:]=sorted(np.random.choice(xv, g+gimp, False));
+                # init a, sd
+                par.loc["a",:]=1./(g+gimp);
+                par.loc["sd",:]=np.std(xv, ddof=1)/(g+gimp)/4.;
+            elif g==G[0] and par.shape[1] != g+gimp:
+                raise Exception("at starting point, par.shape[1] must be equal to G[0]+imposed.shape[1]")
+            else:
+                par.loc["a", np.isnan(par.loc["a",:])]=1./(g+gimp);
+                m_na=np.isnan(par.loc["mean",:]);
+                par.loc["mean", m_na]=np.random.choice(xv, sum(m_na), False);
+                par.loc["sd", np.isnan(par.loc["sd",:])]=np.std(xv, ddof=1)/(g+gimp)/4.;
+                ifree=gimp+np.arange(par.shape[1]-gimp);
+                par.iloc[:, ifree]=par.iloc[:, gimp+np.argsort(par.loc["mean",ifree])];
+            if gimp > 0:
+                # inject imposed
+                i=np.arange(gimp);
+                par.loc["a",i[ninaa]]=imposed.loc["a", ninaa];
+                par.loc["mean",i[ninam]]=imposed.loc["mean", ninam];
+                par.loc["sd",i[ninas]]=imposed.loc["sd", ninas];
+            par.loc["a",:]=par.loc["a",:]/sum(par.loc["a",:]);
+            converged=(g==0);
+            it=1;
+            degen=(g != 0) and it < maxit;
+            lp=np.log(dgmm(xv, par));
+            lp[lp == -np.inf]=-746;
+            loglike=sum(lp);
+            BIC=BIC_prec=-2*loglike+np.log(nv)*(3*par.shape[1]-sum(ninaa)-sum(ninam)-sum(ninas))
+            while not converged and it <= maxit:
+                w=e_step1(xv, par=par);
+                #degen=any(w.sum(0) <= 2.);
+                #if DEBUG:
+                #    print("degen=", degen);
+                #if False and degen:
+                #    import pdb; pdb.set_trace();
+                #if degen and it > 1:
+                #    if DEBUG:
+                #        print("par=", par, "\tnk=", w.sum(0), "\nw=", w);
+                #    break;
+                if np.isnan(w).any():
+                    raise Exception("nan appeared in weights");
+                parnew=m_step1(xv, w, imposed, inaa, inam, inas);
+                i0=which(parnew.loc["a",:] <= tol);
+                # remove empty non imposed classes
+                i0=i0[i0 > gimp];
+                parnew.drop(columns=i0, inplace=True);
+                parnew.columns=np.arange(ncol(parnew));
+                lp=np.log(dgmm(xv, parnew));
+                lp[lp == -np.inf]=-746
+                loglike=sum(lp);
+                BIC=-2*loglike+np.log(nv)*(3*parnew.shape[1]-sum(ninaa)-sum(ninam)-sum(ninas));
+                if BIC > BIC_prec:
+                    BIC=BIC_prec;
+                    if DEBUG:
+                        print("BIC increased");
+                    break;
+                converged=(BIC_prec-BIC < tol);
+                if DEBUG:
+                    print("g=", g, "\tit=", it, "\tBIC=", BIC, "\tconv=", converged);
+                par=parnew;
+                BIC_prec=BIC;
+                it=it+1;
+            #if degen: # there are groups with less then or equal to 2 members => don't record this try
+            #    continue;
+            res_rest[istart]={"par": par, "BIC": BIC, "loglike": loglike, "it": it-1, "maxit_reached": it==maxit+1}
+        ibic=min(res_rest.keys(), key=lambda k: res_rest[k]["BIC"]);
+        res["g"+str(g)]=res_rest[ibic];
+        if degen:
+            break; # don't try other g as there are already groups with less then or equal 2 members
+    if not res:
+        return({});
+    kbic=min(res.keys(), key=lambda k: res[k]["BIC"]);
+    res={"win": res[kbic], "all": res};
+    if classify:
+      cl=gmmcl(x, res["win"]["par"]);
+      res["classification"]=pa.DataFrame({"x": x, "proba_max": cl["wmax"], "cl": cl["cl"]});
+    return(res)
+def par2gaus(par):
+   # transform par (3xG matrix) to function calculating sum of gaussians
+   return(lambda x: dgmm(x, par));
+def gmmcl(x, par):
+   # classify x according to GMM in par
+   # return a dict with class number 'cl', matrix of class weights 'w' and a vector
+   # of maximal weights 'wmax'
+   w=e_step1(x, par=par);
+   cl=w.argmax(1);
+   #cl=as_integer(ifelse(sapply(cl, length)==0, NA, cl))
+   wmax=w[range(len(x)), cl];
+   return({"cl": cl, "w": w, "wmax": wmax});
+def histgmm(x, par, plt, **kwargs):
+    "Plot histogram of sample 'x' and GMM density plot on the same bins"
+    count, bins, ignored = plt.hist(x, min(round(len(x)/3.), 31));
+    nb=len(bins);
+    cdf=sum(count)*np.hstack(list(par.loc["a", i]*pnorm(bins, par.loc["mean", i], par.loc["sd", i]).reshape((len(bins), 1), order="F") for i in range(par.shape[1])));
+    pdf=np.diff(np.hstack((rowSums(cdf), cdf)), axis=0);
+    for i in range(pdf.shape[1]):
+        plt.plot(0.5*(bins[:-1]+bins[1:]), pdf[:,i], label=str(i) if i > 0 else "Total", **kwargs);
+    plt.legend(loc='upper right', shadow=True, fontsize='x-large');
+def roothalf(i1, i2, par, fromleft=True):
+    "find intersection and half-height interval of 2 gaussians defined by columns i1 and i2 in par"
+    if type(par) != pa.DataFrame:
+        raise Exception("par must be a DataFrame");
+    if par.shape[1] < 2:
+        raise Exception("par must have at least two columns");
+    mid=zeroin(lambda x: par2gaus(par.loc[:, i1])(x) - par2gaus(par.loc[:, i2])(x), par.loc["mean", i1]-0.25*par.loc["sd", i1], par.loc["mean", i2]+0.25*par.loc["sd", i2]);
+    # find "grey-zone" limits as peak half-height
+    # first find peack's tip
+    fw_d2=grad(fw_d1);
+    xlr=zcross(fw_d2, par.loc["mean", i1]-0.5*par.loc["sd", i1], par.loc["mean", i2]+0.5*par.loc["sd", i2], par, fromleft=fromleft);
+    xtip=zeroin(fw_d2, xlr[0], xlr[1], par);
+    ftip=float(fw_d1(xtip, par));
+    # now find tip/2 positions
+    fhalf=lambda x: float(fw_d1(x, par))-ftip*0.5;
+    xlr=zcross(fhalf, par.loc["mean", i1]-3*par.loc["sd", i1], xtip, fromleft=False);
+    left=zeroin(fhalf, xlr[0], xlr[1]);
+    xlr=zcross(fhalf, xtip, par.loc["mean", i2]+3*par.loc["sd", i2], fromleft=True);
+    right=zeroin(fhalf, xlr[0], xlr[1]);
+    return({"mid": mid, "left": left, "right": right});
+def gcl2i(cl, par):
+    o=np.argsort(par.loc["mean",:]);
+    io=o.copy();
+    io[o]=np.arange(len(o));
+    iv=cl == cl;
+    res=cl.copy();
+    res[iv]=io[cl[iv]]-io[0];
+    return(cl);
+def fw(x, par):
+    "weights of Gaussian class 0"
+    pdf=dgmmn(x, par);
+    return(pdf[:,0].reshape((-1,1))/rowSums(pdf));
+def fw_d1(x, par):
+    "first derivative by x of weights of Gaussian class 0"
+    pdf=dgmmn(x, par);
+    pdf_1d=dgmmn(x, par, dnorm_d1);
+    w=rowSums(pdf);
+    w_1d=rowSums(pdf_1d);
+    return((pdf_1d[:,0].reshape((-1,1))-(pdf[:,0]*w_1d[:,0]).reshape((-1,1))/w)/w);
+def rt2model(ref, test, athr=0.):
+    "ref and test samples to GMM model. 'athr' is amplitude threshold for vanishing classes"
+    # get only valid entries
+    rv=ref[ref == ref];
+    tv=test[test == test];
+    # imposed group
+    imp=pa.DataFrame([nan, np.mean(rv), sd(rv)], index=["a", "mean", "sd"]);
+    # histogram for first approximation of class nb and positions
+    tmin=np.min(tv);
+    tmax=np.max(tv);
+    h=np.histogram(tv, bins=np.linspace(tmin, tmax, 30));
+    # smooth counts
+    #plt.figure("h");
+    #plt.plot(h[0]);
+    #hcnt=smooth725(h[0], 3);
+    hcnt=h[0];
+    #plt.plot(hcnt);
+    #plt.show(block=False);
+    ip=ipeaks(hcnt);
+    ip=ip[hcnt[ip]>=2]; # too rare groups are eliminated
+    #print("ip=", ip);
+    par=pa.DataFrame(np.array([[nan]*len(ip), np.sort(h[1][ip]), [(tmax-tmin)/30/4]*len(ip)]), index=["a", "mean", "sd"]);
+    # learn gmm without imposed class
+    pari=em1(tv, par=par, G=par.shape[1], restart=1, maxit=200)["win"]["par"];
+    print("pari=", pari);
+    # is there any class very close to imp?
+    i_imp=np.abs(pari.loc["mean",:]-imp.loc["mean",0])/(pari.loc["sd",:]+imp.loc["sd",0])*2. <= 0.5;
+    if i_imp.any():
+        i_imp=which(i_imp);
+        pari.loc["a",:]=1./(ncol(pari)-len(i_imp)+1);
+        pari.iloc[:, i_imp[0]]=imp;
+        if len(i_imp) > 1:
+            pari.drop(columns=i_imp[1:], inplace=True);
+    else:
+        pari=pa.concat((imp, pari), axis=1);
+        pari.loc["a",:]=1./pari.shape[1];
+    pari.columns=np.arange(ncol(pari));
+    cpar=em1(tv, par=pari, imposed=imp, G=(pari.shape[1]-1), restart=1, maxit=200, classify=True)["win"];
+    # re-detect classes too close to each other, eliminate one of them and re-estimate GMM
+    ng=ncol(cpar["par"]);
+    fuse=ng > 1;
+    while fuse:
+        ing=np.arange(ng);
+        di=outer(ing, ing, lambda i1,i2: (np.abs(cpar["par"].loc["mean",i1]-cpar["par"].loc["mean",i2])/(cpar["par"].loc["sd",i1]+cpar["par"].loc["sd",i2])*2) <= 0.5);
+        i12=np.where(outer(ing, ing, lambda i,j: i > j) * di); # candidates to fuse with class=10 will be first
+        if len(i12[0]) > 0:
+            irm=i12[1][0];
+            pari=cpar["par"].drop(columns=irm);
+            pari.loc["sd", 1:]=pari.loc["sd", 1:]/4.;
+            pari.columns=np.arange(ncol(pari));
+            cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-1, restart=1, maxit=200, classify=True)["win"];
+            ng=ncol(cpar["par"]);
+        else:
+            break
+    ng=ncol(cpar["par"]);
+    neglige=(ng > 1) and any(cpar["par"].loc["a",1:] <= athr)
+    while neglige:
+        # strip too rare classes
+        iz=which.min(cpar["par"].loc["a",-1])
+        pari=cpar["par"].drop(columns=iz+1);
+        pari.columns=np.arange(ncol(pari));
+        cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-ncol(imp), restart=1, maxit=200, classify=True)["win"];
+        ng=ncol(cpar["par"]);
+        neglige=(ng > 1) and any(cpar["par"].loc["a",1:] <= athr)
+    return(cpar);
