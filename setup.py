@@ -21,7 +21,7 @@ setup(
    package_data={
         'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'docs/*', 'example/*'],
    },
-   install_requires=['wxpython', 'numpy', 'scipy', 'pandas'],
+   install_requires=['wxpython', 'numpy', 'scipy', 'pandas', 'autograd', 'matplotlib'],
    entry_points={
         'console_scripts': [
         'g3mclass = g3mclass:main',

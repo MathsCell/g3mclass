@@ -30,18 +30,14 @@ import sys;
 import os;
 import getopt;
 import re;
-
 import wx;
 import wx.adv;
 import wx.html;
 import wx.grid as wxg;
 from wx.lib.wordwrap import wordwrap;
 import wx.lib.floatcanvas.FloatCanvas as wxfc;
-
 import pandas as pa;
-
 import webbrowser;
-
 import g3mclass
 dirx=os.path.dirname(os.path.abspath(sys.argv[0])); # execution dir
 diri=os.path.dirname(os.path.abspath(g3mclass.__file__)); # install dir
@@ -129,7 +125,6 @@ def OnOpen(evt):
         gui.mainframe.SetStatusText("'%s' is read"%os.path.basename(fdata))
     # do smth
     dlg.Destroy();
-
 def OnSave(evt):
     """
     This is executed when the user clicks the 'Save results' option
@@ -153,7 +148,6 @@ def OnSave(evt):
             gui.mainframe.SetStatusText("Written '"+os.path.basename(fpath)+"'");
         except IOError:
             wx.LogError("Cannot save results in file '%s'." % fpath)
-
 def OnAbout(evt):
     "show about dialog"
     win=evt.GetEventObject();
@@ -174,10 +168,8 @@ def OnAbout(evt):
 
     # Then we call wx.AboutBox giving it that info object
     wx.adv.AboutBox(info);
-
 def OnLinkClicked(evt):
     webbrowser.open_new_tab(evt.GetLinkInfo().Href);
-
 def OnSize(evt):
     "main window is resized"
     win=evt.GetEventObject();
@@ -185,7 +177,6 @@ def OnSize(evt):
     win.SetSize(sz);
     evt.Skip();
     return;
-
 def ToDo(evt):
     """
     A general purpose "we'll do it later" dialog box
@@ -270,7 +261,6 @@ def res2file(res, fpath=None):
         else:
             raise Exception("fpath is not set for writing");
     tls.obj2kvh(res, "res", fpath);
-
 def s2ftime(s=0.):
     """s2ftime(s=0) -> String
     Format second number as hh:mm:ss.cc
@@ -284,7 +274,6 @@ def s2ftime(s=0.):
     s//=60;
     hh=s;
     return("%02d:%02d:%02d.%02d"%(hh,mm,ss,cc));
-
 def lab2ip(nb, lab):
     """lab2i(nb, nm) -> (i,Page) or (None,None)
     get page of a notebook nb by its label lab
@@ -293,7 +282,6 @@ def lab2ip(nb, lab):
         if lab == nb.GetPageText(i):
             return((i,gui.nb.GetPage(i)));
     return((None,None));
-
 def sett2wx(win):
     "create input wx widgets for settings in the window win"
     global sett_inp;
@@ -317,10 +305,8 @@ def sett2wx(win):
     panel.Fit();
     win.SetVirtualSize(panel.GetSize());
     #panel.Center(wx.HORIZONTAL);
-
 def usage():
     print(__doc__);
-
 def make_gui():
     "create GUI"
     global gui;
@@ -328,7 +314,6 @@ def make_gui():
     gui.app=wx.App();
     code=tls.wxlay2py(tls.kvh2tlist(os.path.join(diri, "g3mclass", "g3mclass_lay.kvh")), pref="gui.");
     exec(code);
-
 ## take arguments
 def main():
     global fdata, wd, gui, dogui;
@@ -376,6 +361,5 @@ def main():
         res2file(data);
     if dogui:
         gui.app.MainLoop();
-
 if __name__ == "__main__":
     main();
