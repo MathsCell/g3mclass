@@ -19,9 +19,9 @@ setup(
    py_modules=['g3mclass', 'tools_ssg'],
    package_dir={'g3mclass': '.'},
    package_data={
-        'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'docs/*', 'example/*'],
+        'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'welcome.html', 'docs/*', 'example/*'],
    },
-   install_requires=['wxpython', 'numpy', 'scipy', 'pandas', 'autograd', 'matplotlib'],
+   install_requires=['wxpython', 'numpy', 'pandas', 'matplotlib'],
    entry_points={
         'console_scripts': [
         'g3mclass = g3mclass:main',

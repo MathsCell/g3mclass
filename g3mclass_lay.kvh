@@ -36,14 +36,28 @@ wx.Frame
 				SetBackgroundColour("WHITE")
 				Bind(wx.EVT_SIZE, OnSize)
 		wx.ScrolledWindow
-			varname	pan_plot
+			varname	sw_model
 			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
 			callmeth
 				SetScrollRate(20,20)
 				SetBackgroundColour("WHITE")
 				Bind(wx.EVT_SIZE, OnSize)
 		wx.ScrolledWindow
-			varname	sw_res
+			varname	sw_test
+			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			callmeth
+				SetScrollRate(20,20)
+				SetBackgroundColour("WHITE")
+				Bind(wx.EVT_SIZE, OnSize)
+		wx.ScrolledWindow
+			varname	sw_ref
+			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			callmeth
+				SetScrollRate(20,20)
+				SetBackgroundColour("WHITE")
+				Bind(wx.EVT_SIZE, OnSize)
+		wx.ScrolledWindow
+			varname	sw_qry
 			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
 			callmeth
 				SetScrollRate(20,20)
@@ -52,8 +66,10 @@ wx.Frame
 		callmeth
 			AddPage(gui.win_welc, "Welcome")
 			AddPage(gui.sw_data, "Data")
-			AddPage(gui.pan_plot, "Plots")
-			AddPage(gui.sw_res, "Results")
+			AddPage(gui.sw_model, "Model")
+			AddPage(gui.sw_test, "Test class")
+			AddPage(gui.sw_ref, "Ref class")
+			AddPage(gui.sw_qry, "Query class")
 	callmeth
 		SetMenuBar(gui.menubar)
 		CreateStatusBar()

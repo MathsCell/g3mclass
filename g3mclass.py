@@ -36,8 +36,10 @@ import wx.html;
 import wx.grid as wxg;
 from wx.lib.wordwrap import wordwrap;
 import wx.lib.floatcanvas.FloatCanvas as wxfc;
+import numpy as np;
 import pandas as pa;
 import webbrowser;
+
 import g3mclass
 dirx=os.path.dirname(os.path.abspath(sys.argv[0])); # execution dir
 diri=os.path.dirname(os.path.abspath(g3mclass.__file__)); # install dir
@@ -47,7 +49,7 @@ import tools_ssg as tls;
 class data2tab(wxg.GridTableBase):
     def __init__(self, data):
         wxg.GridTableBase.__init__(self);
-        self.data=data;
+        self.data=data.copy();
     def GetNumberRows(self):
         return(self.data.shape[0]);
     def GetNumberCols(self):
@@ -62,7 +64,9 @@ class data2tab(wxg.GridTableBase):
     def SetValue(self, row, col, value):
         pass;
     def GetColLabelValue(self, col):
-        return self.data.columns[col] if len(self.data) else None;
+        return str(self.data.columns[col]);
+    def GetRowLabelValue(self, row):
+        return str(self.data.index[row]);
 
 ## config constants
 with open(os.path.join(diri, "g3mclass", "version.txt"), "r") as fp:
@@ -196,7 +200,7 @@ def err_mes(mes):
         raise Exception(me+": "+mes);
 ## working functions
 def file2data(fn):
-    "Read file name 'fn' intto data.frame"
+    "Read file name 'fn' into data.frame"
     global data, dcols;
     try:
         data=pa.read_csv(fn, header=None, sep="\t");
@@ -205,21 +209,21 @@ def file2data(fn):
         return;
     cols=[str(v).strip() if v==v else "" for v in data.iloc[0, :]];
     # search for (ref) and (test)
-    dcols={} # reinit
     suff=" (ref)";
-    dcols["inm"]=dict((i, re.sub(tls.escape(suff, "()")+"$", "", v).strip()) for i,v in enumerate(cols) if v.endswith(suff))
-    if not dcols["inm"]:
+    dcols=dict((i, re.sub(tls.escape(suff, "()")+"$", "", v).strip()) for i,v in enumerate(cols) if v.endswith(suff))
+    if not dcols:
         err_mes("not found '"+suff+"' in column names");
         return;
     # check that varnames are unique and non empty
-    cnt=tls.list2count(dcols["inm"].values());
-    if len(cnt) != len(dcols["inm"]):
+    cnt=tls.list2count(dcols.values());
+    if len(cnt) != len(dcols):
         vbad=[v for v,i in cnt.items() if i > 1];
         err_mes("following column name is not unique in ' (ref)' set: '"+vbad[0]+"'");
         return;
     # check that every ref has its test pair
-    for ir in dcols["inm"].keys():
-        nm=dcols["inm"][ir];
+    # build dcols: icolref => (varname, icoltest, qry_dict_if_any)
+    for ir in dcols.keys():
+        nm=dcols[ir];
         itest=[i for i,v in enumerate(cols) if v.startswith(nm) and v.endswith(" (test)") and re.match("^ *$", v[len(nm):-7])]
         if not itest:
             err_mes("column '"+nm+" (ref)' has not its counter part '"+nm+" (test)'");
@@ -228,7 +232,7 @@ def file2data(fn):
             err_mes("following column name is not unique in '( test)' set: '"+nm+"'");
             return;
         else:
-            dcols["inm"][ir]=(nm,itest[0]);
+            dcols[ir]=(nm,itest[0]);
         # get query (if any)
         dqry=dict((i,v[len(nm)+1:].strip()) for i,v in enumerate(cols) if v.startswith(nm+" ") and not v.endswith(" (test)") and not v.endswith(" (ref)"));
         # check that qry names are unique
@@ -236,24 +240,65 @@ def file2data(fn):
         if len(cnt) < len(dqry):
             err_mes("following column name is not unique in ' (query)' set: '"+nm+" "+[v for v,i in cnt.items() if i > 1][0]+"'");
             return;
-        dcols["inm"][ir]=(*dcols["inm"][ir], dqry);
-        
+        dcols[ir]=(*dcols[ir], dqry);
     
-    tls.aff("dcols", dcols);
+    #tls.aff("dcols", dcols);
     data.columns=cols
     data=data.iloc[1:,:]
+    # convert to float
+    for ir,t in dcols.items():
+        data.iloc[:,ir]=np.asarray(data.iloc[:,ir], float);
+        data.iloc[:,t[1]]=np.asarray(data.iloc[:,t[1]], float);
+    # learn model
+    model=data2model(data, dcols);
+    # classify data
+    classif=dclass(data, dcols, model);
     ## create and fill the data table
     if dogui:
-        if "grid" in dir(gui.sw_data):
-            # destroy the previous grid
-            gui.sw_data.grid.Destroy();
-        # create new one
-        grid=wxg.Grid(gui.sw_data, wx.ID_ANY);
-        gui.sw_data.grid=grid;
-        grid.table=data2tab(data);
-        grid.SetTable(grid.table, True);
-        grid.Fit();
-        gui.sw_data.SetVirtualSize(grid.GetSize());
+        for tab in ("sw_data", "sw_model", "sw_test", "sw_ref"):
+            if "grid" in dir(getattr(gui, tab)):
+                # destroy the previous grid
+                getattr(gui, tab).grid.Destroy();
+            # data: create new grid
+            gtab=getattr(gui, tab);
+            grid=wxg.Grid(gtab, wx.ID_ANY);
+            gtab.grid=grid;
+            if tab == "sw_data":
+                table=data;
+            elif tab == "sw_model":
+                #import pdb; pdb.set_trace();
+                table=tls.dict2df(model);
+            elif tab == "sw_test":
+                table=tls.dict2df(dict((nm, d["test"]) for nm,d in classif.items()));
+            elif tab == "sw_ref":
+                table=tls.dict2df(dict((nm, d["ref"]) for nm,d in classif.items()));
+            #print(tab +" size=", table.shape);
+            grid.table=data2tab(table);
+            grid.SetTable(grid.table, True);
+            grid.Fit();
+            gtab.SetVirtualSize(grid.GetSize());
+
+def data2model(data, dcols):
+    "Learn models for each var in 'data' described in 'dcols'. Return a dict with models pointed by varname"
+    res=dict();
+    for ir,t in dcols.items():
+        ref=np.asarray(data.iloc[:,ir]);
+        test=np.asarray(data.iloc[:,t[1]]);
+        res[t[0]]=tls.rt2model(ref, test, 1./sum(1-tls.is_na(test)));
+    return(res);
+def dclass(data, dcols, model):
+    "Classify each var in 'data' described in 'dcols' using corresponding 'model'. Return a dict with classification pointed by varname/{ref,test}"
+    res=dict();
+    for ir,t in dcols.items():
+        ref=np.asarray(data.iloc[:,ir]);
+        ref=ref[np.logical_not(tls.is_na_end(ref))];
+        test=np.asarray(data.iloc[:,t[1]]);
+        test=test[np.logical_not(tls.is_na_end(test))];        
+        res[t[0]]={
+            "ref": tls.xmod2class(ref, model[t[0]]),
+            "test": tls.xmod2class(test, model[t[0]])
+        };
+    return(res);
 def res2file(res, fpath=None):
     if fpath == None:
         if fdata:

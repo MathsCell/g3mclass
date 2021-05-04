@@ -1,11 +1,13 @@
 import sys;
 import pandas as pa;
 import csv;
-import autograd.numpy as np;
+#import autograd.numpy as np;
+#from autograd import grad;
+import numpy as np;
 np.seterr(all="ignore");
-from autograd import grad;
-#import numpy as np;
-#from numba import jit;
+import numpy.ma as nma;
+from io import StringIO;
+#from numba import jit, njit;
 #def jit(func):
 #    def doit(*args, **kwargs):
 #        return(func(*args, **kwargs));
@@ -20,7 +22,7 @@ Inf=np.inf;
 cl0br=np.array([-Inf,-2,-1,0,1,Inf]) # breaks for 0-ref classes
 cl0lab=np.array(["down-deeper", "down", "ref", "up", "up-higher"]) # labels for these breaks
 # (confident) cutoff class names to numbers -> cl2i
-cl2i=pa.DataFrame({"ref": 0, "ref-down": 0, "ref-up": 0, "down-deeper": -2, "down": -1, "up": 1, "up-higher": 2}, index=[0])
+cl2i=pa.DataFrame({"ref": 0, "ref-down": 0, "ref-up": 0, "down-deeper": -2, "down": -1, "up": 1, "up-higher": 2, "N/A": nan}, index=[0])
 
 def aff(name, obj, ident=0, f=sys.stdout):
     saveout=sys.stdout
@@ -254,8 +256,9 @@ def obj2kvh(o, oname=None, fp=sys.stdout, indent=0):
         for i,v in enumerate(o):
             obj2kvh(v, str(i), fp, indent+1);
     elif issubclass(to, dict):
-        fp.write("\n");
-        dict2kvh(o, fp, indent+1);
+        if have_name:
+            fp.write("\n");
+        dict2kvh(o, fp, indent+have_name);
     elif issubclass(to, pa.DataFrame):
         if have_name:
             fp.write("\n");
@@ -298,6 +301,21 @@ def kvh_getv_by_k(kvt, kl):
             elif len(kl) > 1:
                 # recursive call
                 return(kvh_getv_by_k(v, kl[1:]));
+def dict2df(d):
+    "Return a dict 'd' converted to DataFrame in kvh way"
+    fp=StringIO();
+    dict2kvh(d, fp);
+    s=fp.getvalue();
+    fp.close();
+    if s[-1] == "\n":
+        s=s[:-1]; # strip the last newline
+    li=s.split("\n");
+    nrow=len(li);
+    dl=locals();
+    table=[(dl.update({"cols": v.split("\t")}), dl["cols"])[1] for v in li];
+    ncol=max(len(v) for v in table);
+    table=[row+[""]*(ncol-len(row)) for row in table];
+    return(pa.DataFrame(table, columns=[""]*ncol, index=np.arange(nrow)));
 def wxlay2py(kvt, parent=[None], pref=""):
     """wxlay2py(kvt)
     return a string with python code generating wxWindow
@@ -356,7 +374,7 @@ def rowSums(x):
 def which(x):
     "return array of indexes where 'x' is True. 'x' is supposed 1D."
     return(np.where(x)[0]);
-def zcross(f, xleft, xright, *args, fromleft=True, nitvl=100, **kwargs):
+def zcross(f, xleft, xright, *args, fromleft=True, nitvl=10, **kwargs):
     "find interval [x1, x2] where f(x) changes its sign (zero crossing)"
     #print("args=", args);
     n1=nitvl+1;
@@ -423,7 +441,7 @@ def zeroin(f, ax, bx, *args, tol=sys.float_info.epsilon**0.25, **kwargs):
     # double fb;				# f(b)				
     # double fc;				# f(c)				
     
-    a = float(ax);  b = float(bx);  fa = float(f(a, *args, **kwargs));  fb = float(f(b, *args, **kwargs));
+    a = float(ax);  b = float(bx);  fa = float(f(np.asarray(a), *args, **kwargs));  fb = float(f(np.asarray(b), *args, **kwargs));
     c = a;   fc = fa;
     EPSILON=sys.float_info.epsilon;
     if fa*fb > tol:
@@ -485,11 +503,11 @@ def zeroin(f, ax, bx, *args, tol=sys.float_info.epsilon**0.25, **kwargs):
                 new_step = -tol_act;
 
         a = b;  fa = fb;			# Save the previous approx.	
-        b += new_step;  fb = float(f(b, *args, **kwargs));	# Do step to a new approxim.	
+        b += new_step;  fb = float(f(np.asarray(b), *args, **kwargs));	# Do step to a new approxim.	
         if (fb > 0 and fc > 0) or (fb < 0 and fc < 0):
             # Adjust c for it to have a sign opposite to that of b	
             c = a;  fc = fa;
-def is_na_end(x): return((np.cumsum((x==x)[::-1]) == 0)[::-1]);
+def is_na_end(x): return((np.cumsum(1-is_na(x)[::-1]) == 0)[::-1]);
 def sd1(x):
     return(np.std(x, ddof=1));
 #@jit
@@ -542,8 +560,9 @@ def outer(x, y, f=lambda x,y: x*y):
     res=fv(x.flatten()[:, None], y.flatten());
     res.reshape((*x.shape, *y.shape));
     return(res);
+#@jit
 def ncol(x):
-    return(x.shape[1] if len(x.shape) > 1 else 0);
+    return(np.shape(x)[1] if len(np.shape(x)) > 1 else 0);
 #@jit
 def cut(x, bins, labels=None):
     "return indexes of bins in which x are falling: i is s.t. x ∈ (bins[i-1], bins[i]]. If labels are given then they are returned instead of indexes."
@@ -551,60 +570,66 @@ def cut(x, bins, labels=None):
     x=np.asarray(x).flatten();
     bins=np.asarray(bins).flatten();
     i=(x[:, None] <= bins[None, :]).argmax(1)-1;
-    nlab=len(labels);
+    nlab=len(labels) if not labels is None else 0;
     #import pdb; pdb.set_trace();
     if nlab > 0:
         if nlab != len(bins)-1:
             raise Exception("len(labels) must be equal to len(labels)-1");
         i=np.asarray(labels)[i];
+    i=nma.asarray(i);
+    i.mask=is_na(x);
     return(i.reshape(xs));
-
+def is_na(x):
+    "return boolean array with True where x is nan or is masked"
+    if nma.isMA(x):
+        return(x.mask if type(x.mask) == np.ndarray else np.zeros(x.shape, bool));
+    else:
+        return x != x;
 # EM part
 erfv=np.vectorize(erf);
-#@jit
-def dnorm(x, mean=0, sd=1):
+#@njit
+def dnorm(x, mean=np.array(0.), sd=np.array(1.)):
     "Normal law density function"
     #x=np.asarray(x);
-    if type(x) != np.ndarray:
-        x=np.array(x);
-    xs=x.shape;
-    x=x.flatten().reshape(-1, 1); # column
-    mean=np.asarray(mean).flatten().reshape(1, -1); # row
-    sd=np.asarray(sd).flatten().reshape(1, -1); # row
+    #if type(x) != np.ndarray:
+    #    x=np.array(x);
+    #xs=x.shape;
+    x=np.reshape(x, (-1, 1)); # column
+    mean=np.reshape(mean, (1, -1)); # row
+    sd=np.reshape(sd, (1, -1)); # row
     res=np.exp( - 0.5*((x - mean)/sd)**2)/(sd * np.sqrt(2. * np.pi));
-    res.reshape(*xs, ncol(mean));
+    nc=ncol(mean);
+    res=res.reshape((len(x), nc));
     return(res);
-#@jit
+#@njit
 def dnorm_d1(x, mean=0, sd=1):
     "first derivative by x of the normal law density function"
     #x=np.asarray(x);
-    if type(x) != np.ndarray:
-        x=np.array(x);
-    xs=x.shape;
-    x=x.flatten().reshape(-1, 1); # column
-    mean=np.asarray(mean).flatten().reshape(1, -1); # row
-    sd=np.asarray(sd).flatten().reshape(1, -1); # row
+    #if type(x) != np.ndarray:
+    #    x=np.array(x);
+    x=x.reshape(-1, 1); # column
+    mean=mean.reshape(1, -1); # row
+    sd=sd.reshape(1, -1); # row
     res=dnorm(x, mean, sd)*(mean-x)/(sd*sd);
-    res.reshape(*xs, ncol(mean));
+    res=res.reshape(len(x), ncol(mean));
     return(res);
-#@jit
+#@njit
 def dnorm_d2(x, mean=0, sd=1):
     "second derivative by x of the normal law density function"
     #x=np.asarray(x);
-    if type(x) != np.ndarray:
-        x=np.array(x);
-    xs=x.shape;
-    x=x.flatten().reshape(-1, 1); # column
-    mean=np.asarray(mean).flatten().reshape(1, -1); # row
-    sd=np.asarray(sd).flatten().reshape(1, -1); # row
+    #if type(x) != np.ndarray:
+    #    x=np.array(x);
+    x=x.reshape(-1, 1); # column
+    mean=mean.reshape(1, -1); # row
+    sd=sd.reshape(1, -1); # row
     res=dnorm(x, mean, sd)*(((mean-x)/sd)**2-1.)/(sd*sd);
-    res.reshape(*xs, ncol(mean));
+    res=res.reshape(len(x), ncol(mean));
     return(res);
 #@jit
 def pnorm(x, mean=0., sd=1.):
     "Normal law cumulative distribution function"
     return(0.5*(1+erfv((x-mean)/(sd*np.sqrt(2.)))));
-##@jit
+#@njit
 def dgmmn(x, par, f=dnorm):
     """return a matrix of Gaussian mixture model calculated in points x
     and for components who's parameters are in 3-row matrix 'par', one
@@ -613,9 +638,7 @@ def dgmmn(x, par, f=dnorm):
     In the result matrix res, we have nrow(res)=length(x) and ncol(res)=ncol(par)
     """
     #x=np.asarray(x);
-    if type(par) != pa.DataFrame:
-        par=par.to_frame();
-    res=np.asarray(par.loc["a", :]).reshape(1,-1)*f(x, par.loc["mean",:], par.loc["sd",:]);
+    res=np.array(par.loc["a", :]).reshape(1,-1)*f(x, np.array(par.loc["mean",:]), np.array(par.loc["sd",:]));
     return(res);
 #@jit
 def dgmm(x, par, f=dnorm):
@@ -767,9 +790,6 @@ def em1(x, par=None, imposed=pa.DataFrame(index=["a", "mean", "sd"]), G=range(1,
             loglike=sum(lp);
             BIC=BIC_prec=-2*loglike+np.log(nv)*(3*par.shape[1]-sum(ninaa)-sum(ninam)-sum(ninas))
             while not converged and it <= maxit:
-                if (par.loc["a",:] <= tol).any():
-                    import pdb; pdb.set_trace();
-                    #raise Exception("oups");
                 w=e_step1(xv, par=par);
                 #degen=any(w.sum(0) <= 2.);
                 #if DEBUG:
@@ -828,10 +848,12 @@ def gmmcl(x, par):
     return a dict with class number 'cl', matrix of class weights 'w' and a vector
     of maximal weights 'wmax'"""
     w=e_step1(x, par=par);
-    cl=w.argmax(1);
+    cl=nma.asarray(w.argmax(1));
     #cl=as_integer(ifelse(sapply(cl, length)==0, NA, cl))
     wmax=w[range(len(x)), cl];
-    return({"cl": par.columns[cl], "w": w, "wmax": wmax});
+    cl[:]=par.columns[cl];
+    cl.mask=wmax != wmax;
+    return({"cl": cl, "w": w, "wmax": wmax});
 def histgmm(x, par, plt, **kwargs):
     "Plot histogram of sample 'x' and GMM density plot on the same bins"
     count, bins, ignored = plt.hist(x, 30);
@@ -851,7 +873,7 @@ def roothalf(i1, i2, par, fromleft=True):
     mid=zeroin(lambda x: np.diff(dgmmn(x, par.loc[:, [i1,i2]]), axis=1), par.loc["mean", i1]-0.25*par.loc["sd", i1], par.loc["mean", i2]+0.25*par.loc["sd", i2]);
     # find "grey-zone" limits as peak half-height
     # first find peack's tip
-    fw_d2=grad(fw_d1);
+    #fw_d2=grad(fw_d1);
     xlr=zcross(fw_d2, par.loc["mean", i1]-0.5*par.loc["sd", i1], par.loc["mean", i2]+0.5*par.loc["sd", i2], par, 0, fromleft=fromleft);
     xtip=zeroin(fw_d2, xlr[0], xlr[1], par, 0);
     ftip=float(fw_d1(xtip, par, 0));
@@ -864,7 +886,7 @@ def roothalf(i1, i2, par, fromleft=True):
     return({"mid": mid, "left": left, "right": right});
 #@jit
 def gcl2i(cl, par):
-    o=np.argsort(par.loc["mean",:]);
+    o=np.argsort(par.loc["mean",:]).to_numpy();
     io=o.copy();
     io[o]=np.arange(len(o));
     iv=cl == cl;
@@ -878,12 +900,25 @@ def fw(x, par, i):
     return(pdf[:,i]/rowSums(pdf)[:,0]);
 #@jit
 def fw_d1(x, par, i):
-    "first derivative by x of weights of Gaussian class 0"
+    "first derivative by x of weights of Gaussian class i"
+    x=np.asarray(x);
     pdf=dgmmn(x, par);
-    pdf_1d=dgmmn(x, par, dnorm_d1);
+    pdf_d1=dgmmn(x, par, dnorm_d1);
     w=rowSums(pdf)[:,0];
-    w_1d=rowSums(pdf_1d)[:,0];
-    return((pdf_1d[:,i]-pdf[:,i]*w_1d/w)/w);
+    w_d1=rowSums(pdf_d1)[:,0];
+    return((pdf_d1[:,i]-pdf[:,i]*w_d1/w)/w);
+def fw_d2(x, par, i):
+    "second derivative by x of weights of Gaussian class i"
+    x=np.asarray(x);
+    pdf=dgmmn(x, par);
+    pdf_d1=dgmmn(x, par, dnorm_d1);
+    pdf_d2=dgmmn(x, par, dnorm_d2);
+    w=rowSums(pdf)[:,0];
+    w_d1=rowSums(pdf_d1)[:,0];
+    w_d2=rowSums(pdf_d2)[:,0];
+    return((pdf_d2[:, i] - ((2 * pdf_d1[:, i] - pdf[:, i] * w_d1/w) * 
+        w_d1 + pdf[:, i] * (w_d2 - 
+        w_d1**2/w))/w)/w);
 ##@jit
 def rt2model(ref, test, athr=0.):
     "ref and test samples to GMM model. 'athr' is amplitude threshold for vanishing classes"
@@ -955,8 +990,7 @@ def rt2model(ref, test, athr=0.):
     cutoff=dict()
     p1=cpar["par"].copy();
     p1.loc["a",:]=1.;
-    i=0;
-    for im in iom:
+    for i,im in enumerate(iom):
         # precedent class
         im1=iom[i-1] if i > 0 else nan;
         if im == 0:
@@ -982,26 +1016,16 @@ def rt2model(ref, test, athr=0.):
                 # up-higher shifted class
                 cutoff["up-higher"]=zeroin(lambda x: dgmmn(x, p1)[:, im1] - dgmmn(x, p1)[:, im], p1.loc["mean", im1]-0.5*p1.loc["sd", im1], p1.loc["mean", im]+0.5*p1.loc["sd", im]);
                 break
-        i=i+1;
-    cpar["cutoff"]=cutoff;
-    return(cpar);
-def xmod2class(x, cpar):
-    "cpar is a model dict from rt2model(). It is used to classify a vector x. As result, complete cpar with 'classification' DataFrame in-place"
     # renumber classes and add class labels
-    o=np.argsort(cpar["par"].loc["mean",:]);
+    o=np.argsort(cpar["par"].loc["mean",:]).to_numpy();
     io=o.copy();
     io[o]=np.arange(len(o));
     cpar["par"].columns=io-io[0];
     #import pdb; pdb.set_trace();
-    cla=gmmcl(x, cpar["par"]);
-    cpar["classification"]=pa.DataFrame({"x": x, "cl": cla["cl"], "wmax": cla["wmax"]});
-    cpar["classification"]["class_descr"]=cut(cpar["classification"]["cl"], cl0br, cl0lab);
-    # add classification by cutoff and ccutoff (confident cutoff)
     br=[-Inf];
     cllab=[];
     cbr=[-Inf];
     ccllab=[];
-    cutoff=cpar["cutoff"];
     if "down-deeper" in cutoff:
         br.append(cutoff["down-deeper"]);
         cllab.append("down-deeper");
@@ -1030,13 +1054,22 @@ def xmod2class(x, cpar):
     cutoff["labels"]=cllab;
     cutoff["cbreaks"]=cbr;
     cutoff["clabels"]=ccllab;
+    cpar["cutoff"]=cutoff;
+    return(cpar);
+def xmod2class(x, cpar):
+    "cpar is a model dict from rt2model(). It is used to classify a vector x. Return a dict with 'classification' DataFrame and cutoff dict"
+    cla=gmmcl(x, cpar["par"]);
+    classification=pa.DataFrame({"x": x, "cl": cla["cl"], "wmax": cla["wmax"]});
+    classification["class_descr"]=pa.DataFrame(cut(classification["cl"], cl0br, cl0lab));
+    # add classification by cutoff and ccutoff (confident cutoff)
+    cutoff=cpar["cutoff"];
 
-    clcut=cut(x, br, cllab);
-    cclcut=cut(x, cbr, ccllab);
-    cutnum=cl2i[clcut]
-    ccutnum=cl2i[cclcut]
-    cpar["classification"]["cutoff"]=clcut;
-    cpar["classification"]["cutnum"]=cutnum.to_numpy().flatten();
-    cpar["classification"]["confcutoff"]=cclcut;
-    cpar["classification"]["confcutnum"]=ccutnum.to_numpy().flatten();
-
+    clcut=cut(x, cutoff["breaks"], cutoff["labels"]);
+    cclcut=cut(x, cutoff["cbreaks"], cutoff["clabels"]);
+    cutnum=cl2i[clcut.filled()];
+    ccutnum=cl2i[cclcut.filled()];
+    classification["cutoff"]=pa.DataFrame(clcut);
+    classification["cutnum"]=cutnum.to_numpy().flatten();
+    classification["confcutoff"]=pa.DataFrame(cclcut);
+    classification["confcutnum"]=ccutnum.to_numpy().flatten();
+    return(classification);

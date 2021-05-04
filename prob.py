@@ -79,11 +79,16 @@ if False:
 data=pa.read_csv("abcd.tsv", sep="\t");
 for let in ("A", "B", "C", "D"):
     ref=np.asarray(data["Gene %s (ref)"%let]);
+    ref=ref[np.logical_not(tls.is_na_end(ref))];
     test=np.asarray(data["Gene %s (test)"%let]);
+    test=test[np.logical_not(tls.is_na_end(test))];
     #warnings.simplefilter("error");
     cpar=tls.rt2model(ref, test, athr=2./sum(test == test));
-    tls.xmod2class(test, cpar);
-    tls.obj2kvh(cpar, "cpar", fp="cpar%s.kvh"%let);
+    classif=dict();
+    import pdb; pdb.set_trace();
+    classif["ref"]=tls.xmod2class(ref, cpar);
+    classif["test"]=tls.xmod2class(test, cpar);
+    tls.obj2kvh({"model": cpar, "classification": classif}, None, fp="cpar%s.kvh"%let);
     #plt.figure("gene %s"%let);
     #tls.histgmm(test, cpar["par"], plt);
     #plt.show(block=False);
