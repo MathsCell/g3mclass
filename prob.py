@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 import tools_ssg as tls;
 import pandas as pa;
 import autograd.numpy as np;
@@ -78,17 +79,18 @@ if False:
 #ref=np.random.normal(par.loc["mean", 0], par.loc["sd", 0], 20);
 data=pa.read_csv("abcd.tsv", sep="\t");
 for let in ("A", "B", "C", "D"):
-    ref=np.asarray(data["Gene %s (ref)"%let]);
-    ref=ref[np.logical_not(tls.is_na_end(ref))];
-    test=np.asarray(data["Gene %s (test)"%let]);
-    test=test[np.logical_not(tls.is_na_end(test))];
+    ref=np.array(data["Gene %s (ref)"%let]);
+    ref=ref[~tls.is_na_end(ref)];
+    test=np.array(data["Gene %s (test)"%let]);
+    test=test[~tls.is_na_end(test)];
     #warnings.simplefilter("error");
+    #if let == "B":
+    #    import pdb; pdb.set_trace();
     cpar=tls.rt2model(ref, test, athr=2./sum(test == test));
     classif=dict();
-    import pdb; pdb.set_trace();
     classif["ref"]=tls.xmod2class(ref, cpar);
     classif["test"]=tls.xmod2class(test, cpar);
-    tls.obj2kvh({"model": cpar, "classification": classif}, None, fp="cpar%s.kvh"%let);
+    tls.obj2kvh({"model": cpar, "classification": classif}, None, fp="cpar%s.tsv"%let);
     #plt.figure("gene %s"%let);
     #tls.histgmm(test, cpar["par"], plt);
     #plt.show(block=False);

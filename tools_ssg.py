@@ -373,7 +373,7 @@ def rowSums(x):
     return(x.sum(1).reshape((x.shape[0], 1)));
 def which(x):
     "return array of indexes where 'x' is True. 'x' is supposed 1D."
-    return(np.where(x)[0]);
+    return(np.where(np.asarray(x).flatten())[0]);
 def zcross(f, xleft, xright, *args, fromleft=True, nitvl=10, **kwargs):
     "find interval [x1, x2] where f(x) changes its sign (zero crossing)"
     #print("args=", args);
@@ -519,12 +519,17 @@ def ipeaks(x, decreasing=True):
     d=np.sign(np.diff(x));
     # make the same length as x (linear extrapolation)
     d=np.hstack((1., d, -1.)); # doubt benefice on the ends
-    d=np.diff(d);
-    ip=which(d==-2);
-    ipl=which(np.abs(d)==1);
-    ipll=which(d[ipl[:-1]]+d[ipl[1:]] == -2); # left indexes of plateau in ipl
-    ipl=(ipl[ipll]+ipl[ipll+1])//2;
-    ip=np.append(ip, ipl);
+    d2=np.diff(d);
+    ip=which(d2==-2);
+    ipl=which((d2 == -1)&(d[:-1] == 1.)); # left indexes of plateau candidate in ipl
+    ipr=which((d2 == -1)&(d[:-1] == 0.)); # right indexes of plateau candidate in ipl
+    d=locals();
+    it=np.apply_along_axis(lambda v: (d.update({"w": which(v)}), d["w"][-1] if len(d["w"]) else nan)[-1], 0, ipl[:,None]<ipr[None,:]);
+    ipr=ipr[~is_na(it)];
+    it=np.int_(it[~is_na(it)]);
+    ipl=ipl[it];
+    ipc=np.array([(l+r)//2 for l,r in zip(ipl, ipr) if not np.any((l < ip)*(ip < r))], int); # "center" index
+    ip=np.append(ip, ipc);
     o=np.argsort(x[ip]);
     if decreasing:
         o=o[::-1];
@@ -700,6 +705,9 @@ def m_step1(x, w, imposed=pa.DataFrame(index=["a", "mean", "sd"]), inaa=None, in
             inam=np.full(0, True);
         if inas is None:
             inas=np.full(0, True);
+    ninaa=~inaa;
+    ninam=~inam;
+    ninas=~inas;
     x=np.asarray(x);
     n=len(x);
     nk=w.sum(0);
@@ -707,10 +715,10 @@ def m_step1(x, w, imposed=pa.DataFrame(index=["a", "mean", "sd"]), inaa=None, in
     # renormalize a
     if gimp > 0 and not all(inaa):
         an=a.copy(); # 'a' new
-        an[:gimp][np.logical_not(inaa)]=imposed.loc["a", np.logical_not(inaa)] ;
-        simp=sum(imposed.loc["a", np.logical_not(inaa)]);
+        an[:gimp][ninaa]=imposed.loc["a", ninaa] ;
+        simp=sum(imposed.loc["a", ninaa]);
         irest=np.full(w.shape[1], True);
-        irest[:gimp][np.logical_not(inaa)]=False;
+        irest[:gimp][ninaa]=False;
         srest=sum(an[irest]);
         fa=(1.-simp)/srest;
         an[irest]=fa*an[irest];
@@ -721,13 +729,13 @@ def m_step1(x, w, imposed=pa.DataFrame(index=["a", "mean", "sd"]), inaa=None, in
         a=an;
     mean=np.dot(w.T, x)/nk;
     if gimp > 0 and not all(inam):
-        mean[:gimp][np.logical_not(inam)]=imposed.loc["mean", np.logical_not(inam)];
+        mean[:gimp][ninam]=imposed.loc["mean", ninam];
     #sd=(np.dot(w.T, x**2)-nk*mean**2)/(nk-1.);
     sd=(w*(x.reshape((-1, 1))-mean.reshape((1, -1)))**2).sum(0)/(nk-1.);
     sd[sd<=0.]=sys.float_info.min;
     sd=np.sqrt(sd);
     if gimp > 0 and not all(inas):
-        sd[:gimp][np.logical_not(inas)]=imposed.loc["sd", np.logical_not(inas)];
+        sd[:gimp][ninas]=imposed.loc["sd", ninas];
     res=pa.DataFrame([a, mean, sd]);
     res.index=["a", "mean", "sd"];
     return(res);
@@ -741,9 +749,9 @@ def em1(x, par=None, imposed=pa.DataFrame(index=["a", "mean", "sd"]), G=range(1,
     inaa=np.isnan(imposed.loc["a",:]);
     inam=np.isnan(imposed.loc["mean",:]);
     inas=np.isnan(imposed.loc["sd",:]);
-    ninaa=np.logical_not(inaa);
-    ninam=np.logical_not(inam);
-    ninas=np.logical_not(inas);
+    ninaa=~inaa;
+    ninam=~inam;
+    ninas=~inas;
 
     res=dict();
     if type(G) in (int, float):
@@ -939,7 +947,21 @@ def rt2model(ref, test, athr=0.):
     #plt.plot(hcnt);
     #plt.show(block=False);
     ip=ipeaks(hcnt);
-    ip=ip[hcnt[ip]>=2]; # too rare groups are eliminated
+    iv=ipeaks(-hcnt); # valles
+    # estimate cardinal of each peak and eliminate too low populated ones
+    ip.sort();
+    iv.sort();
+    if len(ip):
+        if iv[0] > ip[0]:
+            iv=np.insert(iv, 0, ip[0]);
+        if iv[-1] < ip[-1]:
+            iv=np.append(iv, ip[-1]);
+        pcnt=np.array([hcnt[iv[i]:(iv[i+1]+1)].sum() for i in range(len(iv)-1)])
+        if len(pcnt) != len(ip):
+            import pdb; pdb.set_trace();
+            ipeaks(-hcnt);
+            raise Exception("cardinal of peaks has not the same length a peak list");
+    ip=ip[pcnt>=3]; # too rare groups are eliminated
     #print("ip=", ip);
     par=pa.DataFrame(np.array([[nan]*len(ip), np.sort(h[1][ip]), [(tmax-tmin)/30/4]*len(ip)]), index=["a", "mean", "sd"]);
     # learn gmm without imposed class
