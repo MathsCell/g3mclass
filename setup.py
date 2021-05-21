@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from setuptools import setup
 
 with open('README.rst', 'r', encoding='utf-8') as f:
@@ -16,7 +17,7 @@ setup(
    author_email='sokol@insa-toulouse.fr',
    url='https://github.com/sgsokol/g3mclass',
    packages=['g3mclass'],
-   py_modules=['g3mclass', 'tools_ssg'],
+   py_modules=['g3mclass', 'tools_g3m'],
    package_dir={'g3mclass': '.'},
    package_data={
         'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'welcome.html', 'docs/*', 'example/*'],

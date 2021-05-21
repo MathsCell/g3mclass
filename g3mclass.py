@@ -36,6 +36,7 @@ import wx.html;
 import wx.grid as wxg;
 from wx.lib.wordwrap import wordwrap;
 import wx.lib.floatcanvas.FloatCanvas as wxfc;
+import wx.lib.agw.floatspin as wx_fs;
 import numpy as np;
 import pandas as pa;
 import webbrowser;
@@ -43,7 +44,7 @@ import webbrowser;
 import g3mclass
 dirx=os.path.dirname(os.path.abspath(sys.argv[0])); # execution dir
 diri=os.path.dirname(os.path.abspath(g3mclass.__file__)); # install dir
-import tools_ssg as tls;
+import tools_g3m as tls;
 
 ## custom classes
 class data2tab(wxg.GridTableBase):
@@ -67,6 +68,41 @@ class data2tab(wxg.GridTableBase):
         return str(self.data.columns[col]);
     def GetRowLabelValue(self, row):
         return str(self.data.index[row]);
+class wx_FloatSlider(wx.Slider):
+    def __init__(self, parent, value=0, minValue=0., maxValue=1., scale=100, frmt="%.2f", **kwargs):
+        self._value = value;
+        self._min = minValue;
+        self._max = maxValue;
+        self._scale = scale;
+        ival, imin, imax = [round(v*scale) for v in (value, minValue, maxValue)];
+        self.frmt=frmt;
+        self._islider = super(type(self), self);
+        #pnl=wx.Panel(parent, -1);
+        pnl=parent;
+        self._islider.__init__(pnl, value=ival, minValue=imin, maxValue=imax, **kwargs);
+        self.Bind(wx.EVT_SLIDER, self._OnSlider);
+        self.txt = wx.StaticText(pnl, label=self.frmt%self._value, style = wx.ALIGN_RIGHT);
+        self.hbox = wx.BoxSizer(wx.HORIZONTAL);
+        self.hbox.Add(self.txt, 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, border=10);
+        self.hbox.Add(self, 1, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, border=10);
+        #import pdb; pdb.set_trace();
+        #pnl.SetSizer(hbox);
+    def _OnSlider(self, event):
+        #import pdb; pdb.set_trace()
+        ival = self._islider.GetValue();
+        imin = self._islider.GetMin();
+        imax = self._islider.GetMax();
+        if ival == imin:
+            self._value = self._min;
+        elif ival == imax:
+            self._value = self._max;
+        else:
+            self._value = ival / self._scale;
+        self.txt.SetLabel(self.frmt%self._value);
+    def GetSizer(self):
+        return self.hbox;
+    def GetValue(self):
+        return self._value;
 
 ## config constants
 with open(os.path.join(diri, "g3mclass", "version.txt"), "r") as fp:
@@ -87,13 +123,15 @@ dogui=False;
 fdata=""; # name of data file
 data=None;
 dcols={};
-settings={
-    "param1": 10,
-    "param2": 10,
+par_mod={
+    "hbin": 30,
+    "thr_di": 0.82,
+    "thr_w": 1.,
 };
 canvas=None; # plotting canvas
 sett_inp=None; # dictionary of input widgets for settings
 wd=""; # working dir
+
 ## call back functions
 def OnExit(evt):
     """
@@ -181,6 +219,50 @@ def OnSize(evt):
     win.SetSize(sz);
     evt.Skip();
     return;
+def OnRemodel(evt):
+    "Model parameters changed => relearn and put results in gui"
+    if dogui:
+        gui.btn_remod.Disable();
+    # learn model
+    #import pdb; pdb.set_trace();
+    model=data2model(data, dcols);
+    # classify data
+    classif=dclass(data, dcols, model);
+    ## create and fill the data table
+    if dogui:
+        for tab in ("sw_data", "sw_model", "sw_test", "sw_ref"):
+            gtab=getattr(gui, tab);
+            if "grid" in dir(gtab):
+                # destroy the previous grid
+                gtab.grid.Destroy();
+                gtab.SetVirtualSize((0, 0));
+            # data: create new grid
+            grid=wxg.Grid(gtab, wx.ID_ANY);
+            gtab.grid=grid;
+            if tab == "sw_data":
+                table=data;
+            elif tab == "sw_model":
+                #import pdb; pdb.set_trace();
+                table=tls.dict2df(model);
+            elif tab == "sw_test":
+                table=tls.dict2df(dict((nm, d["test"]) for nm,d in classif.items()));
+            elif tab == "sw_ref":
+                table=tls.dict2df(dict((nm, d["ref"]) for nm,d in classif.items()));
+            #print(tab +" size=", table.shape);
+            grid.table=data2tab(table);
+            grid.SetTable(grid.table, True);
+            grid.Fit();
+            gtab.SetVirtualSize(grid.GetSize());
+            #grid.Bind(wx.EVT_SCROLLWIN, onScrollGrid);
+def OnSlider(evt):
+    "Slider was moved"
+    global par_mod;
+    if not data is None :
+        gui.btn_remod.Enable();
+    par_mod["hbin"]=round(gui.sl_hbin.GetValue());
+    par_mod["thr_di"]=gui.sl_thr_di.GetValue();
+    par_mod["thr_w"]=gui.sl_thr_w.GetValue();
+    evt.GetEventObject()._OnSlider(evt);
 def ToDo(evt):
     """
     A general purpose "we'll do it later" dialog box
@@ -190,6 +272,8 @@ def ToDo(evt):
                          wx.OK | wx.ICON_INFORMATION);
     dlg.ShowModal();
     dlg.Destroy();
+
+# working horses
 def err_mes(mes):
     "Show error dialog in GUI mode or raise exception"
     if dogui:
@@ -249,42 +333,17 @@ def file2data(fn):
     for ir,t in dcols.items():
         data.iloc[:,ir]=np.asarray(data.iloc[:,ir], float);
         data.iloc[:,t[1]]=np.asarray(data.iloc[:,t[1]], float);
-    # learn model
-    model=data2model(data, dcols);
-    # classify data
-    classif=dclass(data, dcols, model);
-    ## create and fill the data table
-    if dogui:
-        for tab in ("sw_data", "sw_model", "sw_test", "sw_ref"):
-            if "grid" in dir(getattr(gui, tab)):
-                # destroy the previous grid
-                getattr(gui, tab).grid.Destroy();
-            # data: create new grid
-            gtab=getattr(gui, tab);
-            grid=wxg.Grid(gtab, wx.ID_ANY);
-            gtab.grid=grid;
-            if tab == "sw_data":
-                table=data;
-            elif tab == "sw_model":
-                #import pdb; pdb.set_trace();
-                table=tls.dict2df(model);
-            elif tab == "sw_test":
-                table=tls.dict2df(dict((nm, d["test"]) for nm,d in classif.items()));
-            elif tab == "sw_ref":
-                table=tls.dict2df(dict((nm, d["ref"]) for nm,d in classif.items()));
-            #print(tab +" size=", table.shape);
-            grid.table=data2tab(table);
-            grid.SetTable(grid.table, True);
-            grid.Fit();
-            gtab.SetVirtualSize(grid.GetSize());
-
+    OnRemodel(None);
+#def onScrollGrid(obj, event):
+#    import pdb; pdb.set_trace();
+    
 def data2model(data, dcols):
     "Learn models for each var in 'data' described in 'dcols'. Return a dict with models pointed by varname"
     res=dict();
     for ir,t in dcols.items():
         ref=np.asarray(data.iloc[:,ir]);
         test=np.asarray(data.iloc[:,t[1]]);
-        res[t[0]]=tls.rt2model(ref, test, 1./sum(1-tls.is_na(test)));
+        res[t[0]]=tls.rt2model(ref, test, par_mod);
     return(res);
 def dclass(data, dcols, model):
     "Classify each var in 'data' described in 'dcols' using corresponding 'model'. Return a dict with classification pointed by varname/{ref,test}"

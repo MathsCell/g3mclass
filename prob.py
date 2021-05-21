@@ -91,8 +91,10 @@ for let in ("A", "B", "C", "D"):
     classif["ref"]=tls.xmod2class(ref, cpar);
     classif["test"]=tls.xmod2class(test, cpar);
     tls.obj2kvh({"model": cpar, "classification": classif}, None, fp="cpar%s.tsv"%let);
-    #plt.figure("gene %s"%let);
-    #tls.histgmm(test, cpar["par"], plt);
-    #plt.show(block=False);
+    if let == "B":
+        plt.figure("gene %s"%let);
+        tls.histgmm(test, cpar["par"], plt, n=90);
+        plt.xticks(np.arange(0, 900, step=20));
+        plt.show(block=False);
 # final blocking show
-#plt.show();
+plt.show();

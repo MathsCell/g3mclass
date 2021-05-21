@@ -523,13 +523,16 @@ def ipeaks(x, decreasing=True):
     ip=which(d2==-2);
     ipl=which((d2 == -1)&(d[:-1] == 1.)); # left indexes of plateau candidate in ipl
     ipr=which((d2 == -1)&(d[:-1] == 0.)); # right indexes of plateau candidate in ipl
-    d=locals();
-    it=np.apply_along_axis(lambda v: (d.update({"w": which(v)}), d["w"][-1] if len(d["w"]) else nan)[-1], 0, ipl[:,None]<ipr[None,:]);
-    ipr=ipr[~is_na(it)];
-    it=np.int_(it[~is_na(it)]);
-    ipl=ipl[it];
-    ipc=np.array([(l+r)//2 for l,r in zip(ipl, ipr) if not np.any((l < ip)*(ip < r))], int); # "center" index
-    ip=np.append(ip, ipc);
+    if len(ipl) and len(ipr):
+        dl=locals();
+        it=np.apply_along_axis(lambda v: (dl.update({"w": which(v)}), dl["w"][-1] if len(dl["w"]) else nan)[-1], 0, ipl[:,None]<ipr[None,:]).astype(float); # indexes of last true ipl<ipr
+        irep=which(it[:-1]==it[1:])+1;
+        it[irep]=nan;
+        ipr=ipr[~is_na(it)];
+        it=np.int_(it[~is_na(it)]);
+        ipl=ipl[it];
+        ipc=np.array([(l+r)//2 for l,r in zip(ipl, ipr) if not np.any((l < ip)*(ip < r))], int); # "center" index
+        ip=np.append(ip, ipc);
     o=np.argsort(x[ip]);
     if decreasing:
         o=o[::-1];
@@ -862,9 +865,11 @@ def gmmcl(x, par):
     cl[:]=par.columns[cl];
     cl.mask=wmax != wmax;
     return({"cl": cl, "w": w, "wmax": wmax});
-def histgmm(x, par, plt, **kwargs):
+def histgmm(x, par, plt, n=30, **kwargs):
     "Plot histogram of sample 'x' and GMM density plot on the same bins"
-    count, bins, ignored = plt.hist(x, 30);
+    xmi=np.min(x);
+    xma=np.max(x);
+    count, bins, ignored = plt.hist(x, np.arange(xmi, xma, step=10));
     nb=len(bins);
     cdf=sum(count)*np.hstack(list(par.loc["a", i]*pnorm(bins, par.loc["mean", i], par.loc["sd", i]).reshape((len(bins), 1), order="F") for i in par.columns));
     pdf=np.diff(np.hstack((rowSums(cdf), cdf)), axis=0);
@@ -928,17 +933,18 @@ def fw_d2(x, par, i):
         w_d1 + pdf[:, i] * (w_d2 - 
         w_d1**2/w))/w)/w);
 ##@jit
-def rt2model(ref, test, athr=0.):
-    "ref and test samples to GMM model. 'athr' is amplitude threshold for vanishing classes"
+def rt2model(ref, test, par_mod):
+    "ref and test samples to GMM model. par_mod['thr_w'] is weight threshold for vanishing classes"
     # get only valid entries
     rv=ref[ref == ref];
     tv=test[test == test];
+    athr=par_mod["thr_w"]/len(tv)
     # imposed group
     imp=pa.DataFrame([nan, np.mean(rv), sd1(rv)], index=["a", "mean", "sd"]);
     # histogram for first approximation of class nb and positions
     tmin=np.min(tv);
     tmax=np.max(tv);
-    h=np.histogram(tv, bins=np.linspace(tmin, tmax, 31));
+    h=np.histogram(tv, bins=np.linspace(tmin, tmax, par_mod["hbin"]+1));
     # smooth counts
     #plt.figure("h");
     #plt.plot(h[0]);
@@ -958,9 +964,9 @@ def rt2model(ref, test, athr=0.):
             iv=np.append(iv, ip[-1]);
         pcnt=np.array([hcnt[iv[i]:(iv[i+1]+1)].sum() for i in range(len(iv)-1)])
         if len(pcnt) != len(ip):
-            import pdb; pdb.set_trace();
+            #import pdb; pdb.set_trace();
             ipeaks(-hcnt);
-            raise Exception("cardinal of peaks has not the same length a peak list");
+            raise Exception("cardinal of peaks has not the same length as peak list");
     ip=ip[pcnt>=3]; # too rare groups are eliminated
     #print("ip=", ip);
     par=pa.DataFrame(np.array([[nan]*len(ip), np.sort(h[1][ip]), [(tmax-tmin)/30/4]*len(ip)]), index=["a", "mean", "sd"]);
@@ -968,8 +974,13 @@ def rt2model(ref, test, athr=0.):
     pari=em1(tv, par=par, G=par.shape[1], restart=1, maxit=200)["win"]["par"];
     #print("pari=", pari);
     # is there any class very close to imp?
-    i_imp=np.abs(pari.loc["mean",:]-imp.loc["mean",0])/(pari.loc["sd",:]+imp.loc["sd",0])*2. <= 0.5;
-    if i_imp.any():
+    di=(np.abs(pari.loc["mean",:]-imp.loc["mean",0])/(pari.loc["sd",:]+imp.loc["sd",0])*2.).to_frame();
+    di=di.T;
+    di.index=["dist_to_ref"];
+    par_hist=pari.copy();
+    par_hist=par_hist.append(di);
+    i_imp= di <= par_mod["thr_di"]; #0.5;
+    if np.any(i_imp):
         i_imp=which(i_imp);
         pari.loc["a",:]=1./(ncol(pari)-len(i_imp)+1);
         pari.iloc[:, i_imp[0]]=imp;
@@ -1006,6 +1017,7 @@ def rt2model(ref, test, athr=0.):
         cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-ncol(imp), restart=1, maxit=200, classify=True)["win"];
         ng=ncol(cpar["par"]);
         neglige=(ng > 1) and any(cpar["par"].loc["a",1:] <= athr);
+    cpar.update({"par_hist": par_hist});
     # find cutoffs
     iom=np.argsort(cpar["par"].loc["mean",:]);
     iref=which(iom == 0);

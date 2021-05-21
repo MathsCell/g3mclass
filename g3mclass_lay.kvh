@@ -29,6 +29,58 @@ wx.Frame
 				Bind(wx.html.EVT_HTML_LINK_CLICKED, OnLinkClicked)
 				Bind(wx.EVT_SIZE, OnSize)
 		wx.ScrolledWindow
+			varname	sw_param
+			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			wx.StaticText
+				varname	txt_hbin
+				param	.parent, label="Bin number in histogram", style=wx.ALIGN_LEFT
+			wx_FloatSlider
+				varname	sl_hbin
+				param	.parent, value=30, minValue=10, maxValue=100, scale=1, frmt="%3.0f", style=wx.SL_HORIZONTAL
+				callmeth
+					Bind(wx.EVT_SLIDER, OnSlider)
+			wx.StaticText
+				varname	txt_thr_di
+				param	.parent, label="Threshold for fusing too close Gaussian groups", style=wx.ALIGN_LEFT
+			wx_FloatSlider
+				varname	sl_thr_di
+				param	.parent, value=0.82, minValue=0, maxValue=1,  scale=100
+				callmeth
+					Bind(wx.EVT_SLIDER, OnSlider)
+			wx.StaticText
+				varname	txt_thr_w
+				param	.parent, label="Threshold for vanishing Gaussian groups", style=wx.ALIGN_LEFT
+			wx_FloatSlider
+				varname	sl_thr_w
+				param	.parent, value=1, minValue=0, maxValue=10,  scale=100
+				callmeth
+					Bind(wx.EVT_SLIDER, OnSlider)
+			wx.Button
+				varname	btn_remod
+				param	.parent, wx.ID_ANY, label="Re-learn model"
+				callmeth
+					Bind(wx.EVT_BUTTON, OnRemodel)
+					Disable()
+			wx.BoxSizer
+				varname	vbox
+				param	wx.VERTICAL
+				callmeth
+					Add(gui.txt_hbin, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
+					Add(gui.sl_hbin.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
+					Add(gui.txt_thr_di, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
+					Add(gui.sl_thr_di.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
+					Add(gui.txt_thr_w, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
+					Add(gui.sl_thr_w.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
+					Add(gui.btn_remod, 0, flag=wx.ALIGN_CENTER)
+			callmeth
+				SetScrollRate(20,20)
+				SetBackgroundColour("WHITE")
+				Bind(wx.EVT_SIZE, OnSize)
+				SetSizer(gui.vbox)
+		wx.ScrolledWindow
 			varname	sw_data
 			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
 			callmeth
@@ -65,6 +117,7 @@ wx.Frame
 				Bind(wx.EVT_SIZE, OnSize)
 		callmeth
 			AddPage(gui.win_welc, "Welcome")
+			AddPage(gui.sw_param, "Parameters")
 			AddPage(gui.sw_data, "Data")
 			AddPage(gui.sw_model, "Model")
 			AddPage(gui.sw_test, "Test class")
