@@ -33,7 +33,7 @@ wx.Frame
 			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
 			wx.StaticText
 				varname	txt_hbin
-				param	.parent, label="Bin number in histogram", style=wx.ALIGN_LEFT
+				param	.parent, label="Number of equal-width bins in histogram", style=wx.ALIGN_LEFT
 			wx_FloatSlider
 				varname	sl_hbin
 				param	.parent, value=30, minValue=10, maxValue=100, scale=1, frmt="%3.0f", style=wx.SL_HORIZONTAL
@@ -97,6 +97,9 @@ wx.Frame
 		wx.ScrolledWindow
 			varname	sw_test
 			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			wx.Notebook
+				varname	nb_test
+				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 			callmeth
 				SetScrollRate(20,20)
 				SetBackgroundColour("WHITE")
@@ -104,6 +107,9 @@ wx.Frame
 		wx.ScrolledWindow
 			varname	sw_ref
 			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			wx.Notebook
+				varname	nb_ref
+				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 			callmeth
 				SetScrollRate(20,20)
 				SetBackgroundColour("WHITE")

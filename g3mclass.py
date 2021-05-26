@@ -124,8 +124,8 @@ fdata=""; # name of data file
 data=None;
 dcols={};
 par_mod={
-    "hbin": 30,
-    "thr_di": 0.82,
+    "hbin": 25,
+    "thr_di": 0.5,
     "thr_w": 1.,
 };
 canvas=None; # plotting canvas
@@ -236,6 +236,7 @@ def OnRemodel(evt):
                 # destroy the previous grid
                 gtab.grid.Destroy();
                 gtab.SetVirtualSize((0, 0));
+                delattr(gtab, "grid");
             # data: create new grid
             grid=wxg.Grid(gtab, wx.ID_ANY);
             gtab.grid=grid;
@@ -244,10 +245,63 @@ def OnRemodel(evt):
             elif tab == "sw_model":
                 #import pdb; pdb.set_trace();
                 table=tls.dict2df(model);
-            elif tab == "sw_test":
-                table=tls.dict2df(dict((nm, d["test"]) for nm,d in classif.items()));
-            elif tab == "sw_ref":
-                table=tls.dict2df(dict((nm, d["ref"]) for nm,d in classif.items()));
+            elif tab in ("sw_test", "sw_ref"):
+                #import pdb; pdb.set_trace();
+                teref=tab[3:];
+                if "grid" in dir(gtab):
+                    gtab.grid.Destroy();
+                    delattr(gtab, "grid");
+                gtab.Scroll(0, 0);
+                # remove previous sub-pages and create one page per variable (e.g. gene)
+                nb=getattr(gui, "nb_"+teref);
+                for i in range(nb.GetPageCount()-1, -1, -1):
+                    #wx.CallAfter(nb.DeletePage, i);
+                    nb.DeletePage(i);
+                for nm,d in classif.items():
+                    gtab2=wx.ScrolledWindow(nb, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE);
+                    gtab2.SetScrollRate(20,20);
+                    gtab2.SetBackgroundColour("WHITE");
+                    gtab2.SetVirtualSize((0, 0));
+                    gtab2.Bind(wx.EVT_SIZE, OnSize);
+                    nb.AddPage(gtab2, nm);
+                    grid2=wxg.Grid(gtab2, wx.ID_ANY);
+                    # prepare text table
+                    x=d[teref]["x"];
+                    tcol=[
+                        ("x", x),
+                        (" ", []),
+                        ("proba.max", d[teref]["wmax"]),
+                     ]
+                    # add classiffications
+                    tcol.append((" ", []));
+                    for cl,clname in (("cl", "proba.cl"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
+                        tcol.append((clname, d[teref][cl]));
+                    # add class repartition
+                    for cl,clname in (("cl", "proba.cl"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
+                        #import pdb; pdb.set_trace();
+                        tcol.append((" ", []));
+                        vcl=d[teref][cl];
+                        ucl=sorted(set(vcl));
+                        dstat={teref: x.describe()};
+                        for icl in ucl:
+                            xcl=x[tls.which(vcl==icl)];
+                            tcol.append((clname+"="+str(icl), xcl));
+                            dstat[clname+"="+str(icl)]=xcl.describe();
+                        dstat=pa.DataFrame(dstat);
+                        dstat.loc["count", :]=round(dstat.loc["count", :]);
+                        tcol.append((" ", []));
+                        tcol.append(("descriptive stats", dstat.index));
+                        for icol in range(dstat.shape[1]):
+                            tcol.append((dstat.columns[icol], dstat.iloc[:,icol]));
+                        
+                    grid2.table=data2tab(tls.tcol2tab(tcol)); #d[teref]);
+                    grid2.SetTable(grid2.table, True);
+                    gtab2.SetVirtualSize(grid2.GetSize());
+                    grid2.Fit();
+                    gtab2.Fit();
+                    nb.Fit();
+                    gtab.SetVirtualSize(nb.GetSize());
+                continue;
             #print(tab +" size=", table.shape);
             grid.table=data2tab(table);
             grid.SetTable(grid.table, True);

@@ -316,6 +316,15 @@ def dict2df(d):
     ncol=max(len(v) for v in table);
     table=[row+[""]*(ncol-len(row)) for row in table];
     return(pa.DataFrame(table, columns=[""]*ncol, index=np.arange(nrow)));
+def tcol2tab(tcol):
+    "Transform a list of tuples (one tuple per column) into regular data frame"
+    ncol=len(tcol);
+    nrow=max(len(v) for k,v in tcol);
+    table=[[str(v) for v in col]+[""]*(nrow-len(col)) for nm, col in tcol];
+    res=pa.DataFrame(table).transpose();
+    res.index=np.arange(1, nrow+1);
+    res.columns=[k for k,v in tcol];
+    return res;
 def wxlay2py(kvt, parent=[None], pref=""):
     """wxlay2py(kvt)
     return a string with python code generating wxWindow
