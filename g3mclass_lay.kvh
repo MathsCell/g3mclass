@@ -80,47 +80,48 @@ wx.Frame
 				SetBackgroundColour("WHITE")
 				Bind(wx.EVT_SIZE, OnSize)
 				SetSizer(gui.vbox)
-		wx.ScrolledWindow
+		wx.Panel
 			varname	sw_data
-			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			param	.parent
 			callmeth
-				SetScrollRate(20,20)
-				SetBackgroundColour("WHITE")
 				Bind(wx.EVT_SIZE, OnSize)
-		wx.ScrolledWindow
+				SetSizer(wx.BoxSizer(wx.VERTICAL))
+		wx.Panel
 			varname	sw_model
-			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			param	.parent
 			callmeth
-				SetScrollRate(20,20)
-				SetBackgroundColour("WHITE")
 				Bind(wx.EVT_SIZE, OnSize)
-		wx.ScrolledWindow
+				SetSizer(wx.BoxSizer(wx.VERTICAL))
+		wx.Panel
 			varname	sw_test
-			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			param	.parent
 			wx.Notebook
 				varname	nb_test
 				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 			callmeth
-				SetScrollRate(20,20)
-				SetBackgroundColour("WHITE")
 				Bind(wx.EVT_SIZE, OnSize)
-		wx.ScrolledWindow
+				SetSizer(wx.BoxSizer(wx.VERTICAL))
+				GetSizer().Add(gui.nb_test, 1, wx.EXPAND)
+		wx.Panel
 			varname	sw_ref
-			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			param	.parent
 			wx.Notebook
 				varname	nb_ref
 				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 			callmeth
-				SetScrollRate(20,20)
-				SetBackgroundColour("WHITE")
 				Bind(wx.EVT_SIZE, OnSize)
-		wx.ScrolledWindow
+				SetSizer(wx.BoxSizer(wx.VERTICAL))
+				GetSizer().Add(gui.nb_ref, 1, wx.EXPAND)
+		wx.Panel
 			varname	sw_qry
-			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			param	.parent
+			wx.Notebook
+				varname	nb_qry
+				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 			callmeth
-				SetScrollRate(20,20)
-				SetBackgroundColour("WHITE")
 				Bind(wx.EVT_SIZE, OnSize)
+				SetSizer(wx.BoxSizer(wx.VERTICAL))
+				GetSizer().Add(gui.nb_qry, 1, wx.EXPAND)
 		callmeth
 			AddPage(gui.win_welc, "Welcome")
 			AddPage(gui.sw_param, "Parameters")
@@ -133,6 +134,8 @@ wx.Frame
 		SetMenuBar(gui.menubar)
 		CreateStatusBar()
 		SetStatusText("Welcome to "+me)
+		SetSizer(wx.BoxSizer(wx.VERTICAL))
+		GetSizer().Add(gui.nb, 1, wx.EXPAND|wx.ALL)
 		Bind(wx.EVT_MENU, OnOpen, id=wx.ID_OPEN)
 		Bind(wx.EVT_MENU, OnExit, id=wx.ID_EXIT)
 		Bind(wx.EVT_MENU, OnSave, id=wx.ID_SAVE)

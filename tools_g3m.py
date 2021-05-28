@@ -316,7 +316,7 @@ def dict2df(d):
     ncol=max(len(v) for v in table);
     table=[row+[""]*(ncol-len(row)) for row in table];
     return(pa.DataFrame(table, columns=[""]*ncol, index=np.arange(nrow)));
-def tcol2tab(tcol):
+def tcol2df(tcol):
     "Transform a list of tuples (one tuple per column) into regular data frame"
     ncol=len(tcol);
     nrow=max(len(v) for k,v in tcol);
@@ -336,8 +336,15 @@ def wxlay2py(kvt, parent=[None], pref=""):
         if k[:3]=="wx." or k[:3]=="wx_"and type(v)==type([]):
             ## produce the code for this widget
             # call class init
-            varname=pref+kvh_getv_by_k(v, ["varname"]);
-            res+=(varname+"=") if kvh_getv_by_k(v, ["varname"]) else "";
+            vname=kvh_getv_by_k(v, ["varname"]);
+            # call methods if any and varname is set
+            cl=kvh_getv_by_k(v, ["callmeth"]);
+            if vname is None:
+                if not cl is None:
+                    raise Exception("there are callmeth but varname is not given");
+            else:
+                varname=pref+vname;
+                res += varname+"=";
             param=kvh_getv_by_k(v, ["param"]);
             if param:
                 param=param.replace(".parent", str(parent[-1]));
@@ -346,8 +353,6 @@ def wxlay2py(kvt, parent=[None], pref=""):
             res+=k+"("+(param or "")+");\n"
             # recursivly create children
             res+=wxlay2py(v, parent+[varname], pref);
-            # call methods if any and varname is set
-            cl=kvh_getv_by_k(v, ["callmeth"]);
             if varname and cl:
                 for (kc,vc) in cl:
                     if vc:

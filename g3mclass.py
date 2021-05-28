@@ -31,12 +31,10 @@ import os;
 import getopt;
 import re;
 import wx;
+import wx.grid;
 import wx.adv;
 import wx.html;
-import wx.grid as wxg;
 from wx.lib.wordwrap import wordwrap;
-import wx.lib.floatcanvas.FloatCanvas as wxfc;
-import wx.lib.agw.floatspin as wx_fs;
 import numpy as np;
 import pandas as pa;
 import webbrowser;
@@ -47,27 +45,41 @@ diri=os.path.dirname(os.path.abspath(g3mclass.__file__)); # install dir
 import tools_g3m as tls;
 
 ## custom classes
-class data2tab(wxg.GridTableBase):
-    def __init__(self, data):
-        wxg.GridTableBase.__init__(self);
-        self.data=data.copy();
-    def GetNumberRows(self):
-        return(self.data.shape[0]);
-    def GetNumberCols(self):
-        return(self.data.shape[1]);
-    def IsEmptyCell(self, row, col):
-        v=self.data.iloc[row, col];
-        return v != v;
-    def GetValue(self, row, col):
-        v=self.data.iloc[row, col];
-        return(v if v == v else "");
-        #return(self.data[row, col]);
-    def SetValue(self, row, col, value):
-        pass;
-    def GetColLabelValue(self, col):
-        return str(self.data.columns[col]);
-    def GetRowLabelValue(self, row):
-        return str(self.data.index[row]);
+class df2grid(wx.grid.Grid):
+    def __init__(self, parent, df, *args, **kwargs):
+        #import pdb; pdb.set_trace();
+        global bg_grey;
+        self._grid=super(type(self), self);
+        self._grid.__init__(parent, *args, **kwargs);
+        nrow, ncol=df.shape;
+        nmc=df.columns;
+        # destroy previous grid
+        if "grid" in dir(parent):
+            parent.grid.Destroy();
+        self.CreateGrid(nrow, ncol);
+        self.ShowScrollbars(True, True);
+        if bg_grey is None:
+            bg_grey=self.GetLabelBackgroundColour();
+        self.SetDefaultCellBackgroundColour(bg_grey);
+        parent.grid=self;
+        for j in range(ncol):
+            self.SetColLabelValue(j, str(nmc[j]));
+            vcol=df.iloc[:,j];
+            empty=np.all(vcol!=vcol) or np.all(vcol=="");
+            for k in range(nrow):
+                if empty:
+                    self.SetCellValue(k, j, "");
+                    self.SetCellBackgroundColour(k, j, bg_grey);
+                else:
+                    self.SetCellBackgroundColour(k, j, bg_white);
+                    val=vcol.iloc[k];
+                    val=str(val) if val == val else "";
+                    self.SetCellValue(k, j, val);
+        self.AutoSize();
+        if not parent.GetSizer():
+            parent.SetSizer(wx.BoxSizer(wx.VERTICAL));
+        parent.GetSizer().Add(self, 1, wx.EXPAND);
+
 class wx_FloatSlider(wx.Slider):
     def __init__(self, parent, value=0, minValue=0., maxValue=1., scale=100, frmt="%.2f", **kwargs):
         self._value = value;
@@ -131,7 +143,8 @@ par_mod={
 canvas=None; # plotting canvas
 sett_inp=None; # dictionary of input widgets for settings
 wd=""; # working dir
-
+bg_grey=None;
+bg_white=wx.WHITE;
 ## call back functions
 def OnExit(evt):
     """
@@ -216,6 +229,8 @@ def OnSize(evt):
     "main window is resized"
     win=evt.GetEventObject();
     sz=evt.GetSize();
+    #print(win);
+    #print(sz)
     win.SetSize(sz);
     evt.Skip();
     return;
@@ -238,8 +253,9 @@ def OnRemodel(evt):
                 gtab.SetVirtualSize((0, 0));
                 delattr(gtab, "grid");
             # data: create new grid
-            grid=wxg.Grid(gtab, wx.ID_ANY);
-            gtab.grid=grid;
+            #grid=wxg.Grid(gtab, wx.ID_ANY);
+            #grid.ShowScrollbars(True, True)
+            #gtab.grid=grid;
             if tab == "sw_data":
                 table=data;
             elif tab == "sw_model":
@@ -251,20 +267,19 @@ def OnRemodel(evt):
                 if "grid" in dir(gtab):
                     gtab.grid.Destroy();
                     delattr(gtab, "grid");
-                gtab.Scroll(0, 0);
+                #gtab.Scroll(0, 0);
                 # remove previous sub-pages and create one page per variable (e.g. gene)
                 nb=getattr(gui, "nb_"+teref);
+                #nb.GetParent().GetSizer().Add(nb, 1, wx.EXPAND);
                 for i in range(nb.GetPageCount()-1, -1, -1):
                     #wx.CallAfter(nb.DeletePage, i);
                     nb.DeletePage(i);
                 for nm,d in classif.items():
-                    gtab2=wx.ScrolledWindow(nb, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE);
-                    gtab2.SetScrollRate(20,20);
+                    gtab2=wx.Panel(nb);
+                    gtab2.SetSizer(wx.BoxSizer(wx.VERTICAL));
                     gtab2.SetBackgroundColour("WHITE");
-                    gtab2.SetVirtualSize((0, 0));
                     gtab2.Bind(wx.EVT_SIZE, OnSize);
                     nb.AddPage(gtab2, nm);
-                    grid2=wxg.Grid(gtab2, wx.ID_ANY);
                     # prepare text table
                     x=d[teref]["x"];
                     tcol=[
@@ -293,21 +308,9 @@ def OnRemodel(evt):
                         tcol.append(("descriptive stats", dstat.index));
                         for icol in range(dstat.shape[1]):
                             tcol.append((dstat.columns[icol], dstat.iloc[:,icol]));
-                        
-                    grid2.table=data2tab(tls.tcol2tab(tcol)); #d[teref]);
-                    grid2.SetTable(grid2.table, True);
-                    gtab2.SetVirtualSize(grid2.GetSize());
-                    grid2.Fit();
-                    gtab2.Fit();
-                    nb.Fit();
-                    gtab.SetVirtualSize(nb.GetSize());
+                    grid2=df2grid(gtab2, tls.tcol2df(tcol));
                 continue;
-            #print(tab +" size=", table.shape);
-            grid.table=data2tab(table);
-            grid.SetTable(grid.table, True);
-            grid.Fit();
-            gtab.SetVirtualSize(grid.GetSize());
-            #grid.Bind(wx.EVT_SCROLLWIN, onScrollGrid);
+            grid=df2grid(gtab, table);
 def OnSlider(evt):
     "Slider was moved"
     global par_mod;
@@ -467,7 +470,7 @@ def usage():
     print(__doc__);
 def make_gui():
     "create GUI"
-    global gui;
+    global gui, bg_grey;
     gui=wx.Object();
     gui.app=wx.App();
     code=tls.wxlay2py(tls.kvh2tlist(os.path.join(diri, "g3mclass", "g3mclass_lay.kvh")), pref="gui.");
