@@ -315,7 +315,7 @@ def dict2df(d):
     table=[(dl.update({"cols": v.split("\t")}), dl["cols"])[1] for v in li];
     ncol=max(len(v) for v in table);
     table=[row+[""]*(ncol-len(row)) for row in table];
-    return(pa.DataFrame(table, columns=[""]*ncol, index=np.arange(nrow)));
+    return(pa.DataFrame(table, columns=[""]*ncol, index=np.arange(nrow)+1));
 def tcol2df(tcol):
     "Transform a list of tuples (one tuple per column) into regular data frame"
     ncol=len(tcol);

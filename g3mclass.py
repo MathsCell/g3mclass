@@ -49,6 +49,7 @@ class df2grid(wx.grid.Grid):
     def __init__(self, parent, df, *args, **kwargs):
         #import pdb; pdb.set_trace();
         global bg_grey;
+        parent.df=df;
         self._grid=super(type(self), self);
         self._grid.__init__(parent, *args, **kwargs);
         nrow, ncol=df.shape;
@@ -135,6 +136,7 @@ dogui=False;
 fdata=""; # name of data file
 data=None;
 dcols={};
+resdf=None; # dict for formatted output in .tsv
 par_mod={
     "hbin": 25,
     "thr_di": 0.5,
@@ -183,26 +185,42 @@ def OnOpen(evt):
 def OnSave(evt):
     """
     This is executed when the user clicks the 'Save results' option
-    under the 'File' menu. Results are stored in data_res.tsv.
+    under the 'File' menu. Results are stored in <fdata>_test_geneA.tsv, <fdata>_ref_geneA.tsv and so on.
     """
-    global fdata;
+    global fdata, resdf;
     if not fdata:
         # data is not yet choosed
         err_mes("no data yet chosen.\nRead a data file first.");
         return;
-    win=evt.GetEventObject();
-    win=win.GetWindow();
-    with wx.FileDialog(win, "Save TSV file", wildcard="TSV files (*.tsv)|*.tsv", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
-        if fileDialog.ShowModal() == wx.ID_CANCEL:
-            return # the user changed their mind
+    if dogui:
+        win=evt.GetEventObject();
+        win=win.GetWindow();
+        with wx.FileDialog(win, "Save model, test, ref and query results in TSV files (silently overwritten). Choose base-name file (e.g. input data). It will be appended with suffixes like '_test_geneA.tsv'", wildcard="TSV files (*.tsv)|*.tsv", style=wx.FD_SAVE ) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return # the user changed their mind
 
-        # save the current contents in the file
-        fpath = fileDialog.GetPath()
-        try:
-            res2file(data, fpath);
-            gui.mainframe.SetStatusText("Written '"+os.path.basename(fpath)+"'");
-        except IOError:
-            wx.LogError("Cannot save results in file '%s'." % fpath)
+            # save the current contents in the file
+            fpath=fileDialog.GetPath();
+    else:
+        fpath=fdata;
+    fbase=fpath if fpath.lower()[-4:] != ".tsv" else fpath[:-4];
+    try:
+        for dtype in ("model", "test", "ref"):
+            if dtype == "model":
+                fnm=fbase+"_model.tsv";
+                df=resdf["model"];
+                res2file(df, fnm);
+                if dogui:
+                    gui.mainframe.SetStatusText("Written '"+os.path.basename(fnm)+"'");
+            else:
+                for nm,d in resdf[dtype].items():
+                    fnm=fbase+"_"+dtype+"_"+nm+".tsv";
+                    res2file(d, fnm);
+                    if dogui:
+                        gui.mainframe.SetStatusText("Written '"+os.path.basename(fnm)+"'");
+    except IOError:
+        #import pdb; pdb.set_trace();
+        err_mes("Cannot save results in file '%s'." % fpath)
 def OnAbout(evt):
     "show about dialog"
     win=evt.GetEventObject();
@@ -236,6 +254,7 @@ def OnSize(evt):
     return;
 def OnRemodel(evt):
     "Model parameters changed => relearn and put results in gui"
+    global resdf;
     if dogui:
         gui.btn_remod.Disable();
     # learn model
@@ -244,6 +263,44 @@ def OnRemodel(evt):
     # classify data
     classif=dclass(data, dcols, model);
     ## create and fill the data table
+    for dtype in ("model", "test", "ref"):
+        if dtype == "model":
+            if resdf is None:
+                resdf={};
+            resdf["model"]=tls.dict2df(model);
+        else:
+            resdf[dtype]={};
+            for nm,d in classif.items():
+                # prepare text table
+                x=d[dtype]["x"];
+                tcol=[
+                    ("x", x),
+                    (" ", []),
+                    ("proba.max", d[dtype]["wmax"]),
+                 ]
+                # add classiffications
+                tcol.append((" ", []));
+                for cl,clname in (("cl", "proba.cl"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
+                    tcol.append((clname, d[dtype][cl]));
+                # add class repartition
+                for cl,clname in (("cl", "proba.cl"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
+                    #import pdb; pdb.set_trace();
+                    tcol.append((" ", []));
+                    vcl=d[dtype][cl];
+                    ucl=sorted(set(vcl));
+                    dstat={dtype: x.describe()};
+                    for icl in ucl:
+                        xcl=x[tls.which(vcl==icl)];
+                        tcol.append((clname+"="+str(icl), xcl));
+                        dstat[clname+"="+str(icl)]=xcl.describe();
+                    dstat=pa.DataFrame(dstat);
+                    dstat.loc["count", :]=round(dstat.loc["count", :]);
+                    tcol.append((" ", []));
+                    tcol.append(("descriptive stats", dstat.index));
+                    for icol in range(dstat.shape[1]):
+                        tcol.append((dstat.columns[icol], dstat.iloc[:,icol]));
+                resdf[dtype][nm]=tls.tcol2df(tcol);
+            continue;
     if dogui:
         for tab in ("sw_data", "sw_model", "sw_test", "sw_ref"):
             gtab=getattr(gui, tab);
@@ -280,35 +337,8 @@ def OnRemodel(evt):
                     gtab2.SetBackgroundColour("WHITE");
                     gtab2.Bind(wx.EVT_SIZE, OnSize);
                     nb.AddPage(gtab2, nm);
-                    # prepare text table
-                    x=d[teref]["x"];
-                    tcol=[
-                        ("x", x),
-                        (" ", []),
-                        ("proba.max", d[teref]["wmax"]),
-                     ]
-                    # add classiffications
-                    tcol.append((" ", []));
-                    for cl,clname in (("cl", "proba.cl"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
-                        tcol.append((clname, d[teref][cl]));
-                    # add class repartition
-                    for cl,clname in (("cl", "proba.cl"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
-                        #import pdb; pdb.set_trace();
-                        tcol.append((" ", []));
-                        vcl=d[teref][cl];
-                        ucl=sorted(set(vcl));
-                        dstat={teref: x.describe()};
-                        for icl in ucl:
-                            xcl=x[tls.which(vcl==icl)];
-                            tcol.append((clname+"="+str(icl), xcl));
-                            dstat[clname+"="+str(icl)]=xcl.describe();
-                        dstat=pa.DataFrame(dstat);
-                        dstat.loc["count", :]=round(dstat.loc["count", :]);
-                        tcol.append((" ", []));
-                        tcol.append(("descriptive stats", dstat.index));
-                        for icol in range(dstat.shape[1]):
-                            tcol.append((dstat.columns[icol], dstat.iloc[:,icol]));
-                    grid2=df2grid(gtab2, tls.tcol2df(tcol));
+                    grid2=df2grid(gtab2, resdf[teref][nm]);
+                    grid2.Scroll(0, 0);
                 continue;
             grid=df2grid(gtab, table);
 def OnSlider(evt):
@@ -415,13 +445,13 @@ def dclass(data, dcols, model):
             "test": tls.xmod2class(test, model[t[0]])
         };
     return(res);
-def res2file(res, fpath=None):
+def res2file(res, fpath=None, objname=None):
     if fpath == None:
         if fdata:
             fpath=os.path.join(wd, re.sub("\.tsv", "", fdata)+"_res.tsv");
         else:
             raise Exception("fpath is not set for writing");
-    tls.obj2kvh(res, "res", fpath);
+    tls.obj2kvh(res, objname, fpath);
 def s2ftime(s=0.):
     """s2ftime(s=0) -> String
     Format second number as hh:mm:ss.cc
@@ -504,7 +534,7 @@ def main():
     if dogui:
         make_gui();
     fdata=args[0] if len(args) else "";
-    if fdata and fdata[-4:] != ".tsv":
+    if fdata and fdata.lower()[-4:] != ".tsv":
         fdata+=".tsv";
     if fdata and not os.path.exists(fdata):
         raise Exception(me+": file '"+fdata+"' does not exist.\n");
@@ -519,7 +549,9 @@ def main():
     else:
         wd=os.path.abspath(os.getcwd());
     if fdata and write_res:
-        res2file(data);
+        #print("todo: write all results");
+        OnRemodel(None);
+        OnSave(None);
     if dogui:
         gui.app.MainLoop();
 if __name__ == "__main__":
