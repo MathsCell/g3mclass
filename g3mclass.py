@@ -102,6 +102,7 @@ class wx_FloatSlider(wx.Slider):
         #pnl.SetSizer(hbox);
     def _OnSlider(self, event):
         #import pdb; pdb.set_trace()
+        #print("event=", event);
         ival = self._islider.GetValue();
         imin = self._islider.GetMin();
         imax = self._islider.GetMax();
@@ -112,6 +113,8 @@ class wx_FloatSlider(wx.Slider):
         else:
             self._value = ival / self._scale;
         self.txt.SetLabel(self.frmt%self._value);
+        #print("ival=", ival);
+        #print("_val=", self._value);
     def GetSizer(self):
         return self.hbox;
     def GetValue(self):
@@ -139,6 +142,7 @@ dcols={};
 resdf=None; # dict for formatted output in .tsv
 par_mod={
     "hbin": 25,
+    "hbin_var": False,
     "thr_di": 0.5,
     "thr_w": 1.,
 };
@@ -341,15 +345,26 @@ def OnRemodel(evt):
                     grid2.Scroll(0, 0);
                 continue;
             grid=df2grid(gtab, table);
+        gui.nb.SetSelection(lab2ip(gui.nb, "Model")[0]);
 def OnSlider(evt):
     "Slider was moved"
     global par_mod;
+    #print("evt=", evt);
     if not data is None :
         gui.btn_remod.Enable();
     par_mod["hbin"]=round(gui.sl_hbin.GetValue());
+    #print("sl_hbin.GetValue()=", gui.sl_hbin.GetValue());
+    #print("hbin=", par_mod["hbin"]);
     par_mod["thr_di"]=gui.sl_thr_di.GetValue();
     par_mod["thr_w"]=gui.sl_thr_w.GetValue();
+    gui.chk_hbin.SetLabel("  "+"; ".join(vhbin(par_mod["hbin"]).astype(str)));
     evt.GetEventObject()._OnSlider(evt);
+def OnCheck(evt):
+    "a checkbow was checked/unchecked"
+    win=evt.GetEventObject();
+    par_mod["hbin_var"]=win.IsChecked();
+    if not data is None :
+        gui.btn_remod.Enable();
 def ToDo(evt):
     """
     A general purpose "we'll do it later" dialog box
@@ -369,6 +384,9 @@ def err_mes(mes):
         dlg.Destroy();
     else:
         raise Exception(me+": "+mes);
+def vhbin(x):
+    "produce a vector of hbin values"
+    return(tls.c(np.linspace(max(10, par_mod["hbin"]-10), par_mod["hbin"], min(3, int(np.ceil((par_mod["hbin"]-10)/5))+1)), par_mod["hbin"]+5, par_mod["hbin"]+10).astype(int));
 ## working functions
 def file2data(fn):
     "Read file name 'fn' into data.frame"
@@ -430,7 +448,21 @@ def data2model(data, dcols):
     for ir,t in dcols.items():
         ref=np.asarray(data.iloc[:,ir]);
         test=np.asarray(data.iloc[:,t[1]]);
-        res[t[0]]=tls.rt2model(ref, test, par_mod);
+        if par_mod["hbin_var"]:
+            # sweep hbin numbers through vbin and get the best BIC
+            vbin=vhbin(par_mod["hbin"]);
+            par_loc=par_mod.copy();
+            res_loc=[];
+            for nbin in vbin:
+                par_loc["hbin"]=nbin;
+                tmp=tls.rt2model(ref, test, par_loc);
+                res_loc.append(tmp);
+                #print("nbin=", nbin, "; bic=", tmp["BIC"], "par_mod=", tmp["par_mod"]);
+            ibest=np.argmin([v["BIC"] for v in res_loc]);
+            #print("ibest=", ibest, "bic=", res_loc[ibest]["BIC"], "vbic=", [v["BIC"] for v in res_loc]);
+            res[t[0]]=res_loc[ibest];
+        else:
+            res[t[0]]=tls.rt2model(ref, test, par_mod);
     return(res);
 def dclass(data, dcols, model):
     "Classify each var in 'data' described in 'dcols' using corresponding 'model'. Return a dict with classification pointed by varname/{ref,test}"

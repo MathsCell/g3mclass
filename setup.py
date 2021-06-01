@@ -2,9 +2,9 @@
 from setuptools import setup
 
 with open('README.rst', 'r', encoding='utf-8') as f:
-    long_description = f.read()
+    long_description = f.read();
 with open('version.txt', 'r') as f:
-    version = f.read().rstrip()
+    version = f.read().rstrip();
 
 setup(
    name='g3mclass',

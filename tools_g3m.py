@@ -388,6 +388,13 @@ def rowSums(x):
 def which(x):
     "return array of indexes where 'x' is True. 'x' is supposed 1D."
     return(np.where(np.asarray(x).flatten())[0]);
+def c(*args):
+    "concatenates flattened vectors in arguments"
+    if len(args):
+        return(np.hstack([v.flatten() if "flatten" in dir(v) else v for v in args]));
+    else:
+        return(None);
+    
 def zcross(f, xleft, xright, *args, fromleft=True, nitvl=10, **kwargs):
     "find interval [x1, x2] where f(x) changes its sign (zero crossing)"
     #print("args=", args);
@@ -952,7 +959,7 @@ def rt2model(ref, test, par_mod):
     # get only valid entries
     rv=ref[ref == ref];
     tv=test[test == test];
-    athr=par_mod["thr_w"]/len(tv)
+    athr=par_mod["thr_w"]/len(tv);
     # imposed group
     imp=pa.DataFrame([nan, np.mean(rv), sd1(rv)], index=["a", "mean", "sd"]);
     # histogram for first approximation of class nb and positions
@@ -1103,6 +1110,7 @@ def rt2model(ref, test, par_mod):
     cutoff["cbreaks"]=cbr;
     cutoff["clabels"]=ccllab;
     cpar["cutoff"]=cutoff;
+    cpar["par_mod"]=par_mod.copy();
     return(cpar);
 def xmod2class(x, cpar):
     "cpar is a model dict from rt2model(). It is used to classify a vector x. Return a dict with 'classification' DataFrame and cutoff dict"
