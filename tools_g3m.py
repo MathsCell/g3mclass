@@ -320,7 +320,7 @@ def tcol2df(tcol):
     "Transform a list of tuples (one tuple per column) into regular data frame"
     ncol=len(tcol);
     nrow=max(len(v) for k,v in tcol);
-    table=[[str(v) for v in col]+[""]*(nrow-len(col)) for nm, col in tcol];
+    table=[[str(v) if v==v else "" for v in col]+[""]*(nrow-len(col)) for nm, col in tcol];
     res=pa.DataFrame(table).transpose();
     res.index=np.arange(1, nrow+1);
     res.columns=[k for k,v in tcol];
@@ -529,6 +529,7 @@ def zeroin(f, ax, bx, *args, tol=sys.float_info.epsilon**0.25, **kwargs):
             # Adjust c for it to have a sign opposite to that of b	
             c = a;  fc = fa;
 def is_na_end(x): return((np.cumsum(1-is_na(x)[::-1]) == 0)[::-1]);
+def is_empty_end(x): return((np.cumsum(1-(x.astype(str)=="")[::-1]) == 0)[::-1]);
 def sd1(x):
     return(np.std(x, ddof=1));
 #@jit
@@ -590,6 +591,8 @@ def outer(x, y, f=lambda x,y: x*y):
     res.reshape((*x.shape, *y.shape));
     return(res);
 #@jit
+def nrow(x):
+    return(np.shape(x)[0] if len(np.shape(x)) > 0 else 0);
 def ncol(x):
     return(np.shape(x)[1] if len(np.shape(x)) > 1 else 0);
 #@jit
@@ -613,7 +616,12 @@ def is_na(x):
     if nma.isMA(x):
         return(x.mask if type(x.mask) == np.ndarray else np.zeros(x.shape, bool));
     else:
-        return x != x;
+        xx=np.asarray(x);
+        return xx != xx;
+def na_omit(x):
+    "omit NA from x"
+    xx=np.asarray(x);
+    return(xx[~is_na(xx)]);
 # EM part
 erfv=np.vectorize(erf);
 #@njit

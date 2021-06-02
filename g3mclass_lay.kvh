@@ -44,7 +44,7 @@ wx.Frame
 				param	.parent, label="Choose the best model (based on BIC) for the following number of bins:", style=wx.ALIGN_LEFT
 			wx.CheckBox
 				varname	chk_hbin
-				param	.parent, label="  "+"; ".join(vhbin(par_mod["hbin"]).astype(str))
+				param	.parent, label="  "+", ".join(vhbin(par_mod["hbin"]).astype(str))
 				callmeth
 					Bind(wx.EVT_CHECKBOX, OnCheck)
 			wx.StaticText

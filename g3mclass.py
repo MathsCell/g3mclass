@@ -65,15 +65,16 @@ class df2grid(wx.grid.Grid):
         parent.grid=self;
         for j in range(ncol):
             self.SetColLabelValue(j, str(nmc[j]));
-            vcol=df.iloc[:,j];
-            empty=np.all(vcol!=vcol) or np.all(vcol=="");
+            vcol=df.iloc[:,j].to_numpy();
+            empty=np.all(tls.is_na(vcol)) or np.all(vcol.astype(str)=="");
+            empty_end=tls.is_empty_end(vcol) | tls.is_na_end(vcol);
             for k in range(nrow):
-                if empty:
+                if empty or empty_end[k]:
                     self.SetCellValue(k, j, "");
                     self.SetCellBackgroundColour(k, j, bg_grey);
                 else:
                     self.SetCellBackgroundColour(k, j, bg_white);
-                    val=vcol.iloc[k];
+                    val=vcol[k];
                     val=str(val) if val == val else "";
                     self.SetCellValue(k, j, val);
         self.AutoSize();
@@ -279,29 +280,30 @@ def OnRemodel(evt):
                 x=d[dtype]["x"];
                 tcol=[
                     ("x", x),
-                    (" ", []),
-                    ("proba.max", d[dtype]["wmax"]),
                  ]
-                # add classiffications
-                tcol.append((" ", []));
-                for cl,clname in (("cl", "proba.cl"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
-                    tcol.append((clname, d[dtype][cl]));
-                # add class repartition
-                for cl,clname in (("cl", "proba.cl"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
+                # add class & repartition
+                for cl,clname in (("cl", "proba"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
                     #import pdb; pdb.set_trace();
-                    tcol.append((" ", []));
-                    vcl=d[dtype][cl];
-                    ucl=sorted(set(vcl));
-                    dstat={dtype: x.describe()};
+                    tcol.append((clname, []));
+                    if clname == "proba":
+                        tcol.append(("max", d[dtype]["wmax"]));
+                    vcl=d[dtype][cl].astype(object);
+                    i=tls.which(~tls.is_na(vcl));
+                    vcl[i]=vcl[i].astype(int);
+                    tcol.append(("class", vcl));
+                    #import pdb; pdb.set_trace();
+                    ucl=np.sort(tls.na_omit(list(set(vcl)))).astype(int);
+                    dstat={"x": x.describe().astype(object)};
                     for icl in ucl:
                         xcl=x[tls.which(vcl==icl)];
-                        tcol.append((clname+"="+str(icl), xcl));
-                        dstat[clname+"="+str(icl)]=xcl.describe();
+                        tcol.append((str(icl), xcl));
+                        dstat[str(icl)]=xcl.describe().astype(object);
                     dstat=pa.DataFrame(dstat);
-                    dstat.loc["count", :]=round(dstat.loc["count", :]);
+                    dstat.loc["count"]=dstat.loc["count"].astype(int);
                     tcol.append((" ", []));
                     tcol.append(("descriptive stats", dstat.index));
-                    for icol in range(dstat.shape[1]):
+                    for icol in range(tls.ncol(dstat)):
+                        #import pdb; pdb.set_trace();
                         tcol.append((dstat.columns[icol], dstat.iloc[:,icol]));
                 resdf[dtype][nm]=tls.tcol2df(tcol);
             continue;
@@ -357,7 +359,7 @@ def OnSlider(evt):
     #print("hbin=", par_mod["hbin"]);
     par_mod["thr_di"]=gui.sl_thr_di.GetValue();
     par_mod["thr_w"]=gui.sl_thr_w.GetValue();
-    gui.chk_hbin.SetLabel("  "+"; ".join(vhbin(par_mod["hbin"]).astype(str)));
+    gui.chk_hbin.SetLabel("  "+", ".join(vhbin(par_mod["hbin"]).astype(str)));
     evt.GetEventObject()._OnSlider(evt);
 def OnCheck(evt):
     "a checkbow was checked/unchecked"
@@ -386,7 +388,7 @@ def err_mes(mes):
         raise Exception(me+": "+mes);
 def vhbin(x):
     "produce a vector of hbin values"
-    return(tls.c(np.linspace(max(10, par_mod["hbin"]-10), par_mod["hbin"], min(3, int(np.ceil((par_mod["hbin"]-10)/5))+1)), par_mod["hbin"]+5, par_mod["hbin"]+10).astype(int));
+    return(tls.c(np.linspace(max(10, par_mod["hbin"]-15), par_mod["hbin"], min(4, int(np.ceil((par_mod["hbin"]-10)/5))+1)), par_mod["hbin"]+np.linspace(5, 15, 3)).astype(int));
 ## working functions
 def file2data(fn):
     "Read file name 'fn' into data.frame"
@@ -453,13 +455,18 @@ def data2model(data, dcols):
             vbin=vhbin(par_mod["hbin"]);
             par_loc=par_mod.copy();
             res_loc=[];
+            history=pa.DataFrame(None, columns=["hbin", "BIC", "classes"]);
             for nbin in vbin:
                 par_loc["hbin"]=nbin;
                 tmp=tls.rt2model(ref, test, par_loc);
                 res_loc.append(tmp);
+                history=history.append(pa.Series([nbin, tmp["BIC"], ",".join(tmp["par"].columns.astype(str))], index=history.columns), ignore_index=True);
+                #import pdb; pdb.set_trace();
                 #print("nbin=", nbin, "; bic=", tmp["BIC"], "par_mod=", tmp["par_mod"]);
             ibest=np.argmin([v["BIC"] for v in res_loc]);
             #print("ibest=", ibest, "bic=", res_loc[ibest]["BIC"], "vbic=", [v["BIC"] for v in res_loc]);
+            history.index=list(range(1, tls.nrow(history)+1));
+            res_loc[ibest]["history"]=history;
             res[t[0]]=res_loc[ibest];
         else:
             res[t[0]]=tls.rt2model(ref, test, par_mod);
@@ -471,7 +478,7 @@ def dclass(data, dcols, model):
         ref=np.asarray(data.iloc[:,ir]);
         ref=ref[np.logical_not(tls.is_na_end(ref))];
         test=np.asarray(data.iloc[:,t[1]]);
-        test=test[np.logical_not(tls.is_na_end(test))];        
+        test=test[np.logical_not(tls.is_na_end(test))];
         res[t[0]]={
             "ref": tls.xmod2class(ref, model[t[0]]),
             "test": tls.xmod2class(test, model[t[0]])
