@@ -268,7 +268,7 @@ def OnRemodel(evt):
     # classify data
     classif=dclass(data, dcols, model);
     ## create and fill the data table
-    for dtype in ("model", "test", "ref"):
+    for dtype in ("model", "test", "ref", "qry"):
         if dtype == "model":
             if resdf is None:
                 resdf={};
@@ -276,78 +276,48 @@ def OnRemodel(evt):
         else:
             resdf[dtype]={};
             for nm,d in classif.items():
-                # prepare text table
-                x=d[dtype]["x"];
-                tcol=[
-                    ("x", x),
-                 ]
-                # add class & repartition
-                for cl,clname in (("cl", "proba"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
-                    #import pdb; pdb.set_trace();
-                    tcol.append((clname, []));
-                    if clname == "proba":
-                        tcol.append(("max", d[dtype]["wmax"]));
-                    vcl=d[dtype][cl].astype(object);
-                    i=tls.which(~tls.is_na(vcl));
-                    vcl[i]=vcl[i].astype(int);
-                    tcol.append(("class", vcl));
-                    #import pdb; pdb.set_trace();
-                    ucl=np.sort(tls.na_omit(list(set(vcl)))).astype(int);
-                    dstat={"x": x.describe().astype(object)};
-                    for icl in ucl:
-                        xcl=x[tls.which(vcl==icl)];
-                        tcol.append((str(icl), xcl));
-                        dstat[str(icl)]=xcl.describe().astype(object);
-                    dstat=pa.DataFrame(dstat);
-                    dstat.loc["count"]=dstat.loc["count"].astype(int);
-                    tcol.append((" ", []));
-                    tcol.append(("descriptive stats", dstat.index));
-                    for icol in range(tls.ncol(dstat)):
-                        #import pdb; pdb.set_trace();
-                        tcol.append((dstat.columns[icol], dstat.iloc[:,icol]));
-                resdf[dtype][nm]=tls.tcol2df(tcol);
-            continue;
+                if dtype == "qry":
+                    for nmq,dq in d[dtype].items():
+                        vnm=nm+" ("+nmq+")";
+                        resdf[dtype][vnm]=tls.tcol2df(class2tcol(dq));
+                else:
+                    resdf[dtype][nm]=tls.tcol2df(class2tcol(d[dtype]));
     if dogui:
-        for tab in ("sw_data", "sw_model", "sw_test", "sw_ref"):
+        for tab in ("sw_data", "sw_model", "sw_test", "sw_ref", "sw_qry"):
             gtab=getattr(gui, tab);
             if "grid" in dir(gtab):
                 # destroy the previous grid
                 gtab.grid.Destroy();
                 gtab.SetVirtualSize((0, 0));
                 delattr(gtab, "grid");
-            # data: create new grid
-            #grid=wxg.Grid(gtab, wx.ID_ANY);
-            #grid.ShowScrollbars(True, True)
-            #gtab.grid=grid;
             if tab == "sw_data":
                 table=data;
             elif tab == "sw_model":
                 #import pdb; pdb.set_trace();
                 table=tls.dict2df(model);
-            elif tab in ("sw_test", "sw_ref"):
+            elif tab in ("sw_test", "sw_ref", "sw_qry"):
                 #import pdb; pdb.set_trace();
-                teref=tab[3:];
+                dtype=tab[3:];
                 if "grid" in dir(gtab):
                     gtab.grid.Destroy();
                     delattr(gtab, "grid");
-                #gtab.Scroll(0, 0);
                 # remove previous sub-pages and create one page per variable (e.g. gene)
-                nb=getattr(gui, "nb_"+teref);
-                #nb.GetParent().GetSizer().Add(nb, 1, wx.EXPAND);
+                nb=getattr(gui, "nb_"+dtype);
                 for i in range(nb.GetPageCount()-1, -1, -1):
-                    #wx.CallAfter(nb.DeletePage, i);
                     nb.DeletePage(i);
-                for nm,d in classif.items():
+                for nm,df in resdf[dtype].items():
                     gtab2=wx.Panel(nb);
                     gtab2.SetSizer(wx.BoxSizer(wx.VERTICAL));
                     gtab2.SetBackgroundColour("WHITE");
                     gtab2.Bind(wx.EVT_SIZE, OnSize);
                     nb.AddPage(gtab2, nm);
-                    grid2=df2grid(gtab2, resdf[teref][nm]);
-                    grid2.Scroll(0, 0);
+                    grid2=df2grid(gtab2, df);
                 continue;
             grid=df2grid(gtab, table);
         gui.nb.SetSelection(lab2ip(gui.nb, "Model")[0]);
+        w,h=gui.mainframe.GetSize();
+        gui.mainframe.SetSize(w+1,h);
+        wx.CallAfter(gui.mainframe.SetSize, w,h);
 def OnSlider(evt):
     "Slider was moved"
     global par_mod;
@@ -411,35 +381,45 @@ def file2data(fn):
         vbad=[v for v,i in cnt.items() if i > 1];
         err_mes("following column name is not unique in ' (ref)' set: '"+vbad[0]+"'");
         return;
-    # check that every ref has its test pair
-    # build dcols: icolref => (varname, icoltest, qry_dict_if_any)
-    for ir in dcols.keys():
-        nm=dcols[ir];
-        itest=[i for i,v in enumerate(cols) if v.startswith(nm) and v.endswith(" (test)") and re.match("^ *$", v[len(nm):-7])]
+    
+    # build dcols: varname => (icolref, icoltest, icolid, qry_dict). icolid can be None, qry_dict can be empty
+    dcols=dict((v,k) for k,v in dcols.items());
+    for nm in dcols.keys():
+        # check that every ref has its test pair
+        itest=[i for i,v in enumerate(cols) if v.startswith(nm) and v.endswith(" (test)") and re.match("^ *$", v[len(nm):-7])];
         if not itest:
             err_mes("column '"+nm+" (ref)' has not its counter part '"+nm+" (test)'");
             return;
         elif len(itest) > 1:
-            err_mes("following column name is not unique in '( test)' set: '"+nm+"'");
+            err_mes("following column name is not unique in '(test)' set: '"+nm+"'");
             return;
         else:
-            dcols[ir]=(nm,itest[0]);
+            dcols[nm]=(dcols[nm],itest[0]);
+        iid=[i for i,v in enumerate(cols) if v.startswith(nm) and v.lower().endswith(" (id)") and re.match("^ *$", v[len(nm):-5])];
+        if len(iid) > 1:
+            err_mes("following column name is not unique in '(id)' set: '"+nm+"'");
+            return;
+        else:
+            dcols[nm]=(*dcols[nm], iid[0] if len(iid) else None);
         # get query (if any)
-        dqry=dict((i,v[len(nm)+1:].strip()) for i,v in enumerate(cols) if v.startswith(nm+" ") and not v.endswith(" (test)") and not v.endswith(" (ref)"));
+        dqry=dict((i,v[len(nm)+1:].strip("( )")) for i,v in enumerate(cols) if v.startswith(nm+" ") and not v.endswith(" (test)") and not v.endswith(" (ref)") and not v.endswith(" (id)"));
         # check that qry names are unique
         cnt=tls.list2count(dqry.values());
         if len(cnt) < len(dqry):
             err_mes("following column name is not unique in ' (query)' set: '"+nm+" "+[v for v,i in cnt.items() if i > 1][0]+"'");
             return;
-        dcols[ir]=(*dcols[ir], dqry);
+        dcols[nm]=(*dcols[nm], dqry);
     
     #tls.aff("dcols", dcols);
     data.columns=cols
     data=data.iloc[1:,:]
     # convert to float
-    for ir,t in dcols.items():
-        data.iloc[:,ir]=np.asarray(data.iloc[:,ir], float);
+    for nm,t in dcols.items():
+        data.iloc[:,t[0]]=np.asarray(data.iloc[:,t[0]], float);
         data.iloc[:,t[1]]=np.asarray(data.iloc[:,t[1]], float);
+        for iq,qnm in t[3].items():
+            # qry is present
+            data.iloc[:,iq]=np.asarray(data.iloc[:,iq], float);
     OnRemodel(None);
 #def onScrollGrid(obj, event):
 #    import pdb; pdb.set_trace();
@@ -447,11 +427,11 @@ def file2data(fn):
 def data2model(data, dcols):
     "Learn models for each var in 'data' described in 'dcols'. Return a dict with models pointed by varname"
     res=dict();
-    for ir,t in dcols.items():
-        ref=np.asarray(data.iloc[:,ir]);
+    for nm,t in dcols.items():
+        ref=np.asarray(data.iloc[:,t[0]]);
         test=np.asarray(data.iloc[:,t[1]]);
         if par_mod["hbin_var"]:
-            # sweep hbin numbers through vbin and get the best BIC
+            # run hbin numbers through vbin and get the best BIC
             vbin=vhbin(par_mod["hbin"]);
             par_loc=par_mod.copy();
             res_loc=[];
@@ -467,23 +447,55 @@ def data2model(data, dcols):
             #print("ibest=", ibest, "bic=", res_loc[ibest]["BIC"], "vbic=", [v["BIC"] for v in res_loc]);
             history.index=list(range(1, tls.nrow(history)+1));
             res_loc[ibest]["history"]=history;
-            res[t[0]]=res_loc[ibest];
+            res[nm]=res_loc[ibest];
         else:
-            res[t[0]]=tls.rt2model(ref, test, par_mod);
+            res[nm]=tls.rt2model(ref, test, par_mod);
     return(res);
 def dclass(data, dcols, model):
     "Classify each var in 'data' described in 'dcols' using corresponding 'model'. Return a dict with classification pointed by varname/{ref,test}"
     res=dict();
-    for ir,t in dcols.items():
-        ref=np.asarray(data.iloc[:,ir]);
-        ref=ref[np.logical_not(tls.is_na_end(ref))];
+    for nm,t in dcols.items():
+        ref=np.asarray(data.iloc[:,t[0]]);
+        ref=ref[~tls.is_na_end(ref)];
         test=np.asarray(data.iloc[:,t[1]]);
-        test=test[np.logical_not(tls.is_na_end(test))];
-        res[t[0]]={
-            "ref": tls.xmod2class(ref, model[t[0]]),
-            "test": tls.xmod2class(test, model[t[0]])
+        test=test[~tls.is_na_end(test)];
+        res[nm]={
+            "ref": tls.xmod2class(ref, model[nm]),
+            "test": tls.xmod2class(test, model[nm]),
+            "qry": dict((v, tls.xmod2class(np.asarray(data.iloc[:,k]), model[nm])) for k,v in t[3].items())
         };
     return(res);
+def class2tcol(d):
+    "Format classification in d in tuple-column collection"
+    # prepare text table
+    x=d["x"];
+    tcol=[("x", x)];
+    # add class & repartition
+    for cl,clname in (("cl", "proba"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
+        #import pdb; pdb.set_trace();
+        tcol.append((clname, []));
+        if clname == "proba":
+            tcol.append(("max", d["wmax"]));
+        vcl=d[cl].astype(object);
+        i=tls.which(~tls.is_na(vcl));
+        vcl[i]=vcl[i].astype(int);
+        tcol.append(("class", vcl));
+        #import pdb; pdb.set_trace();
+        ucl=np.sort(tls.na_omit(list(set(vcl)))).astype(int);
+        dstat={"x": x.describe().astype(object)};
+        for icl in ucl:
+            xcl=x[tls.which(vcl==icl)];
+            tcol.append((str(icl), xcl));
+            dstat[str(icl)]=xcl.describe().astype(object);
+        dstat=pa.DataFrame(dstat);
+        dstat.loc["count"]=dstat.loc["count"].astype(int);
+        tcol.append((" ", []));
+        tcol.append(("descriptive stats", dstat.index));
+        for icol in range(tls.ncol(dstat)):
+            #import pdb; pdb.set_trace();
+            tcol.append((dstat.columns[icol], dstat.iloc[:,icol]));
+    return(tcol);
+
 def res2file(res, fpath=None, objname=None):
     if fpath == None:
         if fdata:
