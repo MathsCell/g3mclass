@@ -210,7 +210,7 @@ def OnSave(evt):
         fpath=fdata;
     fbase=fpath if fpath.lower()[-4:] != ".tsv" else fpath[:-4];
     try:
-        for dtype in ("model", "test", "ref"):
+        for dtype in ("model", "test", "ref", "qry"):
             if dtype == "model":
                 fnm=fbase+"_model.tsv";
                 df=resdf["model"];
