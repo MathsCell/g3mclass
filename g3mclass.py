@@ -30,11 +30,20 @@ import sys;
 import os;
 import getopt;
 import re;
+import multiprocessing as mp;
+import itertools as itr;
+
 import wx;
 import wx.grid;
 import wx.adv;
 import wx.html;
 from wx.lib.wordwrap import wordwrap;
+import wx.lib.mixins.inspection as wit
+import matplotlib as mpl
+from matplotlib.backends.backend_wxagg import (
+    FigureCanvasWxAgg as FigureCanvas,
+    NavigationToolbar2WxAgg as NavigationToolbar)
+
 import numpy as np;
 import pandas as pa;
 import webbrowser;
@@ -43,6 +52,19 @@ import g3mclass
 dirx=os.path.dirname(os.path.abspath(sys.argv[0])); # execution dir
 diri=os.path.dirname(os.path.abspath(g3mclass.__file__)); # install dir
 import tools_g3m as tls;
+
+# timeit
+from time import strftime, localtime, process_time as tproc
+globals()["_T0"]=tproc()
+def timeme(s="", dig=2):
+    "if a global variable TIMEME is True and another global variable _T0 is set, print current CPU time relative to _T0. This printing is preceded by a message from 's'"
+    if TIMEME:
+        if "_T0" in globals():
+            print(s, ":\tCPU=", round(tproc()-_T0, dig), "s", sep="");
+        else:
+            globals()["_T0"]=tproc();
+
+TIMEME=False;
 
 ## custom classes
 class df2grid(wx.grid.Grid):
@@ -70,6 +92,7 @@ class df2grid(wx.grid.Grid):
             empty_end=tls.is_empty_end(vcol) | tls.is_na_end(vcol);
             for k in range(nrow):
                 if empty or empty_end[k]:
+                    break;
                     self.SetCellValue(k, j, "");
                     self.SetCellBackgroundColour(k, j, bg_grey);
                 else:
@@ -260,13 +283,16 @@ def OnSize(evt):
 def OnRemodel(evt):
     "Model parameters changed => relearn and put results in gui"
     global resdf;
+    timeme("OnRemodel");
     if dogui:
         gui.btn_remod.Disable();
     # learn model
     #import pdb; pdb.set_trace();
     model=data2model(data, dcols);
+    timeme("model");
     # classify data
     classif=dclass(data, dcols, model);
+    timeme("classify");
     ## create and fill the data table
     for dtype in ("model", "test", "ref", "qry"):
         if dtype == "model":
@@ -282,8 +308,9 @@ def OnRemodel(evt):
                         resdf[dtype][vnm]=tls.tcol2df(class2tcol(dq));
                 else:
                     resdf[dtype][nm]=tls.tcol2df(class2tcol(d[dtype]));
+    timeme("resdf");
     if dogui:
-        for tab in ("sw_data", "sw_model", "sw_test", "sw_ref", "sw_qry"):
+        for tab in ("sw_data", "sw_model", "sw_test", "sw_ref", "sw_qry", "sw_plot"):
             gtab=getattr(gui, tab);
             if "grid" in dir(gtab):
                 # destroy the previous grid
@@ -291,12 +318,10 @@ def OnRemodel(evt):
                 gtab.SetVirtualSize((0, 0));
                 delattr(gtab, "grid");
             if tab == "sw_data":
-                table=data;
+                grid=df2grid(gtab, data);
             elif tab == "sw_model":
-                #import pdb; pdb.set_trace();
-                table=tls.dict2df(model);
+                grid=df2grid(gtab, tls.dict2df(model));
             elif tab in ("sw_test", "sw_ref", "sw_qry"):
-                #import pdb; pdb.set_trace();
                 dtype=tab[3:];
                 if "grid" in dir(gtab):
                     gtab.grid.Destroy();
@@ -305,19 +330,34 @@ def OnRemodel(evt):
                 nb=getattr(gui, "nb_"+dtype);
                 for i in range(nb.GetPageCount()-1, -1, -1):
                     nb.DeletePage(i);
+                nb.SetSize(400, 300); # fixes warning "gtk_box_gadget_distribute: assertion 'size >= 0' failed"
                 for nm,df in resdf[dtype].items():
-                    gtab2=wx.Panel(nb);
-                    gtab2.SetSizer(wx.BoxSizer(wx.VERTICAL));
-                    gtab2.SetBackgroundColour("WHITE");
-                    gtab2.Bind(wx.EVT_SIZE, OnSize);
-                    nb.AddPage(gtab2, nm);
-                    grid2=df2grid(gtab2, df);
+                    d2grid(nm, df, nb);
+            elif tab == "sw_plot":
+                for child in gtab.GetChildren():
+                    # clean the room
+                    child.Destroy();
+                sizer=wx.BoxSizer(wx.VERTICAL);
+                #import pdb; pdb.set_trace();
+                for nm,dm in model.items():
+                    figure=mpl.figure.Figure(dpi=None, figsize=(2, 2));
+                    canvas=FigureCanvas(gtab, -1, figure);
+                    toolbar=NavigationToolbar(canvas);
+                    toolbar.Realize();
+                    ax=figure.gca();
+                    t=dcols[nm];
+                    tls.histgmm(data.iloc[:,t[1]], dm["par"], ax, dm["par_mod"]) # hist of test
+                    ax.set_title(nm);
+                    sizer.Add(canvas, 1, wx.EXPAND);
+                    sizer.Add(toolbar, 0, wx.LEFT | wx.EXPAND);
+                gtab.SetSizer(sizer);
                 continue;
-            grid=df2grid(gtab, table);
+            timeme("tab="+tab)
         gui.nb.SetSelection(lab2ip(gui.nb, "Model")[0]);
         w,h=gui.mainframe.GetSize();
         gui.mainframe.SetSize(w+1,h);
         wx.CallAfter(gui.mainframe.SetSize, w,h);
+    timeme("dogui");
 def OnSlider(evt):
     "Slider was moved"
     global par_mod;
@@ -346,6 +386,14 @@ def ToDo(evt):
                          wx.OK | wx.ICON_INFORMATION);
     dlg.ShowModal();
     dlg.Destroy();
+def d2grid(nm, df, nb):
+    gtab2=wx.Panel(nb);
+    gtab2.SetSizer(wx.BoxSizer(wx.VERTICAL));
+    gtab2.SetBackgroundColour("WHITE");
+    gtab2.Bind(wx.EVT_SIZE, OnSize);
+    nb.AddPage(gtab2, nm);
+    grid2=df2grid(gtab2, df);
+    timeme("sub="+nm);
 
 # working horses
 def err_mes(mes):
@@ -426,30 +474,34 @@ def file2data(fn):
     
 def data2model(data, dcols):
     "Learn models for each var in 'data' described in 'dcols'. Return a dict with models pointed by varname"
-    res=dict();
-    for nm,t in dcols.items():
-        ref=np.asarray(data.iloc[:,t[0]]);
-        test=np.asarray(data.iloc[:,t[1]]);
-        if par_mod["hbin_var"]:
-            # run hbin numbers through vbin and get the best BIC
-            vbin=vhbin(par_mod["hbin"]);
-            par_loc=par_mod.copy();
-            res_loc=[];
-            history=pa.DataFrame(None, columns=["hbin", "BIC", "classes"]);
-            for nbin in vbin:
-                par_loc["hbin"]=nbin;
-                tmp=tls.rt2model(ref, test, par_loc);
-                res_loc.append(tmp);
-                history=history.append(pa.Series([nbin, tmp["BIC"], ",".join(tmp["par"].columns.astype(str))], index=history.columns), ignore_index=True);
+    if len(dcols) > 1 and not par_mod["hbin_var"]:
+        with mp.Pool(min(len(dcols), mp.cpu_count())) as pool:
+            res=pool.starmap(tls.rt2model, ((data.iloc[:,t[0]].to_numpy(), data.iloc[:,t[1]].to_numpy(), par_mod) for nm,t in dcols.items()));
+        res=dict(zip(dcols.keys(), res));
+    else:
+        res=dict();
+        for nm,t in dcols.items():
+            ref=np.asarray(data.iloc[:,t[0]]);
+            test=np.asarray(data.iloc[:,t[1]]);
+            if par_mod["hbin_var"]:
+                # run hbin numbers through vbin and get the best BIC
+                vbin=vhbin(par_mod["hbin"]);
                 #import pdb; pdb.set_trace();
-                #print("nbin=", nbin, "; bic=", tmp["BIC"], "par_mod=", tmp["par_mod"]);
-            ibest=np.argmin([v["BIC"] for v in res_loc]);
-            #print("ibest=", ibest, "bic=", res_loc[ibest]["BIC"], "vbic=", [v["BIC"] for v in res_loc]);
-            history.index=list(range(1, tls.nrow(history)+1));
-            res_loc[ibest]["history"]=history;
-            res[nm]=res_loc[ibest];
-        else:
-            res[nm]=tls.rt2model(ref, test, par_mod);
+                dl=dict();
+                par_loc=[(dl.update({"tmp": par_mod.copy()}), dl["tmp"].update({"hbin": nbin}), dl["tmp"])[-1] for nbin in vbin]; # create n copies of par_mod with diff hbin
+                with mp.Pool(min(len(dcols), mp.cpu_count())) as pool:
+                    res_loc=pool.starmap(tls.rt2model, ((ref, test, d) for d in par_loc));
+                history=pa.DataFrame(None, columns=["hbin", "BIC", "classes"]);
+                for tmp in res_loc:
+                    history=history.append(pa.Series([tmp["par_mod"]["hbin"], tmp["BIC"], ",".join(tmp["par"].columns.astype(str))], index=history.columns), ignore_index=True);
+                    #print("nbin=", nbin, "; bic=", tmp["BIC"], "par_mod=", tmp["par_mod"]);
+                ibest=np.argmin([v["BIC"] for v in res_loc]);
+                #print("ibest=", ibest, "bic=", res_loc[ibest]["BIC"], "vbic=", [v["BIC"] for v in res_loc]);
+                history.index=list(range(1, tls.nrow(history)+1));
+                res_loc[ibest]["history"]=history;
+                res[nm]=res_loc[ibest];
+            else:
+                res[nm]=tls.rt2model(ref, test, par_mod);
     return(res);
 def dclass(data, dcols, model):
     "Classify each var in 'data' described in 'dcols' using corresponding 'model'. Return a dict with classification pointed by varname/{ref,test}"
@@ -558,9 +610,9 @@ def make_gui():
     exec(code);
 ## take arguments
 def main():
-    global fdata, wd, gui, dogui;
+    global fdata, wd, gui, dogui, TIMEME;
     try:
-        opts,args=getopt.getopt(sys.argv[1:], "hwv", ["help", "DEBUG"]);
+        opts,args=getopt.getopt(sys.argv[1:], "hwvt", ["help", "DEBUG"]);
     except getopt.GetoptError as err:
         print((str(err)));
         usage();
@@ -580,6 +632,8 @@ def main():
         elif o=="-w":
             dogui=False;
             write_res=True;
+        elif o=="-t":
+            TIMEME=True;
         else:
             assert False, "unhandled option";
     if dogui:

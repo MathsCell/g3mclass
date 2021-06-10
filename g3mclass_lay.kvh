@@ -133,6 +133,9 @@ wx.Frame
 				Bind(wx.EVT_SIZE, OnSize)
 				SetSizer(wx.BoxSizer(wx.VERTICAL))
 				GetSizer().Add(gui.nb_qry, 1, wx.EXPAND)
+		wx.Panel
+			varname	sw_plot
+			param	.parent
 		callmeth
 			AddPage(gui.win_welc, "Welcome")
 			AddPage(gui.sw_param, "Parameters")
@@ -141,6 +144,7 @@ wx.Frame
 			AddPage(gui.sw_test, "Test class")
 			AddPage(gui.sw_ref, "Ref class")
 			AddPage(gui.sw_qry, "Query class")
+			AddPage(gui.sw_plot, "Plots")
 	callmeth
 		SetMenuBar(gui.menubar)
 		CreateStatusBar()

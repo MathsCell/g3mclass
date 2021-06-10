@@ -894,17 +894,20 @@ def gmmcl(x, par):
     cl[:]=par.columns[cl];
     cl.mask=wmax != wmax;
     return({"cl": cl, "w": w, "wmax": wmax});
-def histgmm(x, par, plt, n=30, **kwargs):
+def histgmm(x, par, plt, par_mod, **kwargs):
     "Plot histogram of sample 'x' and GMM density plot on the same bins"
     xmi=np.min(x);
     xma=np.max(x);
-    count, bins, ignored = plt.hist(x, np.arange(xmi, xma, step=10));
+    count, bins, ignored = plt.hist(x, np.linspace(xmi, xma, par_mod["hbin"]+1));
     nb=len(bins);
     cdf=sum(count)*np.hstack(list(par.loc["a", i]*pnorm(bins, par.loc["mean", i], par.loc["sd", i]).reshape((len(bins), 1), order="F") for i in par.columns));
     pdf=np.diff(np.hstack((rowSums(cdf), cdf)), axis=0);
     for i in range(pdf.shape[1]):
         plt.plot(0.5*(bins[:-1]+bins[1:]), pdf[:,i], label=str(par.columns[i-1]) if i > 0 else "Total", **kwargs);
-    plt.legend(loc='upper right', shadow=True, fontsize='x-large');
+    # x tics
+    plt.tick_params(colors='grey', which='minor')
+    plt.set_xticks(x[~is_na(x)], minor=True);
+    plt.legend(loc='upper right', shadow=True); #, fontsize='x-large');
 #@jit
 def roothalf(i1, i2, par, fromleft=True):
     "find intersection and half-height interval of 2 gaussians defined by columns i1 and i2 in par"
