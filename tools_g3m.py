@@ -622,6 +622,8 @@ def na_omit(x):
     "omit NA from x"
     xx=np.asarray(x);
     return(xx[~is_na(xx)]);
+def starfun(t):
+    return(t[0](*(t[1:])));
 # EM part
 erfv=np.vectorize(erf);
 #@njit
@@ -825,8 +827,12 @@ def em1(x, par=None, imposed=pa.DataFrame(index=["a", "mean", "sd"]), G=range(1,
             converged=(g==0);
             it=1;
             #degen=(g != 0) and it < maxit;
-            lp=np.log(dgmm(xv, par));
-            lp[lp == -np.inf]=-746;
+            #np.seterr(divide='raise')
+            pr=dgmm(xv, par);
+            lp=-746*np.ones(pr.shape);
+            lp=np.log(pr, out=lp, where=pr>0.);
+            #np.seterr(divide='warn')
+            #lp[lp == -np.inf]=-746;
             loglike=sum(lp);
             BIC=BIC_prec=-2*loglike+np.log(nv)*(3*par.shape[1]-sum(ninaa)-sum(ninam)-sum(ninas))
             while not converged and it <= maxit:
@@ -898,12 +904,20 @@ def histgmm(x, par, plt, par_mod, **kwargs):
     "Plot histogram of sample 'x' and GMM density plot on the same bins"
     xmi=np.min(x);
     xma=np.max(x);
-    count, bins, ignored = plt.hist(x, np.linspace(xmi, xma, par_mod["hbin"]+1));
-    nb=len(bins);
-    cdf=sum(count)*np.hstack(list(par.loc["a", i]*pnorm(bins, par.loc["mean", i], par.loc["sd", i]).reshape((len(bins), 1), order="F") for i in par.columns));
-    pdf=np.diff(np.hstack((rowSums(cdf), cdf)), axis=0);
+    count, bins, ignored = plt.hist(x, np.linspace(xmi, xma, par_mod["k"]+1), density=True, rwidth=0.95, **kwargs);
+    dbin=bins[1]-bins[0];
+    nbp=401;
+    xp=np.linspace(xmi, xma, nbp);
+    dxp=(xma-xmi)/(nbp-1.);
+    cdf=np.hstack(list(par.loc["a", i]*pnorm(xp, par.loc["mean", i], par.loc["sd", i]).reshape((len(xp), 1), order="F") for i in par.columns));
+    pdf=np.diff(np.hstack((rowSums(cdf), cdf)), axis=0)/dxp;
+    #import pdb; pdb.set_trace();
+    #pdf=dgmmn(xp, par);
+    #pdf=np.hstack((rowSums(pdf), pdf));
+    xpm=0.5*(xp[:-1]+xp[1:]);
     for i in range(pdf.shape[1]):
-        plt.plot(0.5*(bins[:-1]+bins[1:]), pdf[:,i], label=str(par.columns[i-1]) if i > 0 else "Total", **kwargs);
+        #plt.plot(xpm, pdf[:,i], label=str(par.columns[i-1]) if i > 0 else "Total", **kwargs);
+        plt.fill_between(xpm, 0, pdf[:,i], label=str(par.columns[i-1]) if i > 0 else "Total", **kwargs);
     # x tics
     plt.tick_params(colors='grey', which='minor')
     plt.set_xticks(x[~is_na(x)], minor=True);
@@ -976,7 +990,7 @@ def rt2model(ref, test, par_mod):
     # histogram for first approximation of class nb and positions
     tmin=np.min(tv);
     tmax=np.max(tv);
-    h=np.histogram(tv, bins=np.linspace(tmin, tmax, par_mod["hbin"]+1));
+    h=np.histogram(tv, bins=np.linspace(tmin, tmax, par_mod["k"]+1));
     # smooth counts
     #plt.figure("h");
     #plt.plot(h[0]);

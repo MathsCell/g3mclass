@@ -28,15 +28,21 @@ wx.Frame
 				SetPage(welc_text)
 				Bind(wx.html.EVT_HTML_LINK_CLICKED, OnLinkClicked)
 				Bind(wx.EVT_SIZE, OnSize)
+		wx.Panel
+			varname	sw_data
+			param	.parent
+			callmeth
+				Bind(wx.EVT_SIZE, OnSize)
+				SetSizer(wx.BoxSizer(wx.VERTICAL))
 		wx.ScrolledWindow
 			varname	sw_param
 			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
 			wx.StaticText
 				varname	txt_hbin
-				param	.parent, label="Number of equal-width bins in histogram", style=wx.ALIGN_LEFT
+				param	.parent, label="Number of equal-width bins in histogram (k)", style=wx.ALIGN_LEFT
 			wx_FloatSlider
 				varname	sl_hbin
-				param	.parent, value=par_mod["hbin"], minValue=10, maxValue=100, scale=1, frmt="%3.0f", style=wx.SL_HORIZONTAL
+				param	.parent, value=par_mod["k"], minValue=10, maxValue=100, scale=1, frmt="%3.0f", style=wx.SL_HORIZONTAL
 				callmeth
 					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.StaticText
@@ -44,7 +50,7 @@ wx.Frame
 				param	.parent, label="Choose the best model (based on BIC) for the following number of bins:", style=wx.ALIGN_LEFT
 			wx.CheckBox
 				varname	chk_hbin
-				param	.parent, label="  "+", ".join(vhbin(par_mod["hbin"]).astype(str))
+				param	.parent, label="  "+", ".join(vhbin(par_mod["k"]).astype(str))
 				callmeth
 					Bind(wx.EVT_CHECKBOX, OnCheck)
 			wx.StaticText
@@ -92,17 +98,16 @@ wx.Frame
 				Bind(wx.EVT_SIZE, OnSize)
 				SetSizer(gui.vbox)
 		wx.Panel
-			varname	sw_data
-			param	.parent
-			callmeth
-				Bind(wx.EVT_SIZE, OnSize)
-				SetSizer(wx.BoxSizer(wx.VERTICAL))
-		wx.Panel
 			varname	sw_model
 			param	.parent
+			wx.Notebook
+				varname	nb_model
+				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 			callmeth
 				Bind(wx.EVT_SIZE, OnSize)
+				Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, OnTabChange)
 				SetSizer(wx.BoxSizer(wx.VERTICAL))
+				GetSizer().Add(gui.nb_model, 1, wx.EXPAND)
 		wx.Panel
 			varname	sw_test
 			param	.parent
@@ -111,6 +116,7 @@ wx.Frame
 				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 			callmeth
 				Bind(wx.EVT_SIZE, OnSize)
+				Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, OnTabChange)
 				SetSizer(wx.BoxSizer(wx.VERTICAL))
 				GetSizer().Add(gui.nb_test, 1, wx.EXPAND)
 		wx.Panel
@@ -121,6 +127,7 @@ wx.Frame
 				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 			callmeth
 				Bind(wx.EVT_SIZE, OnSize)
+				Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, OnTabChange)
 				SetSizer(wx.BoxSizer(wx.VERTICAL))
 				GetSizer().Add(gui.nb_ref, 1, wx.EXPAND)
 		wx.Panel
@@ -136,10 +143,18 @@ wx.Frame
 		wx.Panel
 			varname	sw_plot
 			param	.parent
+			wx.Notebook
+				varname	nb_plot
+				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
+			callmeth
+				Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, OnTabChange)
+				Bind(wx.EVT_SIZE, OnSize)
+				SetSizer(wx.BoxSizer(wx.VERTICAL))
+				GetSizer().Add(gui.nb_plot, 1, wx.EXPAND)
 		callmeth
 			AddPage(gui.win_welc, "Welcome")
-			AddPage(gui.sw_param, "Parameters")
 			AddPage(gui.sw_data, "Data")
+			AddPage(gui.sw_param, "Parameters")
 			AddPage(gui.sw_model, "Model")
 			AddPage(gui.sw_test, "Test class")
 			AddPage(gui.sw_ref, "Ref class")

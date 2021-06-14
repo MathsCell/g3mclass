@@ -30,8 +30,11 @@ import sys;
 import os;
 import getopt;
 import re;
-import multiprocessing as mp;
 import itertools as itr;
+import multiprocessing as mp;
+from concurrent.futures import ThreadPoolExecutor as thpool;
+import threading;
+import time;
 
 import wx;
 import wx.grid;
@@ -83,7 +86,7 @@ class df2grid(wx.grid.Grid):
         self.ShowScrollbars(True, True);
         if bg_grey is None:
             bg_grey=self.GetLabelBackgroundColour();
-        self.SetDefaultCellBackgroundColour(bg_grey);
+        #self.SetDefaultCellBackgroundColour(bg_grey);
         parent.grid=self;
         for j in range(ncol):
             self.SetColLabelValue(j, str(nmc[j]));
@@ -94,9 +97,9 @@ class df2grid(wx.grid.Grid):
                 if empty or empty_end[k]:
                     break;
                     self.SetCellValue(k, j, "");
-                    self.SetCellBackgroundColour(k, j, bg_grey);
+                    #self.SetCellBackgroundColour(k, j, bg_grey);
                 else:
-                    self.SetCellBackgroundColour(k, j, bg_white);
+                    #self.SetCellBackgroundColour(k, j, bg_white);
                     val=vcol[k];
                     val=str(val) if val == val else "";
                     self.SetCellValue(k, j, val);
@@ -158,6 +161,7 @@ with open(os.path.join(diri, "g3mclass", "licence_en.txt"), "r") as fp:
     licenseText=fp.read();
 
 ## global vars
+lock=threading.Lock();
 gui=wx.Object();
 dogui=False;
 fdata=""; # name of data file
@@ -165,8 +169,8 @@ data=None;
 dcols={};
 resdf=None; # dict for formatted output in .tsv
 par_mod={
-    "hbin": 25,
-    "hbin_var": False,
+    "k": 25,
+    "k_var": False,
     "thr_di": 0.5,
     "thr_w": 1.,
 };
@@ -286,6 +290,7 @@ def OnRemodel(evt):
     timeme("OnRemodel");
     if dogui:
         gui.btn_remod.Disable();
+        wait=wx.BusyCursor();
     # learn model
     #import pdb; pdb.set_trace();
     model=data2model(data, dcols);
@@ -294,11 +299,13 @@ def OnRemodel(evt):
     classif=dclass(data, dcols, model);
     timeme("classify");
     ## create and fill the data table
+    if resdf is None:
+        resdf={};
     for dtype in ("model", "test", "ref", "qry"):
         if dtype == "model":
-            if resdf is None:
-                resdf={};
-            resdf["model"]=tls.dict2df(model);
+            resdf[dtype]={};
+            for nm,dm in model.items():
+                resdf[dtype][nm]=tls.dict2df(dm);
         else:
             resdf[dtype]={};
             for nm,d in classif.items():
@@ -312,51 +319,42 @@ def OnRemodel(evt):
     if dogui:
         for tab in ("sw_data", "sw_model", "sw_test", "sw_ref", "sw_qry", "sw_plot"):
             gtab=getattr(gui, tab);
-            if "grid" in dir(gtab):
+            if False and "grid" in dir(gtab):
                 # destroy the previous grid
                 gtab.grid.Destroy();
                 gtab.SetVirtualSize((0, 0));
                 delattr(gtab, "grid");
             if tab == "sw_data":
                 grid=df2grid(gtab, data);
-            elif tab == "sw_model":
+            elif False and tab == "sw_model":
                 grid=df2grid(gtab, tls.dict2df(model));
-            elif tab in ("sw_test", "sw_ref", "sw_qry"):
+            elif tab in ("sw_model", "sw_test", "sw_ref", "sw_qry", "sw_plot"):
                 dtype=tab[3:];
-                if "grid" in dir(gtab):
+                if False and "grid" in dir(gtab):
                     gtab.grid.Destroy();
                     delattr(gtab, "grid");
                 # remove previous sub-pages and create one page per variable (e.g. gene)
                 nb=getattr(gui, "nb_"+dtype);
+                #print("tab=", tab, "; nb=", nb);
                 for i in range(nb.GetPageCount()-1, -1, -1):
                     nb.DeletePage(i);
                 nb.SetSize(400, 300); # fixes warning "gtk_box_gadget_distribute: assertion 'size >= 0' failed"
-                for nm,df in resdf[dtype].items():
-                    d2grid(nm, df, nb);
-            elif tab == "sw_plot":
-                for child in gtab.GetChildren():
-                    # clean the room
-                    child.Destroy();
-                sizer=wx.BoxSizer(wx.VERTICAL);
-                #import pdb; pdb.set_trace();
-                for nm,dm in model.items():
-                    figure=mpl.figure.Figure(dpi=None, figsize=(2, 2));
-                    canvas=FigureCanvas(gtab, -1, figure);
-                    toolbar=NavigationToolbar(canvas);
-                    toolbar.Realize();
-                    ax=figure.gca();
-                    t=dcols[nm];
-                    tls.histgmm(data.iloc[:,t[1]], dm["par"], ax, dm["par_mod"]) # hist of test
-                    ax.set_title(nm);
-                    sizer.Add(canvas, 1, wx.EXPAND);
-                    sizer.Add(toolbar, 0, wx.LEFT | wx.EXPAND);
-                gtab.SetSizer(sizer);
-                continue;
+                if tab == "sw_plot":
+                    for nm,dm in model.items():
+                        m2plot(nm, dm, nb);
+                else:
+                    #with thpool(min(4, len(resdf[dtype]), os.cpu_count())) as pool:
+                    #    list(pool.map(tls.starfun, ((wx.CallAfter, d2grid, nm, df, nb, lock) for nm,df in resdf[dtype].items())));
+
+                    for nm,df in resdf[dtype].items():
+                    #    wx.CallLater(10, d2grid, nm, df, nb);
+                        d2grid(nm, df, nb);
             timeme("tab="+tab)
         gui.nb.SetSelection(lab2ip(gui.nb, "Model")[0]);
         w,h=gui.mainframe.GetSize();
         gui.mainframe.SetSize(w+1,h);
         wx.CallAfter(gui.mainframe.SetSize, w,h);
+        del(wait);
     timeme("dogui");
 def OnSlider(evt):
     "Slider was moved"
@@ -364,19 +362,27 @@ def OnSlider(evt):
     #print("evt=", evt);
     if not data is None :
         gui.btn_remod.Enable();
-    par_mod["hbin"]=round(gui.sl_hbin.GetValue());
+    par_mod["k"]=round(gui.sl_hbin.GetValue());
     #print("sl_hbin.GetValue()=", gui.sl_hbin.GetValue());
-    #print("hbin=", par_mod["hbin"]);
+    #print("k=", par_mod["k"]);
     par_mod["thr_di"]=gui.sl_thr_di.GetValue();
     par_mod["thr_w"]=gui.sl_thr_w.GetValue();
-    gui.chk_hbin.SetLabel("  "+", ".join(vhbin(par_mod["hbin"]).astype(str)));
+    gui.chk_hbin.SetLabel("  "+", ".join(vhbin(par_mod["k"]).astype(str)));
     evt.GetEventObject()._OnSlider(evt);
 def OnCheck(evt):
     "a checkbow was checked/unchecked"
     win=evt.GetEventObject();
-    par_mod["hbin_var"]=win.IsChecked();
+    par_mod["k_var"]=win.IsChecked();
     if not data is None :
         gui.btn_remod.Enable();
+def OnTabChange(evt):
+    #import pdb; pdb.set_trace();
+    win=evt.GetEventObject();
+    i=win.GetSelection();
+    for nb in (gui.nb_model, gui.nb_test, gui.nb_ref, gui.nb_plot):
+        if win is nb:
+            continue;
+        nb.SetSelection(i);
 def ToDo(evt):
     """
     A general purpose "we'll do it later" dialog box
@@ -386,14 +392,40 @@ def ToDo(evt):
                          wx.OK | wx.ICON_INFORMATION);
     dlg.ShowModal();
     dlg.Destroy();
-def d2grid(nm, df, nb):
+def d2grid(nm, df, nb, lock=None):
+    #print("nm=", nm, "; nb=", nb, "lock=", lock);
+    if not lock is None:
+        #print(nm+" waiting for lock1");
+        lock.acquire();
+        #print(nm+" lock1 is aquired");
     gtab2=wx.Panel(nb);
-    gtab2.SetSizer(wx.BoxSizer(wx.VERTICAL));
+    nb.AddPage(gtab2, nm);
+    #import pdb; pdb.set_trace();
+    if not lock is None:
+        time.sleep(0.1);
+        lock.release();
+        #print(nm+" lock1 is released");
+    #gtab2.SetSizer(wx.BoxSizer(wx.VERTICAL));
     gtab2.SetBackgroundColour("WHITE");
     gtab2.Bind(wx.EVT_SIZE, OnSize);
-    nb.AddPage(gtab2, nm);
     grid2=df2grid(gtab2, df);
     timeme("sub="+nm);
+def m2plot(nm, dm, nb):
+    gtab=wx.Panel(nb);
+    nb.AddPage(gtab, nm);
+    figure=mpl.figure.Figure(dpi=None, figsize=(2, 2));
+    canvas=FigureCanvas(gtab, -1, figure);
+    toolbar=NavigationToolbar(canvas);
+    toolbar.Realize();
+    ax=figure.gca();
+    t=dcols[nm];
+    tls.histgmm(data.iloc[:,t[1]], dm["par"], ax, dm["par_mod"], alpha=0.3) # hist of test
+    ax.set_title(nm);
+    sizer=wx.BoxSizer(wx.VERTICAL);
+    sizer.Add(canvas, 1, wx.EXPAND);
+    sizer.Add(toolbar, 0, wx.LEFT | wx.EXPAND);
+    gtab.SetSizer(sizer);
+    
 
 # working horses
 def err_mes(mes):
@@ -406,7 +438,7 @@ def err_mes(mes):
         raise Exception(me+": "+mes);
 def vhbin(x):
     "produce a vector of hbin values"
-    return(tls.c(np.linspace(max(10, par_mod["hbin"]-15), par_mod["hbin"], min(4, int(np.ceil((par_mod["hbin"]-10)/5))+1)), par_mod["hbin"]+np.linspace(5, 15, 3)).astype(int));
+    return(tls.c(np.linspace(max(10, par_mod["k"]-15), par_mod["k"], min(4, int(np.ceil((par_mod["k"]-10)/5))+1)), par_mod["k"]+np.linspace(5, 15, 3)).astype(int));
 ## working functions
 def file2data(fn):
     "Read file name 'fn' into data.frame"
@@ -474,26 +506,28 @@ def file2data(fn):
     
 def data2model(data, dcols):
     "Learn models for each var in 'data' described in 'dcols'. Return a dict with models pointed by varname"
-    if len(dcols) > 1 and not par_mod["hbin_var"]:
+    if len(dcols) > 1 and not par_mod["k_var"]:
         with mp.Pool(min(len(dcols), mp.cpu_count())) as pool:
-            res=pool.starmap(tls.rt2model, ((data.iloc[:,t[0]].to_numpy(), data.iloc[:,t[1]].to_numpy(), par_mod) for nm,t in dcols.items()));
+        #with thpool(min(len(dcols), os.cpu_count())) as pool:
+            res=pool.map(tls.starfun, ((tls.rt2model, data.iloc[:,t[0]].to_numpy(), data.iloc[:,t[1]].to_numpy(), par_mod) for t in dcols.values()));
         res=dict(zip(dcols.keys(), res));
     else:
         res=dict();
         for nm,t in dcols.items():
             ref=np.asarray(data.iloc[:,t[0]]);
             test=np.asarray(data.iloc[:,t[1]]);
-            if par_mod["hbin_var"]:
+            if par_mod["k_var"]:
                 # run hbin numbers through vbin and get the best BIC
-                vbin=vhbin(par_mod["hbin"]);
+                vbin=vhbin(par_mod["k"]);
                 #import pdb; pdb.set_trace();
                 dl=dict();
-                par_loc=[(dl.update({"tmp": par_mod.copy()}), dl["tmp"].update({"hbin": nbin}), dl["tmp"])[-1] for nbin in vbin]; # create n copies of par_mod with diff hbin
+                par_loc=[(dl.update({"tmp": par_mod.copy()}), dl["tmp"].update({"k": nbin}), dl["tmp"])[-1] for nbin in vbin]; # create n copies of par_mod with diff hbin
                 with mp.Pool(min(len(dcols), mp.cpu_count())) as pool:
-                    res_loc=pool.starmap(tls.rt2model, ((ref, test, d) for d in par_loc));
-                history=pa.DataFrame(None, columns=["hbin", "BIC", "classes"]);
+                #with thpool(min(len(dcols), os.cpu_count())) as pool:
+                    res_loc=list(pool.map(tls.starfun, ((tls.rt2model, ref, test, d) for d in par_loc)));
+                history=pa.DataFrame(None, columns=["k", "BIC", "classes"]);
                 for tmp in res_loc:
-                    history=history.append(pa.Series([tmp["par_mod"]["hbin"], tmp["BIC"], ",".join(tmp["par"].columns.astype(str))], index=history.columns), ignore_index=True);
+                    history=history.append(pa.Series([tmp["par_mod"]["k"], tmp["BIC"], ",".join(tmp["par"].columns.astype(str))], index=history.columns), ignore_index=True);
                     #print("nbin=", nbin, "; bic=", tmp["BIC"], "par_mod=", tmp["par_mod"]);
                 ibest=np.argmin([v["BIC"] for v in res_loc]);
                 #print("ibest=", ibest, "bic=", res_loc[ibest]["BIC"], "vbic=", [v["BIC"] for v in res_loc]);
@@ -502,6 +536,7 @@ def data2model(data, dcols):
                 res[nm]=res_loc[ibest];
             else:
                 res[nm]=tls.rt2model(ref, test, par_mod);
+            timeme("model "+nm);
     return(res);
 def dclass(data, dcols, model):
     "Classify each var in 'data' described in 'dcols' using corresponding 'model'. Return a dict with classification pointed by varname/{ref,test}"
