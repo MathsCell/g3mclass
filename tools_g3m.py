@@ -12,7 +12,7 @@ from io import StringIO;
 #    def doit(*args, **kwargs):
 #        return(func(*args, **kwargs));
 #    return(doit);
-import matplotlib.pyplot as plt;
+import matplotlib as mpl;
 from math import erf, fabs, nan;
 DEBUG=False;
 nan=np.nan;
@@ -900,24 +900,51 @@ def gmmcl(x, par):
     cl[:]=par.columns[cl];
     cl.mask=wmax != wmax;
     return({"cl": cl, "w": w, "wmax": wmax});
+def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
+    c1=np.array(mpl.colors.to_rgb(c1))
+    c2=np.array(mpl.colors.to_rgb(c2))
+    return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
+
 def histgmm(x, par, plt, par_mod, **kwargs):
     "Plot histogram of sample 'x' and GMM density plot on the same bins"
+    opar=par[sorted(par.columns)];
     xmi=np.min(x);
     xma=np.max(x);
-    count, bins, ignored = plt.hist(x, np.linspace(xmi, xma, par_mod["k"]+1), density=True, rwidth=0.95, **kwargs);
+    count, bins, patches = plt.hist(x, np.linspace(xmi, xma, par_mod["k"]+1), color='white', density=True, **kwargs);
+    #hcol=patches.get_children()[0].get_facecolor();
+    #if hcol[3] < 1:
+    #    hcol=list(hcol);
+    #    hcol[3] = 1;
+    hcol=mpl.colors.to_rgb('black');
+    [p.set_edgecolor(hcol) for p in patches.get_children()];
+    #count, bins, patches = plt.hist(x, np.linspace(xmi, xma, par_mod["k"]+1), histtype="step", color='dimgrey', density=True, linewidth=1.2, **kwargs);
     dbin=bins[1]-bins[0];
     nbp=401;
     xp=np.linspace(xmi, xma, nbp);
     dxp=(xma-xmi)/(nbp-1.);
-    cdf=np.hstack(list(par.loc["a", i]*pnorm(xp, par.loc["mean", i], par.loc["sd", i]).reshape((len(xp), 1), order="F") for i in par.columns));
+    cdf=np.hstack(list(opar.loc["a", i]*pnorm(xp, opar.loc["mean", i], opar.loc["sd", i]).reshape((len(xp), 1), order="F") for i in opar.columns));
     pdf=np.diff(np.hstack((rowSums(cdf), cdf)), axis=0)/dxp;
     #import pdb; pdb.set_trace();
-    #pdf=dgmmn(xp, par);
+    #pdf=dgmmn(xp, opar);
     #pdf=np.hstack((rowSums(pdf), pdf));
     xpm=0.5*(xp[:-1]+xp[1:]);
+    # prepare colors
+    ctot=[mpl.colors.to_rgb("grey")];
+    c0=[mpl.colors.to_rgb("seagreen")];
+    nneg=sum(opar.columns<0);
+    cneglow=mpl.colors.to_rgb("lightskyblue"); # close to 0
+    cneghigh=mpl.colors.to_rgb("dodgerblue"); # far from 0
+    cneg=[colorFader(cneghigh, cneglow, i/nneg) for i in range(nneg)];
+    npos=sum(opar.columns>0);
+    cposlow=mpl.colors.to_rgb("lightcoral"); # close to 0
+    cposhigh=mpl.colors.to_rgb("maroon"); # far from 0
+    cpos=[colorFader(cposlow, cposhigh, i/npos) for i in range(npos)];
+    colpar=ctot+cneg+c0+cpos;
+    #import pdb; pdb.set_trace();
     for i in range(pdf.shape[1]):
-        #plt.plot(xpm, pdf[:,i], label=str(par.columns[i-1]) if i > 0 else "Total", **kwargs);
-        plt.fill_between(xpm, 0, pdf[:,i], label=str(par.columns[i-1]) if i > 0 else "Total", **kwargs);
+        line,=plt.plot(xpm, pdf[:,i], color=colpar[i], linewidth=4); #, **kwargs);
+        lcol=line.get_color();
+        plt.fill_between(xpm, 0, pdf[:,i], color=lcol, label=str(opar.columns[i-1]) if i > 0 else "Total", **kwargs);
     # x tics
     plt.tick_params(colors='grey', which='minor')
     plt.set_xticks(x[~is_na(x)], minor=True);

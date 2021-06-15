@@ -83,30 +83,38 @@ class df2grid(wx.grid.Grid):
         if "grid" in dir(parent):
             parent.grid.Destroy();
         self.CreateGrid(nrow, ncol);
-        self.ShowScrollbars(True, True);
         if bg_grey is None:
             bg_grey=self.GetLabelBackgroundColour();
-        #self.SetDefaultCellBackgroundColour(bg_grey);
+        self.SetDefaultCellBackgroundColour(bg_white);
         parent.grid=self;
+        bg=wx.grid.GridCellAttr();
+        bg.SetBackgroundColour(bg_grey);
+        #import pdb; pdb.set_trace();
         for j in range(ncol):
             self.SetColLabelValue(j, str(nmc[j]));
             vcol=df.iloc[:,j].to_numpy();
             empty=np.all(tls.is_na(vcol)) or np.all(vcol.astype(str)=="");
             empty_end=tls.is_empty_end(vcol) | tls.is_na_end(vcol);
+            if empty:
+                self.SetColAttr(j, bg);
+                bg.IncRef();
+                continue;
             for k in range(nrow):
                 if empty or empty_end[k]:
-                    break;
-                    self.SetCellValue(k, j, "");
+                    pass;
                     #self.SetCellBackgroundColour(k, j, bg_grey);
+                    #break;
+                    #self.SetCellValue(k, j, "");
                 else:
                     #self.SetCellBackgroundColour(k, j, bg_white);
                     val=vcol[k];
                     val=str(val) if val == val else "";
                     self.SetCellValue(k, j, val);
-        self.AutoSize();
+        self.AutoSizeColumns();
         if not parent.GetSizer():
             parent.SetSizer(wx.BoxSizer(wx.VERTICAL));
         parent.GetSizer().Add(self, 1, wx.EXPAND);
+        #self.ShowScrollbars(True, True);
 
 class wx_FloatSlider(wx.Slider):
     def __init__(self, parent, value=0, minValue=0., maxValue=1., scale=100, frmt="%.2f", **kwargs):
@@ -419,7 +427,7 @@ def m2plot(nm, dm, nb):
     toolbar.Realize();
     ax=figure.gca();
     t=dcols[nm];
-    tls.histgmm(data.iloc[:,t[1]], dm["par"], ax, dm["par_mod"], alpha=0.3) # hist of test
+    tls.histgmm(data.iloc[:,t[1]], dm["par"], ax, dm["par_mod"], alpha=0.5) # hist of test
     ax.set_title(nm);
     sizer=wx.BoxSizer(wx.VERTICAL);
     sizer.Add(canvas, 1, wx.EXPAND);
@@ -576,6 +584,10 @@ def class2tcol(d):
             dstat[str(icl)]=xcl.describe().astype(object);
         dstat=pa.DataFrame(dstat);
         dstat.loc["count"]=dstat.loc["count"].astype(int);
+        dstat.loc["percent"]=(np.round((100*dstat.loc["count"]/dstat.loc["count", "x"]).astype(float), 2)).astype(str)+"%";
+        dstat.loc["percent"]=dstat.loc["percent"].astype(str);
+        i=dstat.index;
+        dstat=dstat.reindex(i[0:1].to_list()+i[-1:].to_list()+i[1:-1].to_list())
         tcol.append((" ", []));
         tcol.append(("descriptive stats", dstat.index));
         for icol in range(tls.ncol(dstat)):
