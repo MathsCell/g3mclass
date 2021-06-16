@@ -41,11 +41,13 @@ import wx.grid;
 import wx.adv;
 import wx.html;
 from wx.lib.wordwrap import wordwrap;
-import wx.lib.mixins.inspection as wit
-import matplotlib as mpl
+import wx.lib.mixins.inspection as wit;
+import matplotlib as mpl;
 from matplotlib.backends.backend_wxagg import (
     FigureCanvasWxAgg as FigureCanvas,
-    NavigationToolbar2WxAgg as NavigationToolbar)
+    NavigationToolbar2WxAgg as NavigationToolbar);
+from matplotlib.backends.backend_pdf import PdfPages as mpdf;
+import matplotlib.pyplot as plt;
 
 import numpy as np;
 import pandas as pa;
@@ -174,6 +176,8 @@ gui=wx.Object();
 dogui=False;
 fdata=""; # name of data file
 data=None;
+model=None;
+prev_res_saved=True;
 dcols={};
 resdf=None; # dict for formatted output in .tsv
 par_mod={
@@ -182,6 +186,18 @@ par_mod={
     "thr_di": 0.5,
     "thr_w": 1.,
 };
+par_plot={
+    "col_hist": "black",
+    "col_panel": "white",
+    "col_tot": "grey",
+    "col_ref": "seagreen",
+    "col_neglow": "lightskyblue",
+    "col_neghigh": "dodgerblue",
+    "col_poslow": "lightcoral",
+    "col_poshigh": "maroon",
+    "alpha": 0.5,
+    "lw": 2,
+}
 canvas=None; # plotting canvas
 sett_inp=None; # dictionary of input widgets for settings
 wd=""; # working dir
@@ -210,32 +226,39 @@ def OnOpen(evt):
     This is executed when the user clicks the 'Open' option
     under the 'File' menu.  We ask the user to choose a TSV file.
     """
-    global fdata
-    dlg = wx.FileDialog(None, defaultDir=wd, wildcard="Data files (*.tsv)|*.tsv|Data files (*.csv)|*.csv",
-        style=wx.FD_OPEN);
-    if dlg.ShowModal() == wx.ID_OK:
-        #print "selected file="+dlg.GetPath();
-        # proceed the data file
-        fdata=dlg.GetPath()
-        file2data(fdata);
-        gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
-        gui.mainframe.SetStatusText("'%s' is read"%os.path.basename(fdata))
-    # do smth
-    dlg.Destroy();
+    global fdata, prev_res_saved;
+    win=evt.GetEventObject();
+    win=win.GetWindow();
+    if not prev_res_saved:
+        if wx.MessageBox("Current results have not been saved! Proceed?", "Please confirm",
+                         wx.ICON_QUESTION | wx.YES_NO, win) == wx.NO:
+            return;
+    with wx.FileDialog(None, defaultDir=wd, wildcard="Data files (*.tsv)|*.tsv|Data files (*.csv)|*.csv",
+        style=wx.FD_OPEN) as dlg:
+        wait=wx.BusyCursor();
+        if dlg.ShowModal() == wx.ID_OK:
+            #print "selected file="+dlg.GetPath();
+            # proceed the data file
+            fdata=dlg.GetPath()
+            file2data(fdata);
+            gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
+            gui.mainframe.SetStatusText("'%s' is read"%os.path.basename(fdata));
+            pre_res_saved=False;
+        del(wait);
 def OnSave(evt):
     """
     This is executed when the user clicks the 'Save results' option
     under the 'File' menu. Results are stored in <fdata>_test_geneA.tsv, <fdata>_ref_geneA.tsv and so on.
     """
-    global fdata, resdf;
+    global fdata, resdf, prev_res_saved;
     if not fdata:
-        # data is not yet choosed
+        # data are not yet chosen
         err_mes("no data yet chosen.\nRead a data file first.");
         return;
     if dogui:
         win=evt.GetEventObject();
         win=win.GetWindow();
-        with wx.FileDialog(win, "Save model, test, ref and query results in TSV files (silently overwritten). Choose base-name file (e.g. input data). It will be appended with suffixes like '_test_geneA.tsv'", wildcard="TSV files (*.tsv)|*.tsv", style=wx.FD_SAVE ) as fileDialog:
+        with wx.FileDialog(win, "Save model, test, ref and query results in TSV files (silently overwritten). Choose base-name file (e.g. input data). It will be appended with suffixes like '_test_geneA.tsv'", defaultFile=fdata, wildcard="TSV files (*.tsv)|*.tsv", style=wx.FD_SAVE ) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return # the user changed their mind
 
@@ -245,6 +268,7 @@ def OnSave(evt):
         fpath=fdata;
     fbase=fpath if fpath.lower()[-4:] != ".tsv" else fpath[:-4];
     try:
+        # save *.tsv
         for dtype in ("model", "test", "ref", "qry"):
             if dtype == "model":
                 fnm=fbase+"_model.tsv";
@@ -258,9 +282,23 @@ def OnSave(evt):
                     res2file(d, fnm);
                     if dogui:
                         gui.mainframe.SetStatusText("Written '"+os.path.basename(fnm)+"'");
+        # save .pdf
+        fnm=fbase+".pdf";
+        with mpdf(fnm) as pdf:
+            for nm, dm in model.items():
+                figure=mpl.figure.Figure(dpi=None, figsize=(8, 6));
+                ax=figure.gca();
+                t=dcols[nm];
+                tls.histgmm(data.iloc[:,t[1]], dm["par"], ax, dm["par_mod"], par_plot) # hist of test
+                ax.set_title(nm);
+                pdf.savefig(figure);
+                #ax.close();
+        if dogui:
+            gui.mainframe.SetStatusText("Written '"+os.path.basename(fnm)+"'");
     except IOError:
         #import pdb; pdb.set_trace();
-        err_mes("Cannot save results in file '%s'." % fpath)
+        err_mes("Cannot save results in file '%s'." % fpath);
+    prev_res_saved=True;
 def OnAbout(evt):
     "show about dialog"
     win=evt.GetEventObject();
@@ -294,7 +332,7 @@ def OnSize(evt):
     return;
 def OnRemodel(evt):
     "Model parameters changed => relearn and put results in gui"
-    global resdf;
+    global resdf, prev_res_saved, model;
     timeme("OnRemodel");
     if dogui:
         gui.btn_remod.Disable();
@@ -334,22 +372,16 @@ def OnRemodel(evt):
                 delattr(gtab, "grid");
             if tab == "sw_data":
                 grid=df2grid(gtab, data);
-            elif False and tab == "sw_model":
-                grid=df2grid(gtab, tls.dict2df(model));
             elif tab in ("sw_model", "sw_test", "sw_ref", "sw_qry", "sw_plot"):
                 dtype=tab[3:];
-                if False and "grid" in dir(gtab):
-                    gtab.grid.Destroy();
-                    delattr(gtab, "grid");
-                # remove previous sub-pages and create one page per variable (e.g. gene)
+                # remove previous sub-pages and create one page per marker
                 nb=getattr(gui, "nb_"+dtype);
                 #print("tab=", tab, "; nb=", nb);
                 for i in range(nb.GetPageCount()-1, -1, -1):
                     nb.DeletePage(i);
                 nb.SetSize(400, 300); # fixes warning "gtk_box_gadget_distribute: assertion 'size >= 0' failed"
                 if tab == "sw_plot":
-                    for nm,dm in model.items():
-                        m2plot(nm, dm, nb);
+                    OnReplot(None);
                 else:
                     #with thpool(min(4, len(resdf[dtype]), os.cpu_count())) as pool:
                     #    list(pool.map(tls.starfun, ((wx.CallAfter, d2grid, nm, df, nb, lock) for nm,df in resdf[dtype].items())));
@@ -363,9 +395,21 @@ def OnRemodel(evt):
         gui.mainframe.SetSize(w+1,h);
         wx.CallAfter(gui.mainframe.SetSize, w,h);
         del(wait);
+        prev_res_saved=False;
     timeme("dogui");
+def OnReplot(evt):
+    "replot in tab Plots"
+    if model is None:
+        return;
+    nb=gui.nb_plot;
+    for i in range(nb.GetPageCount()-1, -1, -1):
+        nb.DeletePage(i);
+    for nm,dm in model.items():
+        m2plot(nm, dm, nb);
+    if not evt is None:
+        gui.nb.SetSelection(lab2ip(gui.nb, "Plots")[0]);
 def OnSlider(evt):
-    "Slider was moved"
+    "Slider for modeling parameters was moved"
     global par_mod;
     #print("evt=", evt);
     if not data is None :
@@ -377,6 +421,13 @@ def OnSlider(evt):
     par_mod["thr_w"]=gui.sl_thr_w.GetValue();
     gui.chk_hbin.SetLabel("  "+", ".join(vhbin(par_mod["k"]).astype(str)));
     evt.GetEventObject()._OnSlider(evt);
+def OnSliderPlot(evt):
+    "Slider for plot parameters was moved"
+    global par_plot;
+    win=evt.GetEventObject();
+    par_plot[win.GetName()]=win.GetValue();
+    win._OnSlider(evt);
+    #print("pp=", par_plot);
 def OnCheck(evt):
     "a checkbow was checked/unchecked"
     win=evt.GetEventObject();
@@ -391,6 +442,14 @@ def OnTabChange(evt):
         if win is nb:
             continue;
         nb.SetSelection(i);
+def OnColpick(evt):
+    "respond to colour picker control"
+    global par_plot;
+    #import pdb; pdb.set_trace();
+    win=evt.GetEventObject();
+    par_plot[win.GetName()]=evt.GetColour();
+    
+# helpers
 def ToDo(evt):
     """
     A general purpose "we'll do it later" dialog box
@@ -427,15 +486,12 @@ def m2plot(nm, dm, nb):
     toolbar.Realize();
     ax=figure.gca();
     t=dcols[nm];
-    tls.histgmm(data.iloc[:,t[1]], dm["par"], ax, dm["par_mod"], alpha=0.5) # hist of test
+    tls.histgmm(data.iloc[:,t[1]], dm["par"], ax, dm["par_mod"], par_plot) # hist of test
     ax.set_title(nm);
     sizer=wx.BoxSizer(wx.VERTICAL);
     sizer.Add(canvas, 1, wx.EXPAND);
     sizer.Add(toolbar, 0, wx.LEFT | wx.EXPAND);
     gtab.SetSizer(sizer);
-    
-
-# working horses
 def err_mes(mes):
     "Show error dialog in GUI mode or raise exception"
     if dogui:
@@ -508,7 +564,13 @@ def file2data(fn):
         for iq,qnm in t[3].items():
             # qry is present
             data.iloc[:,iq]=np.asarray(data.iloc[:,iq], float);
+    if dogui:
+        #wait=wx.BusyCursor();
+        gui.mainframe.SetCursor(wx.Cursor(wx.CURSOR_WAIT));
     OnRemodel(None);
+    if dogui:
+        #del(wait);
+        gui.mainframe.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
 #def onScrollGrid(obj, event):
 #    import pdb; pdb.set_trace();
     

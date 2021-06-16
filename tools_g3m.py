@@ -1,17 +1,10 @@
 import sys;
 import pandas as pa;
 import csv;
-#import autograd.numpy as np;
-#from autograd import grad;
 import numpy as np;
 np.seterr(all="ignore");
 import numpy.ma as nma;
 from io import StringIO;
-#from numba import jit, njit;
-#def jit(func):
-#    def doit(*args, **kwargs):
-#        return(func(*args, **kwargs));
-#    return(doit);
 import matplotlib as mpl;
 from math import erf, fabs, nan;
 DEBUG=False;
@@ -333,10 +326,12 @@ def wxlay2py(kvt, parent=[None], pref=""):
     res="";
     # get the kvh tuples
     for (k,v) in kvt:
-        if k[:3]=="wx." or k[:3]=="wx_"and type(v)==type([]):
+        if k[:3] == "wx." or k[:3] == "wx_" and type(v) == list:
             ## produce the code for this widget
             # call class init
             vname=kvh_getv_by_k(v, ["varname"]);
+            #if vname=="cpick_neghigh":
+            #    import pdb; pdb.set_trace();
             # call methods if any and varname is set
             cl=kvh_getv_by_k(v, ["callmeth"]);
             if vname is None:
@@ -373,6 +368,8 @@ def wxlay2py(kvt, parent=[None], pref=""):
                                 kc=kc.replace(".top", str(parent[1]));
                             res+=(varname+"." if vc[:2] != "wx"
                                 else "")+kc+";\n";
+        elif k.strip() == "" and type(v) == str and v[0]=="\t":
+            raise Exception("A space is found where a tab is expected v='"+v+"'");
         else:
             # we don't know what it is, just silently ignore
             pass;
@@ -394,7 +391,6 @@ def c(*args):
         return(np.hstack([v.flatten() if "flatten" in dir(v) else v for v in args]));
     else:
         return(None);
-    
 def zcross(f, xleft, xright, *args, fromleft=True, nitvl=10, **kwargs):
     "find interval [x1, x2] where f(x) changes its sign (zero crossing)"
     #print("args=", args);
@@ -407,7 +403,6 @@ def zcross(f, xleft, xright, *args, fromleft=True, nitvl=10, **kwargs):
         raise Exception(f"zero-cross point is not found in [{xleft}; {xright}]");
     izcross=izcross[0];
     return([xp[izcross], xp[izcross+1]]);
-##@jit('float64(float64, float64, float64, optional(float64))', nopython=True, parallel=False, )
 def zeroin(f, ax, bx, *args, tol=sys.float_info.epsilon**0.25, **kwargs):
     """
  adapted from www.netlib.org/c/brent.shar zeroin.c
@@ -532,7 +527,6 @@ def is_na_end(x): return((np.cumsum(1-is_na(x)[::-1]) == 0)[::-1]);
 def is_empty_end(x): return((np.cumsum(1-(x.astype(str)=="")[::-1]) == 0)[::-1]);
 def sd1(x):
     return(np.std(x, ddof=1));
-#@jit
 def ipeaks(x, decreasing=True):
     r"""return a vector of indexes corresponding to peaks in a vector x
     By default, the peaks are sorted in decreasing order.
@@ -559,7 +553,6 @@ def ipeaks(x, decreasing=True):
     if decreasing:
         o=o[::-1];
     return(ip[o]);
-#@jit
 def smooth725(v, repet=1):
    """smooth by convolution with 0.25;0.5;0.25
    NB: the returned vector has the same length as original one.
@@ -590,12 +583,10 @@ def outer(x, y, f=lambda x,y: x*y):
     res=fv(x.flatten()[:, None], y.flatten());
     res.reshape((*x.shape, *y.shape));
     return(res);
-#@jit
 def nrow(x):
     return(np.shape(x)[0] if len(np.shape(x)) > 0 else 0);
 def ncol(x):
     return(np.shape(x)[1] if len(np.shape(x)) > 1 else 0);
-#@jit
 def cut(x, bins, labels=None):
     "return indexes of bins in which x are falling: i is s.t. x ∈ (bins[i-1], bins[i]]. If labels are given then they are returned instead of indexes."
     xs=x.shape;
@@ -626,7 +617,6 @@ def starfun(t):
     return(t[0](*(t[1:])));
 # EM part
 erfv=np.vectorize(erf);
-#@njit
 def dnorm(x, mean=np.array(0.), sd=np.array(1.)):
     "Normal law density function"
     #x=np.asarray(x);
@@ -640,7 +630,6 @@ def dnorm(x, mean=np.array(0.), sd=np.array(1.)):
     nc=ncol(mean);
     res=res.reshape((len(x), nc));
     return(res);
-#@njit
 def dnorm_d1(x, mean=0, sd=1):
     "first derivative by x of the normal law density function"
     #x=np.asarray(x);
@@ -652,7 +641,6 @@ def dnorm_d1(x, mean=0, sd=1):
     res=dnorm(x, mean, sd)*(mean-x)/(sd*sd);
     res=res.reshape(len(x), ncol(mean));
     return(res);
-#@njit
 def dnorm_d2(x, mean=0, sd=1):
     "second derivative by x of the normal law density function"
     #x=np.asarray(x);
@@ -664,11 +652,9 @@ def dnorm_d2(x, mean=0, sd=1):
     res=dnorm(x, mean, sd)*(((mean-x)/sd)**2-1.)/(sd*sd);
     res=res.reshape(len(x), ncol(mean));
     return(res);
-#@jit
 def pnorm(x, mean=0., sd=1.):
     "Normal law cumulative distribution function"
     return(0.5*(1+erfv((x-mean)/(sd*np.sqrt(2.)))));
-#@njit
 def dgmmn(x, par, f=dnorm):
     """return a matrix of Gaussian mixture model calculated in points x
     and for components who's parameters are in 3-row matrix 'par', one
@@ -679,13 +665,11 @@ def dgmmn(x, par, f=dnorm):
     #x=np.asarray(x);
     res=np.array(par.loc["a", :]).reshape(1,-1)*f(x, np.array(par.loc["mean",:]), np.array(par.loc["sd",:]));
     return(res);
-#@jit
 def dgmm(x, par, f=dnorm):
     if isinstance(x, (int, float)):
         return(dgmmn(x, par, f).sum(1)[0]);
     else:
         return(dgmmn(x, par, f).sum(1).reshape(x.shape));
-##@jit
 def e_step1(x, mean=None, sd=None, a=None, par=None):
     """E-step of EM algorithm for 1D gaussian mixture: estimate membership weights
 
@@ -715,7 +699,6 @@ def e_step1(x, mean=None, sd=None, a=None, par=None):
         w[iz, im]=1.; # assign them to the closest from centered/reduced point of view
         rs[iz]=1.;
     return(w/rs);
-#@jit
 def m_step1(x, w, imposed=pa.DataFrame(index=["a", "mean", "sd"]), inaa=None, inam=None, inas=None, tol=sys.float_info.epsilon*2**7):
     """M-step of EM algorithm for 1D gaussian mixture: estimate a, mean and sd
 
@@ -773,7 +756,6 @@ def m_step1(x, w, imposed=pa.DataFrame(index=["a", "mean", "sd"]), inaa=None, in
     res=pa.DataFrame([a, mean, sd]);
     res.index=["a", "mean", "sd"];
     return(res);
-##@jit
 def em1(x, par=None, imposed=pa.DataFrame(index=["a", "mean", "sd"]), G=range(1,10), maxit=10, tol=1.e-7, restart=5, classify=False):
     "EM algorithm for Gaussian Mixture Model fitting on a 1D sample x. G is supposed to be increasing sequence of class numbers."
     iva=np.isfinite(x);
@@ -888,7 +870,6 @@ def em1(x, par=None, imposed=pa.DataFrame(index=["a", "mean", "sd"]), G=range(1,
 def par2gaus(par):
    # transform par (3xG matrix) to function calculating sum of gaussians
    return(lambda x: dgmm(x, par));
-#@jit
 def gmmcl(x, par):
     """classify x according to GMM in par
     return a dict with class number 'cl', matrix of class weights 'w' and a vector
@@ -904,52 +885,39 @@ def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0)
     c1=np.array(mpl.colors.to_rgb(c1))
     c2=np.array(mpl.colors.to_rgb(c2))
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
-
-def histgmm(x, par, plt, par_mod, **kwargs):
+def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
     "Plot histogram of sample 'x' and GMM density plot on the same bins"
+    #print("pp=", par_plot);
     opar=par[sorted(par.columns)];
     xmi=np.min(x);
     xma=np.max(x);
-    count, bins, patches = plt.hist(x, np.linspace(xmi, xma, par_mod["k"]+1), color='white', density=True, **kwargs);
-    #hcol=patches.get_children()[0].get_facecolor();
-    #if hcol[3] < 1:
-    #    hcol=list(hcol);
-    #    hcol[3] = 1;
-    hcol=mpl.colors.to_rgb('black');
-    [p.set_edgecolor(hcol) for p in patches.get_children()];
-    #count, bins, patches = plt.hist(x, np.linspace(xmi, xma, par_mod["k"]+1), histtype="step", color='dimgrey', density=True, linewidth=1.2, **kwargs);
+    count, bins, patches = plt.hist(x, np.linspace(xmi, xma, par_mod["k"]+1), color=par_plot["col_hist"], density=True, **kwargs);
+    col_edge=mpl.colors.to_rgb(par_plot["col_hist"]);
+    col_panel=list(mpl.colors.to_rgb(par_plot["col_panel"]))+[par_plot["alpha"]];
+    #import pdb; pdb.set_trace();
+    [(p.set_facecolor(col_panel), p.set_edgecolor(col_edge)) for p in patches.get_children()];
     dbin=bins[1]-bins[0];
     nbp=401;
     xp=np.linspace(xmi, xma, nbp);
     dxp=(xma-xmi)/(nbp-1.);
     cdf=np.hstack(list(opar.loc["a", i]*pnorm(xp, opar.loc["mean", i], opar.loc["sd", i]).reshape((len(xp), 1), order="F") for i in opar.columns));
     pdf=np.diff(np.hstack((rowSums(cdf), cdf)), axis=0)/dxp;
-    #import pdb; pdb.set_trace();
-    #pdf=dgmmn(xp, opar);
-    #pdf=np.hstack((rowSums(pdf), pdf));
     xpm=0.5*(xp[:-1]+xp[1:]);
     # prepare colors
-    ctot=[mpl.colors.to_rgb("grey")];
-    c0=[mpl.colors.to_rgb("seagreen")];
     nneg=sum(opar.columns<0);
-    cneglow=mpl.colors.to_rgb("lightskyblue"); # close to 0
-    cneghigh=mpl.colors.to_rgb("dodgerblue"); # far from 0
-    cneg=[colorFader(cneghigh, cneglow, i/nneg) for i in range(nneg)];
+    cneg=[colorFader(par_plot["col_neghigh"], par_plot["col_neglow"], i/nneg) for i in range(nneg)];
     npos=sum(opar.columns>0);
-    cposlow=mpl.colors.to_rgb("lightcoral"); # close to 0
-    cposhigh=mpl.colors.to_rgb("maroon"); # far from 0
-    cpos=[colorFader(cposlow, cposhigh, i/npos) for i in range(npos)];
-    colpar=ctot+cneg+c0+cpos;
+    cpos=[colorFader(par_plot["col_poslow"], par_plot["col_poshigh"], i/npos) for i in range(npos)];
+    colpar=[par_plot["col_tot"]]+cneg+[par_plot["col_ref"]]+cpos;
     #import pdb; pdb.set_trace();
     for i in range(pdf.shape[1]):
-        line,=plt.plot(xpm, pdf[:,i], color=colpar[i], linewidth=4); #, **kwargs);
+        line,=plt.plot(xpm, pdf[:,i], color=colpar[i], linewidth=par_plot["lw"], label=str(opar.columns[i-1]) if i > 0 else "Total"); #, **kwargs);
         lcol=line.get_color();
-        plt.fill_between(xpm, 0, pdf[:,i], color=lcol, label=str(opar.columns[i-1]) if i > 0 else "Total", **kwargs);
+        plt.fill_between(xpm, 0, pdf[:,i], color=lcol, alpha=par_plot["alpha"], **kwargs);
     # x tics
     plt.tick_params(colors='grey', which='minor')
     plt.set_xticks(x[~is_na(x)], minor=True);
     plt.legend(loc='upper right', shadow=True); #, fontsize='x-large');
-#@jit
 def roothalf(i1, i2, par, fromleft=True):
     "find intersection and half-height interval of 2 gaussians defined by columns i1 and i2 in par"
     if type(par) != pa.DataFrame:
@@ -970,7 +938,6 @@ def roothalf(i1, i2, par, fromleft=True):
     xlr=zcross(fhalf, xtip, par.loc["mean", i2]+3*par.loc["sd", i2], fromleft=True);
     right=zeroin(fhalf, xlr[0], xlr[1]);
     return({"mid": mid, "left": left, "right": right});
-#@jit
 def gcl2i(cl, par):
     o=np.argsort(par.loc["mean",:]).to_numpy();
     io=o.copy();
@@ -979,12 +946,10 @@ def gcl2i(cl, par):
     res=np.asarray(cl);
     res[iv]=io[cl[iv]]-io[0];
     return(res);
-#@jit
 def fw(x, par, i):
     "weights of Gaussian class i"
     pdf=dgmmn(x, par);
     return(pdf[:,i]/rowSums(pdf)[:,0]);
-#@jit
 def fw_d1(x, par, i):
     "first derivative by x of weights of Gaussian class i"
     x=np.asarray(x);
@@ -1005,7 +970,6 @@ def fw_d2(x, par, i):
     return((pdf_d2[:, i] - ((2 * pdf_d1[:, i] - pdf[:, i] * w_d1/w) * 
         w_d1 + pdf[:, i] * (w_d2 - 
         w_d1**2/w))/w)/w);
-##@jit
 def rt2model(ref, test, par_mod):
     "ref and test samples to GMM model. par_mod['thr_w'] is weight threshold for vanishing classes"
     # get only valid entries
