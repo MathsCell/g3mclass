@@ -889,9 +889,10 @@ def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
     "Plot histogram of sample 'x' and GMM density plot on the same bins"
     #print("pp=", par_plot);
     opar=par[sorted(par.columns)];
-    xmi=np.min(x);
-    xma=np.max(x);
-    count, bins, patches = plt.hist(x, np.linspace(xmi, xma, par_mod["k"]+1), color=par_plot["col_hist"], density=True, **kwargs);
+    xv=x[~is_na(x)];
+    xmi=np.min(xv);
+    xma=np.max(xv);
+    count, bins, patches = plt.hist(xv, np.linspace(xmi, xma, par_mod["k"]+1), color=par_plot["col_hist"], density=True, **kwargs);
     col_edge=mpl.colors.to_rgb(par_plot["col_hist"]);
     col_panel=list(mpl.colors.to_rgb(par_plot["col_panel"]))+[par_plot["alpha"]];
     #import pdb; pdb.set_trace();
@@ -915,8 +916,9 @@ def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
         lcol=line.get_color();
         plt.fill_between(xpm, 0, pdf[:,i], color=lcol, alpha=par_plot["alpha"], **kwargs);
     # x tics
-    plt.tick_params(colors='grey', which='minor')
-    plt.set_xticks(x[~is_na(x)], minor=True);
+    plt.tick_params(colors='grey', which='minor');
+    if "set_xticks" in dir(plt):
+        plt.set_xticks(xv, minor=True);
     plt.legend(loc='upper right', shadow=True); #, fontsize='x-large');
 def roothalf(i1, i2, par, fromleft=True):
     "find intersection and half-height interval of 2 gaussians defined by columns i1 and i2 in par"
@@ -928,15 +930,18 @@ def roothalf(i1, i2, par, fromleft=True):
     # find "grey-zone" limits as peak half-height
     # first find peack's tip
     #fw_d2=grad(fw_d1);
-    xlr=zcross(fw_d2, par.loc["mean", i1]-0.5*par.loc["sd", i1], par.loc["mean", i2]+0.5*par.loc["sd", i2], par, 0, fromleft=fromleft);
-    xtip=zeroin(fw_d2, xlr[0], xlr[1], par, 0);
-    ftip=float(fw_d1(xtip, par, 0));
-    # now find tip/2 positions
-    fhalf=lambda x: float(fw_d1(x, par, 0))-ftip*0.5;
-    xlr=zcross(fhalf, par.loc["mean", i1]-3*par.loc["sd", i1], xtip, fromleft=False);
-    left=zeroin(fhalf, xlr[0], xlr[1]);
-    xlr=zcross(fhalf, xtip, par.loc["mean", i2]+3*par.loc["sd", i2], fromleft=True);
-    right=zeroin(fhalf, xlr[0], xlr[1]);
+    try:
+        xlr=zcross(fw_d2, par.loc["mean", i1]-0.75*par.loc["sd", i1], par.loc["mean", i2]+0.75*par.loc["sd", i2], par, 0, fromleft=fromleft);
+        xtip=zeroin(fw_d2, xlr[0], xlr[1], par, 0);
+        ftip=float(fw_d1(xtip, par, 0));
+        # now find tip/2 positions
+        fhalf=lambda x: float(fw_d1(x, par, 0))-ftip*0.5;
+        xlr=zcross(fhalf, par.loc["mean", i1]-3*par.loc["sd", i1], xtip, fromleft=False);
+        left=zeroin(fhalf, xlr[0], xlr[1]);
+        xlr=zcross(fhalf, xtip, par.loc["mean", i2]+3*par.loc["sd", i2], fromleft=True);
+        right=zeroin(fhalf, xlr[0], xlr[1]);
+    except:
+        left=right=nan;
     return({"mid": mid, "left": left, "right": right});
 def gcl2i(cl, par):
     o=np.argsort(par.loc["mean",:]).to_numpy();
@@ -1057,7 +1062,7 @@ def rt2model(ref, test, par_mod):
     cpar.update({"par_hist": par_hist});
     # find cutoffs
     iom=np.argsort(cpar["par"].loc["mean",:]);
-    iref=which(iom == 0);
+    iref=which(iom == 0)[0];
     cutoff=dict()
     p1=cpar["par"].copy();
     p1.loc["a",:]=1.;

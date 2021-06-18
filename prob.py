@@ -1,14 +1,35 @@
 #! /usr/bin/env python3
-import tools_ssg as tls;
+import tools_g3m as tls;
 import pandas as pa;
-import autograd.numpy as np;
-from autograd import elementwise_grad as egrad;
-#import numpy as np;
+#import autograd.numpy as np;
+#from autograd import elementwise_grad as egrad;
+import numpy as np;
+import matplotlib as mpl;
 import matplotlib.pyplot as plt;
+from matplotlib.backends.backend_pdf import PdfPages as mpdf;
 #import warnings;
 
 nan=np.nan;
 Inf=np.inf;
+
+par_mod={
+    "k": 25,
+    "k_var": False,
+    "thr_di": 0.5,
+    "thr_w": 1.,
+};
+par_plot={
+    "col_hist": "black",
+    "col_panel": "white",
+    "col_tot": "grey",
+    "col_ref": "seagreen",
+    "col_neglow": "lightskyblue",
+    "col_neghigh": "dodgerblue",
+    "col_poslow": "lightcoral",
+    "col_poshigh": "maroon",
+    "alpha": 0.5,
+    "lw": 2,
+}
 
 n=100;
 mean=[-1, 1];
@@ -77,24 +98,25 @@ if False:
 # ref-test try
 #test=x.copy();
 #ref=np.random.normal(par.loc["mean", 0], par.loc["sd", 0], 20);
-data=pa.read_csv("abcd.tsv", sep="\t");
-for let in ("A", "B", "C", "D"):
-    ref=np.array(data["Gene %s (ref)"%let]);
-    ref=ref[~tls.is_na_end(ref)];
-    test=np.array(data["Gene %s (test)"%let]);
-    test=test[~tls.is_na_end(test)];
-    #warnings.simplefilter("error");
-    #if let == "B":
-    #    import pdb; pdb.set_trace();
-    cpar=tls.rt2model(ref, test, athr=2./sum(test == test));
-    classif=dict();
-    classif["ref"]=tls.xmod2class(ref, cpar);
-    classif["test"]=tls.xmod2class(test, cpar);
-    tls.obj2kvh({"model": cpar, "classification": classif}, None, fp="cpar%s.tsv"%let);
-    if let == "B":
-        plt.figure("gene %s"%let);
-        tls.histgmm(test, cpar["par"], plt, n=90);
-        plt.xticks(np.arange(0, 900, step=20));
-        plt.show(block=False);
-# final blocking show
+fnm="male_female_gluc_bmi.tsv";
+nmrt=("femalegluc (ref)", "femalegluc (test)");
+par_loc=par_mod.copy();
+par_loc["k"]=35;
+data=pa.read_csv(fnm, sep="\t");
+ref=np.array(data[nmrt[0]]);
+ref=ref[~tls.is_na_end(ref)];
+test=np.array(data[nmrt[1]]);
+test=test[~tls.is_na_end(test)];
+#warnings.simplefilter("error");
+#if let == "B":
+cpar=tls.rt2model(ref, test, par_loc);
+classif=dict();
+classif["ref"]=tls.xmod2class(ref, cpar);
+classif["test"]=tls.xmod2class(test, cpar);
+tls.obj2kvh({"model": cpar, "classification": classif}, None, fp=fnm[:-4]+".kvh");
+
+plt.figure(nmrt[1]);
+import pdb; pdb.set_trace();
+tls.histgmm(test, cpar["par"], plt, cpar["par_mod"], par_plot) # hist of test
+
 plt.show();

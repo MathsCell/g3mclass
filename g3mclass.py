@@ -171,7 +171,8 @@ with open(os.path.join(diri, "g3mclass", "licence_en.txt"), "r") as fp:
     licenseText=fp.read();
 
 ## global vars
-lock=threading.Lock();
+nproc=os.cpu_count();
+#lock=threading.Lock();
 gui=wx.Object();
 dogui=False;
 fdata=""; # name of data file
@@ -577,9 +578,12 @@ def file2data(fn):
 def data2model(data, dcols):
     "Learn models for each var in 'data' described in 'dcols'. Return a dict with models pointed by varname"
     if len(dcols) > 1 and not par_mod["k_var"]:
-        with mp.Pool(min(len(dcols), mp.cpu_count())) as pool:
-        #with thpool(min(len(dcols), os.cpu_count())) as pool:
-            res=pool.map(tls.starfun, ((tls.rt2model, data.iloc[:,t[0]].to_numpy(), data.iloc[:,t[1]].to_numpy(), par_mod) for t in dcols.values()));
+        if nproc == 1:
+            res=[tls.rt2model(data.iloc[:,t[0]].to_numpy(), data.iloc[:,t[1]].to_numpy(), par_mod) for t in dcols.values()];
+        else:
+            #with thpool(min(len(dcols), os.cpu_count())) as pool:
+            with mp.Pool(min(len(dcols), nproc)) as pool:
+                res=pool.map(tls.starfun, ((tls.rt2model, data.iloc[:,t[0]].to_numpy(), data.iloc[:,t[1]].to_numpy(), par_mod) for t in dcols.values()));
         res=dict(zip(dcols.keys(), res));
     else:
         res=dict();
@@ -592,9 +596,18 @@ def data2model(data, dcols):
                 #import pdb; pdb.set_trace();
                 dl=dict();
                 par_loc=[(dl.update({"tmp": par_mod.copy()}), dl["tmp"].update({"k": nbin}), dl["tmp"])[-1] for nbin in vbin]; # create n copies of par_mod with diff hbin
-                with mp.Pool(min(len(dcols), mp.cpu_count())) as pool:
-                #with thpool(min(len(dcols), os.cpu_count())) as pool:
-                    res_loc=list(pool.map(tls.starfun, ((tls.rt2model, ref, test, d) for d in par_loc)));
+                if nproc == 1:
+                    res_loc=[];
+                    for d in par_loc:
+                        try:
+                            res_loc.append(tls.rt2model(ref, test, d));
+                        except:
+                            import pdb; pdb.set_trace();
+                            tmp=tls.rt2model(ref, test, d);
+                else:
+                    #with thpool(min(len(dcols), os.cpu_count())) as pool:
+                    with mp.Pool(min(nproc, len(dcols))) as pool:
+                        res_loc=list(pool.map(tls.starfun, ((tls.rt2model, ref, test, d) for d in par_loc)));
                 history=pa.DataFrame(None, columns=["k", "BIC", "classes"]);
                 for tmp in res_loc:
                     history=history.append(pa.Series([tmp["par_mod"]["k"], tmp["BIC"], ",".join(tmp["par"].columns.astype(str))], index=history.columns), ignore_index=True);
@@ -719,9 +732,9 @@ def make_gui():
     exec(code);
 ## take arguments
 def main():
-    global fdata, wd, gui, dogui, TIMEME;
+    global fdata, wd, gui, dogui, TIMEME, nproc;
     try:
-        opts,args=getopt.getopt(sys.argv[1:], "hwvt", ["help", "DEBUG"]);
+        opts,args=getopt.getopt(sys.argv[1:], "hwvt", ["help", "DEBUG", "np="]);
     except getopt.GetoptError as err:
         print((str(err)));
         usage();
@@ -743,6 +756,14 @@ def main():
             write_res=True;
         elif o=="-t":
             TIMEME=True;
+        elif o=="--np":
+            tmp=int(a);
+            if tmp < 0:
+                raise Excpetion("--np must have a positive integer argument")
+            elif tmp == 0:
+                pass; # keep actual nproc value;
+            else:
+                nproc=tmp;
         else:
             assert False, "unhandled option";
     if dogui:
