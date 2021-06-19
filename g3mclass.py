@@ -4,11 +4,11 @@
 usage: g3mclass.py [-h|--help] [--DEBUG] [-w] [data[.tsv]]
 """
 #Todo:
-# - data parsing
-# - test and query classification
-# - plots
-# - write results
-# - GUI
+# + data parsing
+# + test and query classification
+# + plots
+# + write results
+# + GUI
 # - doc
 # - packaging
 
@@ -17,7 +17,7 @@ usage: g3mclass.py [-h|--help] [--DEBUG] [-w] [data[.tsv]]
 
 # This file content:
 # -imports
-# -custom classess
+# -custom classes
 # -config constants
 # -global vars
 # -call-backs defs
@@ -42,6 +42,7 @@ import wx.adv;
 import wx.html;
 from wx.lib.wordwrap import wordwrap;
 import wx.lib.mixins.inspection as wit;
+import wx.lib.colourdb;
 import matplotlib as mpl;
 from matplotlib.backends.backend_wxagg import (
     FigureCanvasWxAgg as FigureCanvas,
@@ -198,9 +199,7 @@ par_plot={
     "col_poshigh": "maroon",
     "alpha": 0.5,
     "lw": 2,
-}
-canvas=None; # plotting canvas
-sett_inp=None; # dictionary of input widgets for settings
+};
 wd=""; # working dir
 bg_grey=None;
 bg_white=wx.WHITE;
@@ -289,8 +288,8 @@ def OnSave(evt):
             for nm, dm in model.items():
                 figure=mpl.figure.Figure(dpi=None, figsize=(8, 6));
                 ax=figure.gca();
-                t=dcols[nm];
-                tls.histgmm(data.iloc[:,t[1]], dm["par"], ax, dm["par_mod"], par_plot) # hist of test
+                dc=dcols[nm];
+                tls.histgmm(data.iloc[:,dc["itest"]].values, dm["par"], ax, dm["par_mod"], par_plot) # hist of test
                 ax.set_title(nm);
                 pdf.savefig(figure);
                 #ax.close();
@@ -428,7 +427,6 @@ def OnSliderPlot(evt):
     win=evt.GetEventObject();
     par_plot[win.GetName()]=win.GetValue();
     win._OnSlider(evt);
-    #print("pp=", par_plot);
 def OnCheck(evt):
     "a checkbow was checked/unchecked"
     win=evt.GetEventObject();
@@ -442,14 +440,14 @@ def OnTabChange(evt):
     for nb in (gui.nb_model, gui.nb_test, gui.nb_ref, gui.nb_plot):
         if win is nb:
             continue;
-        nb.SetSelection(i);
+        if i < nb.GetPageCount():
+            nb.SetSelection(i);
 def OnColpick(evt):
-    "respond to colour picker control"
+    "respond to color picker control"
     global par_plot;
     #import pdb; pdb.set_trace();
     win=evt.GetEventObject();
     par_plot[win.GetName()]=evt.GetColour();
-    
 # helpers
 def ToDo(evt):
     """
@@ -486,8 +484,8 @@ def m2plot(nm, dm, nb):
     toolbar=NavigationToolbar(canvas);
     toolbar.Realize();
     ax=figure.gca();
-    t=dcols[nm];
-    tls.histgmm(data.iloc[:,t[1]], dm["par"], ax, dm["par_mod"], par_plot) # hist of test
+    dc=dcols[nm];
+    tls.histgmm(data.iloc[:,dc["itest"]].values, dm["par"], ax, dm["par_mod"], par_plot) # hist of test
     ax.set_title(nm);
     sizer=wx.BoxSizer(wx.VERTICAL);
     sizer.Add(canvas, 1, wx.EXPAND);
@@ -497,10 +495,18 @@ def err_mes(mes):
     "Show error dialog in GUI mode or raise exception"
     if dogui:
         dlg=wx.MessageDialog(None, mes, "Error", wx.OK | wx.ICON_ERROR);
-        dlg.ShowModal()
+        dlg.ShowModal();
         dlg.Destroy();
     else:
         raise Exception(me+": "+mes);
+def warn_mes(mes):
+    "Show info dialog in GUI mode or print on stderr"
+    if dogui:
+        dlg=wx.MessageDialog(None, mes, "Warning", wx.OK | wx.ICON_WARNING);
+        dlg.ShowModal();
+        dlg.Destroy();
+    else:
+        print(me+": "+mes, file=sys.stderr);
 def vhbin(x):
     "produce a vector of hbin values"
     return(tls.c(np.linspace(max(10, par_mod["k"]-15), par_mod["k"], min(4, int(np.ceil((par_mod["k"]-10)/5))+1)), par_mod["k"]+np.linspace(5, 15, 3)).astype(int));
@@ -514,8 +520,9 @@ def file2data(fn):
         err_mes("file '"+fn+"' could not be read");
         return;
     cols=[str(v).strip() if v==v else "" for v in data.iloc[0, :]];
+    iparse=[]; # collect parsed columns
     # search for (ref) and (test)
-    suff=" (ref)";
+    suff="(ref)";
     dcols=dict((i, re.sub(tls.escape(suff, "()")+"$", "", v).strip()) for i,v in enumerate(cols) if v.endswith(suff))
     if not dcols:
         err_mes("not found '"+suff+"' in column names");
@@ -524,14 +531,15 @@ def file2data(fn):
     cnt=tls.list2count(dcols.values());
     if len(cnt) != len(dcols):
         vbad=[v for v,i in cnt.items() if i > 1];
-        err_mes("following column name is not unique in ' (ref)' set: '"+vbad[0]+"'");
+        err_mes("following column name is not unique in '(ref)' set: '"+vbad[0]+"'");
         return;
+    iparse += list(dcols.keys());
     
-    # build dcols: varname => (icolref, icoltest, icolid, qry_dict). icolid can be None, qry_dict can be empty
+    # build dcols: varname => dict:iref, itest, idref, idtest, qry_dict). id(ref|test) can be None, qry_dict can be empty
     dcols=dict((v,k) for k,v in dcols.items());
     for nm in dcols.keys():
         # check that every ref has its test pair
-        itest=[i for i,v in enumerate(cols) if v.startswith(nm) and v.endswith(" (test)") and re.match("^ *$", v[len(nm):-7])];
+        itest=[i for i,v in enumerate(cols) if v.startswith(nm) and v.endswith("(test)") and re.match("^ *$", v[len(nm):-7])];
         if not itest:
             err_mes("column '"+nm+" (ref)' has not its counter part '"+nm+" (test)'");
             return;
@@ -539,57 +547,66 @@ def file2data(fn):
             err_mes("following column name is not unique in '(test)' set: '"+nm+"'");
             return;
         else:
-            dcols[nm]=(dcols[nm],itest[0]);
-        iid=[i for i,v in enumerate(cols) if v.startswith(nm) and v.lower().endswith(" (id)") and re.match("^ *$", v[len(nm):-5])];
-        if len(iid) > 1:
-            err_mes("following column name is not unique in '(id)' set: '"+nm+"'");
-            return;
-        else:
-            dcols[nm]=(*dcols[nm], iid[0] if len(iid) else None);
+            iref=dcols[nm];
+            itest=itest[0];
+            dcols[nm]={"iref": iref, "itest": itest};
+        dcols[nm]["idref"]=iref-1 if iref > 0 and cols[iref-1].lower() == "id" else None;
+        dcols[nm]["idtest"]=itest-1 if itest > 0 and cols[itest-1].lower() == "id" else None;
+        iparse.append(itest);
+        if not dcols[nm]["idref"] is None:
+            iparse.append(dcols[nm]["idref"]);
+        if not dcols[nm]["idtest"] is None:
+            iparse.append(dcols[nm]["idtest"]);
         # get query (if any)
-        dqry=dict((i,v[len(nm)+1:].strip("( )")) for i,v in enumerate(cols) if v.startswith(nm+" ") and not v.endswith(" (test)") and not v.endswith(" (ref)") and not v.endswith(" (id)"));
+        dqry=dict((i,v[len(nm):].strip("( )")) for i,v in enumerate(cols) if v.startswith(nm+" ") or v.startswith(nm+"(") and not v.endswith("(test)") and not v.endswith("(ref)"));
         # check that qry names are unique
         cnt=tls.list2count(dqry.values());
         if len(cnt) < len(dqry):
-            err_mes("following column name is not unique in ' (query)' set: '"+nm+" "+[v for v,i in cnt.items() if i > 1][0]+"'");
+            err_mes("following column names are not unique in '(query)' set: '"+"', '".join([v for v,i in cnt.items() if i > 1])+"'");
             return;
-        dcols[nm]=(*dcols[nm], dqry);
-    
+        dqry=dict((v,{"i": i}) for i,v in dqry.items());
+        for nmq in dqry.keys():
+            iq=dqry[nmq]["i"];
+            iparse.append(iq);
+            iid=iq-1 if iq > 0 and cols[iq-1].lower() == "id" else None;
+            dqry[nmq]["id"]=iid;
+            if not iid is None:
+                iparse.append(iid);
+        dcols[nm]["qry"]=dqry;
+    # check that all columns are useful
+    iparse=set(iparse);
+    for i,nm in enumerate(cols):
+        if nm and i not in iparse:
+            warn_mes("Column '"+nm+"' is not categorized in any of: ref, test, query or id of one of these");
     #tls.aff("dcols", dcols);
-    data.columns=cols
-    data=data.iloc[1:,:]
-    # convert to float
-    for nm,t in dcols.items():
-        data.iloc[:,t[0]]=np.asarray(data.iloc[:,t[0]], float);
-        data.iloc[:,t[1]]=np.asarray(data.iloc[:,t[1]], float);
-        for iq,qnm in t[3].items():
-            # qry is present
-            data.iloc[:,iq]=np.asarray(data.iloc[:,iq], float);
     if dogui:
         #wait=wx.BusyCursor();
         gui.mainframe.SetCursor(wx.Cursor(wx.CURSOR_WAIT));
+    data.columns=cols;
+    data=data.iloc[1:,:];
+    # convert to float
+    for nm,dc in dcols.items():
+        for i in [dc["iref"], dc["itest"], *[dq["i"] for nmq,dq in dc["qry"].items()]]:
+            data.iloc[:,i]=data.iloc[:,i].to_numpy(float);
     OnRemodel(None);
     if dogui:
         #del(wait);
         gui.mainframe.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
-#def onScrollGrid(obj, event):
-#    import pdb; pdb.set_trace();
-    
 def data2model(data, dcols):
     "Learn models for each var in 'data' described in 'dcols'. Return a dict with models pointed by varname"
     if len(dcols) > 1 and not par_mod["k_var"]:
         if nproc == 1:
-            res=[tls.rt2model(data.iloc[:,t[0]].to_numpy(), data.iloc[:,t[1]].to_numpy(), par_mod) for t in dcols.values()];
+            res=[tls.rt2model(data.iloc[:,dc["iref"]].values, data.iloc[:,dc["itest"]].values, par_mod) for dc in dcols.values()];
         else:
             #with thpool(min(len(dcols), os.cpu_count())) as pool:
             with mp.Pool(min(len(dcols), nproc)) as pool:
-                res=pool.map(tls.starfun, ((tls.rt2model, data.iloc[:,t[0]].to_numpy(), data.iloc[:,t[1]].to_numpy(), par_mod) for t in dcols.values()));
+                res=pool.map(tls.starfun, ((tls.rt2model, data.iloc[:,dc["iref"]].values, data.iloc[:,dc["itest"]].values, par_mod) for dc in dcols.values()));
         res=dict(zip(dcols.keys(), res));
     else:
         res=dict();
-        for nm,t in dcols.items():
-            ref=np.asarray(data.iloc[:,t[0]]);
-            test=np.asarray(data.iloc[:,t[1]]);
+        for nm,dc in dcols.items():
+            ref=data.iloc[:,dc["iref"]].values;
+            test=data.iloc[:,dc["itest"]].values;
             if par_mod["k_var"]:
                 # run hbin numbers through vbin and get the best BIC
                 vbin=vhbin(par_mod["k"]);
@@ -602,8 +619,9 @@ def data2model(data, dcols):
                         try:
                             res_loc.append(tls.rt2model(ref, test, d));
                         except:
-                            import pdb; pdb.set_trace();
-                            tmp=tls.rt2model(ref, test, d);
+                            #import pdb; pdb.set_trace();
+                            #tmp=tls.rt2model(ref, test, d);
+                            raise;
                 else:
                     #with thpool(min(len(dcols), os.cpu_count())) as pool:
                     with mp.Pool(min(nproc, len(dcols))) as pool:
@@ -624,15 +642,15 @@ def data2model(data, dcols):
 def dclass(data, dcols, model):
     "Classify each var in 'data' described in 'dcols' using corresponding 'model'. Return a dict with classification pointed by varname/{ref,test}"
     res=dict();
-    for nm,t in dcols.items():
-        ref=np.asarray(data.iloc[:,t[0]]);
+    for nm,dc in dcols.items():
+        ref=data.iloc[:,dc["iref"]].values;
         ref=ref[~tls.is_na_end(ref)];
-        test=np.asarray(data.iloc[:,t[1]]);
+        test=data.iloc[:,dc["itest"]].values;
         test=test[~tls.is_na_end(test)];
         res[nm]={
             "ref": tls.xmod2class(ref, model[nm]),
             "test": tls.xmod2class(test, model[nm]),
-            "qry": dict((v, tls.xmod2class(np.asarray(data.iloc[:,k]), model[nm])) for k,v in t[3].items())
+            "qry": dict((nmq, tls.xmod2class(data.iloc[:,dq["i"]].values, model[nm])) for nmq,dq in dc["qry"].items())
         };
     return(res);
 def class2tcol(d):
@@ -669,7 +687,6 @@ def class2tcol(d):
             #import pdb; pdb.set_trace();
             tcol.append((dstat.columns[icol], dstat.iloc[:,icol]));
     return(tcol);
-
 def res2file(res, fpath=None, objname=None):
     if fpath == None:
         if fdata:
@@ -698,29 +715,6 @@ def lab2ip(nb, lab):
         if lab == nb.GetPageText(i):
             return((i,gui.nb.GetPage(i)));
     return((None,None));
-def sett2wx(win):
-    "create input wx widgets for settings in the window win"
-    global sett_inp;
-    gs=wx.FlexGridSizer(0, 2, 2, 2)  # rows=len(settings), cols, vgap, hgap;
-    panel=wx.Panel(win, wx.ID_ANY);
-    # create widgets and add them to the sizer
-    gs.AddSpacer(10);
-    gs.AddSpacer(10);
-    sett_inp={};
-    for (k,v) in list(settings.items()):
-        #print("set k=", k);
-        gs.Add(wx.StaticText(panel, wx.ID_ANY, k), 0, wx.EXPAND, 5);
-        inp=wx.TextCtrl(panel, wx.ID_ANY, str(v), size=(125, -1));
-        inp.Bind(wx.EVT_TEXT, OnSettings);
-        inp.set_field=k;
-        gs.Add(inp, 0, wx.EXPAND, 5);
-        sett_inp[k]=inp;
-    gs.AddSpacer(10);
-    gs.AddSpacer(10);
-    panel.SetSizer(gs);
-    panel.Fit();
-    win.SetVirtualSize(panel.GetSize());
-    #panel.Center(wx.HORIZONTAL);
 def usage():
     print(__doc__);
 def make_gui():
@@ -728,6 +722,7 @@ def make_gui():
     global gui, bg_grey;
     gui=wx.Object();
     gui.app=wx.App();
+    wx.lib.colourdb.updateColourDB();
     code=tls.wxlay2py(tls.kvh2tlist(os.path.join(diri, "g3mclass", "g3mclass_lay.kvh")), pref="gui.");
     exec(code);
 ## take arguments
