@@ -5,6 +5,7 @@ import numpy as np;
 np.seterr(all="ignore");
 import numpy.ma as nma;
 from io import StringIO;
+import wx;
 import matplotlib as mpl;
 from math import erf, fabs, nan;
 DEBUG=False;
@@ -881,10 +882,13 @@ def gmmcl(x, par):
     cl[:]=par.columns[cl];
     cl.mask=wmax != wmax;
     return({"cl": cl, "w": w, "wmax": wmax});
+def wxc2mplc(c):
+    "Convert wx.Colour to matplotlib colour"
+    return mpl.colors.to_rgb(np.asarray(wx.Colour(c))/255.);
 def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
-    c1=np.array(mpl.colors.to_rgb(c1))
-    c2=np.array(mpl.colors.to_rgb(c2))
-    return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
+    c1=np.asarray(wxc2mplc(c1));
+    c2=np.asarray(wxc2mplc(c2));
+    return mpl.colors.to_hex((1-mix)*c1 + mix*c2);
 def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
     "Plot histogram of sample 'x' and GMM density plot on the same bins"
     #print("pp=", par_plot);
@@ -892,10 +896,11 @@ def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
     xv=x[~is_na(x)];
     xmi=np.min(xv);
     xma=np.max(xv);
-    count, bins, patches = plt.hist(xv, np.linspace(xmi, xma, par_mod["k"]+1), color=par_plot["col_hist"], density=True, **kwargs);
-    col_edge=mpl.colors.to_rgb(par_plot["col_hist"]);
-    col_panel=list(mpl.colors.to_rgb(par_plot["col_panel"]))+[par_plot["alpha"]];
+    col_edge=wxc2mplc(par_plot["col_hist"]);
+    col_panel=list(wxc2mplc(par_plot["col_panel"]))+[par_plot["alpha"]];
+    
     #import pdb; pdb.set_trace();
+    count, bins, patches = plt.hist(xv, np.linspace(xmi, xma, par_mod["k"]+1), color=wxc2mplc(par_plot["col_hist"]), density=True, **kwargs);
     [(p.set_facecolor(col_panel), p.set_edgecolor(col_edge)) for p in patches.get_children()];
     dbin=bins[1]-bins[0];
     nbp=401;
@@ -909,7 +914,7 @@ def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
     cneg=[colorFader(par_plot["col_neghigh"], par_plot["col_neglow"], i/nneg) for i in range(nneg)];
     npos=sum(opar.columns>0);
     cpos=[colorFader(par_plot["col_poslow"], par_plot["col_poshigh"], i/npos) for i in range(npos)];
-    colpar=[par_plot["col_tot"]]+cneg+[par_plot["col_ref"]]+cpos;
+    colpar=[wxc2mplc(par_plot["col_tot"])]+cneg+[wxc2mplc(par_plot["col_ref"])]+cpos;
     #import pdb; pdb.set_trace();
     for i in range(pdf.shape[1]):
         line,=plt.plot(xpm, pdf[:,i], color=colpar[i], linewidth=par_plot["lw"], label=str(opar.columns[i-1]) if i > 0 else "Total"); #, **kwargs);

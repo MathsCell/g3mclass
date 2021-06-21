@@ -558,7 +558,8 @@ def file2data(fn):
         if not dcols[nm]["idtest"] is None:
             iparse.append(dcols[nm]["idtest"]);
         # get query (if any)
-        dqry=dict((i,v[len(nm):].strip("( )")) for i,v in enumerate(cols) if v.startswith(nm+" ") or v.startswith(nm+"(") and not v.endswith("(test)") and not v.endswith("(ref)"));
+        dqry=dict((i,v[len(nm):].strip("( )")) for i,v in enumerate(cols) if (v.startswith(nm+" ") or v.startswith(nm+"(")) and not (v.endswith("(test)") or v.endswith("(ref)")));
+        #print(nm+" dqry=", dqry);
         # check that qry names are unique
         cnt=tls.list2count(dqry.values());
         if len(cnt) < len(dqry):
