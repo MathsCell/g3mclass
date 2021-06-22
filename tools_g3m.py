@@ -13,10 +13,10 @@ nan=np.nan;
 Inf=np.inf;
 
 # translate gmm class to 0-ref class numbers
-cl0br=np.array([-Inf,-2,-1,0,1,Inf]) # breaks for 0-ref classes
-cl0lab=np.array(["down-deeper", "down", "ref", "up", "up-higher"]) # labels for these breaks
+#cl0br=np.array([-Inf,-2,-1,0,1,Inf]) # breaks for 0-ref classes
+#cl0lab=np.array(["down-deeper", "down", "ref", "up", "up-higher"]) # labels for these breaks
 # (confident) cutoff class names to numbers -> cl2i
-cl2i=pa.DataFrame({"ref": 0, "ref-down": 0, "ref-up": 0, "down-deeper": -2, "down": -1, "up": 1, "up-higher": 2, "N/A": nan}, index=[0])
+#cl2i=pa.DataFrame({"ref": 0, "ref-down": 0, "ref-up": 0, "down-deeper": -2, "down": -1, "up": 1, "up-higher": 2, "N/A": nan}, index=[0])
 
 def aff(name, obj, ident=0, f=sys.stdout):
     saveout=sys.stdout
@@ -882,49 +882,6 @@ def gmmcl(x, par):
     cl[:]=par.columns[cl];
     cl.mask=wmax != wmax;
     return({"cl": cl, "w": w, "wmax": wmax});
-def wxc2mplc(c):
-    "Convert wx.Colour to matplotlib colour"
-    return mpl.colors.to_rgb(np.asarray(wx.Colour(c))/255.);
-def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
-    c1=np.asarray(wxc2mplc(c1));
-    c2=np.asarray(wxc2mplc(c2));
-    return mpl.colors.to_hex((1-mix)*c1 + mix*c2);
-def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
-    "Plot histogram of sample 'x' and GMM density plot on the same bins"
-    #print("pp=", par_plot);
-    opar=par[sorted(par.columns)];
-    xv=x[~is_na(x)];
-    xmi=np.min(xv);
-    xma=np.max(xv);
-    col_edge=wxc2mplc(par_plot["col_hist"]);
-    col_panel=list(wxc2mplc(par_plot["col_panel"]))+[par_plot["alpha"]];
-    
-    #import pdb; pdb.set_trace();
-    count, bins, patches = plt.hist(xv, np.linspace(xmi, xma, par_mod["k"]+1), color=wxc2mplc(par_plot["col_hist"]), density=True, **kwargs);
-    [(p.set_facecolor(col_panel), p.set_edgecolor(col_edge)) for p in patches.get_children()];
-    dbin=bins[1]-bins[0];
-    nbp=401;
-    xp=np.linspace(xmi, xma, nbp);
-    dxp=(xma-xmi)/(nbp-1.);
-    cdf=np.hstack(list(opar.loc["a", i]*pnorm(xp, opar.loc["mean", i], opar.loc["sd", i]).reshape((len(xp), 1), order="F") for i in opar.columns));
-    pdf=np.diff(np.hstack((rowSums(cdf), cdf)), axis=0)/dxp;
-    xpm=0.5*(xp[:-1]+xp[1:]);
-    # prepare colors
-    nneg=sum(opar.columns<0);
-    cneg=[colorFader(par_plot["col_neghigh"], par_plot["col_neglow"], i/nneg) for i in range(nneg)];
-    npos=sum(opar.columns>0);
-    cpos=[colorFader(par_plot["col_poslow"], par_plot["col_poshigh"], i/npos) for i in range(npos)];
-    colpar=[wxc2mplc(par_plot["col_tot"])]+cneg+[wxc2mplc(par_plot["col_ref"])]+cpos;
-    #import pdb; pdb.set_trace();
-    for i in range(pdf.shape[1]):
-        line,=plt.plot(xpm, pdf[:,i], color=colpar[i], linewidth=par_plot["lw"], label=str(opar.columns[i-1]) if i > 0 else "Total"); #, **kwargs);
-        lcol=line.get_color();
-        plt.fill_between(xpm, 0, pdf[:,i], color=lcol, alpha=par_plot["alpha"], **kwargs);
-    # x tics
-    plt.tick_params(colors='grey', which='minor');
-    if "set_xticks" in dir(plt):
-        plt.set_xticks(xv, minor=True);
-    plt.legend(loc='upper right', shadow=True); #, fontsize='x-large');
 def roothalf(i1, i2, par, fromleft=True):
     "find intersection and half-height interval of 2 gaussians defined by columns i1 and i2 in par"
     if type(par) != pa.DataFrame:
@@ -1066,37 +1023,38 @@ def rt2model(ref, test, par_mod):
         neglige=(ng > 1) and any(cpar["par"].loc["a",1:] <= athr);
     cpar.update({"par_hist": par_hist});
     # find cutoffs
-    iom=np.argsort(cpar["par"].loc["mean",:]);
+    iom=np.argsort(cpar["par"].loc["mean",:]); # indexes of ordered means
     iref=which(iom == 0)[0];
     cutoff=dict()
     p1=cpar["par"].copy();
     p1.loc["a",:]=1.;
     for i,im in enumerate(iom):
+        if i == 0:
+            continue;
         # precedent class
-        im1=iom[i-1] if i > 0 else nan;
-        if im == 0:
-            next # skip ref class
-        if cpar["par"].loc["mean", 0] > cpar["par"].loc["mean", im]:
-            if i == iref-1:
-                # down shifted class
-                roots=roothalf(im, 0, p1, True);
-                cutoff["downshift"]=roots["mid"];
+        im1=iom[i-1];
+        if i <= iref:
+            # down classes
+            if i == iref:
+                # first down shifted class
+                roots=roothalf(im1, 0, p1, True);
+                cutoff["down-1"]=roots["mid"];
                 cutoff["down_left"]=roots["left"];
                 cutoff["down_right"]=roots["right"];
-            elif i > 0:
-                # down-deeper class
-                cutoff["down-deeper"]=zeroin(lambda x: dgmmn(x, p1)[:, im1] - dgmmn(x, p1)[:, im], p1.loc["mean", im1]-0.5*p1.loc["sd", im1], p1.loc["mean", im]+0.5*p1.loc["sd", im]);
-        if cpar["par"].loc["mean", 0] < cpar["par"].loc["mean", im]:
-            if "upshift" not in cutoff:
-                # up shifted class
+            else:
+                # other down class
+                cutoff["down-"+str(iref-i)]=zeroin(lambda x: dgmmn(x, p1)[:, im1] - dgmmn(x, p1)[:, im], p1.loc["mean", im1]-0.5*p1.loc["sd", im1], p1.loc["mean", im]+0.5*p1.loc["sd", im]);
+        else:
+            # up classes
+            if i == iref+1:
+                # first up shifted class
                 roots=roothalf(0, im, p1, False);
-                cutoff["upshift"]=roots["mid"];
+                cutoff["up-1"]=roots["mid"];
                 cutoff["up_left"]=roots["left"];
                 cutoff["up_right"]=roots["right"];
             else:
-                # up-higher shifted class
-                cutoff["up-higher"]=zeroin(lambda x: dgmmn(x, p1)[:, im1] - dgmmn(x, p1)[:, im], p1.loc["mean", im1]-0.5*p1.loc["sd", im1], p1.loc["mean", im]+0.5*p1.loc["sd", im]);
-                break
+                # other up class
+                cutoff["up-"+str(i-iref)]=zeroin(lambda x: dgmmn(x, p1)[:, im1] - dgmmn(x, p1)[:, im], p1.loc["mean", im1]-0.5*p1.loc["sd", im1], p1.loc["mean", im]+0.5*p1.loc["sd", im]);
     # renumber classes and add class labels
     o=np.argsort(cpar["par"].loc["mean",:]).to_numpy();
     io=o.copy();
@@ -1107,51 +1065,61 @@ def rt2model(ref, test, par_mod):
     cllab=[];
     cbr=[-Inf];
     ccllab=[];
-    if "down-deeper" in cutoff:
-        br.append(cutoff["down-deeper"]);
-        cllab.append("down-deeper");
-        cbr.append(cutoff["down-deeper"]);
-        ccllab.append("down-deeper");
-    if "downshift" in cutoff:
-        br.append(cutoff["downshift"]);
-        cllab.append("down");
-        cbr += [cutoff["down_left"], cutoff["down_right"]];
-        ccllab += ["down", "ref-down"];
+    kdown=sorted([k for k in cutoff if k.startswith("down-")], key=lambda k: int(k[5:]), reverse=True);
+    for k in kdown:
+        br.append(cutoff[k]);
+        cllab.append(k);
+        cbr.append(cutoff[k]);
+        ccllab.append(k);
     cllab.append("ref");
     ccllab.append("ref");
-    if "upshift" in cutoff:
-        br.append(cutoff["upshift"]);
-        cllab.append("up");
-        cbr += [cutoff["up_left"], cutoff["up_right"]];
-        ccllab += ["ref-up", "up"];
-    if "up-higher" in cutoff:
-        br.append(cutoff["up-higher"]);
-        cllab.append("up-higher");
-        cbr.append(cutoff["up-higher"]);
-        ccllab.append("up-higher");
+    kup=sorted([k for k in cutoff if k.startswith("up-")], key=lambda k: int(k[3:]));
+    for k in kup:
+        br.append(cutoff[k]);
+        cllab.append(k);
+        cbr.append(cutoff[k]);
+        ccllab.append(k);
     br.append(Inf);
     cbr.append(Inf);
+    
+    if "down-1" in cutoff:
+        i=ccllab.index("down-1");
+        cbr[i+1]=cutoff["down_left"];
+    if "up-1" in cutoff:
+        i=ccllab.index("up-1");
+        cbr[i]=cutoff["up_right"];
+    
     cutoff["breaks"]=br;
     cutoff["labels"]=cllab;
     cutoff["cbreaks"]=cbr;
     cutoff["clabels"]=ccllab;
     cpar["cutoff"]=cutoff;
     cpar["par_mod"]=par_mod.copy();
+    #import pdb; pdb.set_trace();
     return(cpar);
 def xmod2class(x, cpar):
-    "cpar is a model dict from rt2model(). It is used to classify a vector x. Return a dict with 'classification' DataFrame and cutoff dict"
+    "cpar is a model dict from rt2model(). It is used to classify a vector x. Return a 'classification' DataFrame"
     cla=gmmcl(x, cpar["par"]);
     classification=pa.DataFrame({"x": x, "cl": cla["cl"], "wmax": cla["wmax"]});
-    classification["class_descr"]=pa.DataFrame(cut(classification["cl"], cl0br, cl0lab));
+    #import pdb; pdb.set_trace();
+    #classification["class_descr"]=pa.DataFrame(cut(classification["cl"], cl0br, cl0lab));
+    cl=classification["cl"].copy().astype(object);
+    ine=cl < 0;
+    ipo=cl > 0;
+    i0=cl==0;
+    cl[ine]="down"+cl[ine].astype(int).astype(str);
+    cl[i0]="ref";
+    cl[ipo]="up-"+cl[ipo].astype(int).astype(str);
+    classification["class_descr"]=cl;
     # add classification by cutoff and ccutoff (confident cutoff)
     cutoff=cpar["cutoff"];
-
+    
     clcut=cut(x, cutoff["breaks"], cutoff["labels"]);
     cclcut=cut(x, cutoff["cbreaks"], cutoff["clabels"]);
-    cutnum=cl2i[clcut.filled()];
-    ccutnum=cl2i[cclcut.filled()];
-    classification["cutoff"]=pa.DataFrame(clcut);
-    classification["cutnum"]=cutnum.to_numpy().flatten();
-    classification["confcutoff"]=pa.DataFrame(cclcut);
-    classification["confcutnum"]=ccutnum.to_numpy().flatten();
+    cutnum=cut(x, cutoff["breaks"], sorted(cpar["par"].columns)).astype(object).filled(nan);
+    ccutnum=cut(x, cutoff["cbreaks"], sorted(cpar["par"].columns)).astype(object).filled(nan);
+    classification["cutoff"]=clcut;
+    classification["cutnum"]=cutnum;
+    classification["confcutoff"]=cclcut;
+    classification["confcutnum"]=ccutnum;
     return(classification);

@@ -289,7 +289,7 @@ def OnSave(evt):
                 figure=mpl.figure.Figure(dpi=None, figsize=(8, 6));
                 ax=figure.gca();
                 dc=dcols[nm];
-                tls.histgmm(data.iloc[:,dc["itest"]].values, dm["par"], ax, dm["par_mod"], par_plot) # hist of test
+                histgmm(data.iloc[:,dc["itest"]].values, dm["par"], ax, dm["par_mod"], par_plot) # hist of test
                 ax.set_title(nm);
                 pdf.savefig(figure);
                 #ax.close();
@@ -355,12 +355,13 @@ def OnRemodel(evt):
         else:
             resdf[dtype]={};
             for nm,d in classif.items():
+                ucl=sorted(model[nm]["par"].columns);
                 if dtype == "qry":
                     for nmq,dq in d[dtype].items():
                         vnm=nm+" ("+nmq+")";
-                        resdf[dtype][vnm]=tls.tcol2df(class2tcol(dq));
+                        resdf[dtype][vnm]=tls.tcol2df(class2tcol(dq, ucl));
                 else:
-                    resdf[dtype][nm]=tls.tcol2df(class2tcol(d[dtype]));
+                    resdf[dtype][nm]=tls.tcol2df(class2tcol(d[dtype], ucl));
     timeme("resdf");
     if dogui:
         for tab in ("sw_data", "sw_model", "sw_test", "sw_ref", "sw_qry", "sw_plot"):
@@ -407,6 +408,9 @@ def OnReplot(evt):
     for nm,dm in model.items():
         m2plot(nm, dm, nb);
     if not evt is None:
+        w,h=gui.mainframe.GetSize();
+        gui.mainframe.SetSize(w+1,h);
+        wx.CallAfter(gui.mainframe.SetSize, w,h);
         gui.nb.SetSelection(lab2ip(gui.nb, "Plots")[0]);
 def OnSlider(evt):
     "Slider for modeling parameters was moved"
@@ -485,7 +489,7 @@ def m2plot(nm, dm, nb):
     toolbar.Realize();
     ax=figure.gca();
     dc=dcols[nm];
-    tls.histgmm(data.iloc[:,dc["itest"]].values, dm["par"], ax, dm["par_mod"], par_plot) # hist of test
+    histgmm(data.iloc[:,dc["itest"]].values, dm["par"], ax, dm["par_mod"], par_plot) # hist of test
     ax.set_title(nm);
     sizer=wx.BoxSizer(wx.VERTICAL);
     sizer.Add(canvas, 1, wx.EXPAND);
@@ -654,12 +658,13 @@ def dclass(data, dcols, model):
             "qry": dict((nmq, tls.xmod2class(data.iloc[:,dq["i"]].values, model[nm])) for nmq,dq in dc["qry"].items())
         };
     return(res);
-def class2tcol(d):
+def class2tcol(d, ucl):
     "Format classification in d in tuple-column collection"
     # prepare text table
     x=d["x"];
     tcol=[("x", x)];
     # add class & repartition
+    #ucl=sorted(set(tls.na_omit(d["cl"])));
     for cl,clname in (("cl", "proba"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
         #import pdb; pdb.set_trace();
         tcol.append((clname, []));
@@ -670,7 +675,7 @@ def class2tcol(d):
         vcl[i]=vcl[i].astype(int);
         tcol.append(("class", vcl));
         #import pdb; pdb.set_trace();
-        ucl=np.sort(tls.na_omit(list(set(vcl)))).astype(int);
+        
         dstat={"x": x.describe().astype(object)};
         for icl in ucl:
             xcl=x[tls.which(vcl==icl)];
@@ -716,6 +721,49 @@ def lab2ip(nb, lab):
         if lab == nb.GetPageText(i):
             return((i,gui.nb.GetPage(i)));
     return((None,None));
+def wxc2mplc(c):
+    "Convert wx.Colour to matplotlib colour"
+    return mpl.colors.to_rgb(np.asarray(wx.Colour(c))/255.);
+def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
+    c1=np.asarray(wxc2mplc(c1));
+    c2=np.asarray(wxc2mplc(c2));
+    return mpl.colors.to_hex((1-mix)*c1 + mix*c2);
+def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
+    "Plot histogram of sample 'x' and GMM density plot on the same bins"
+    #print("pp=", par_plot);
+    opar=par[sorted(par.columns)];
+    xv=x[~tls.is_na(x)];
+    xmi=np.min(xv);
+    xma=np.max(xv);
+    col_edge=wxc2mplc(par_plot["col_hist"]);
+    col_panel=list(wxc2mplc(par_plot["col_panel"]))+[par_plot["alpha"]];
+    
+    #import pdb; pdb.set_trace();
+    count, bins, patches = plt.hist(xv, np.linspace(xmi, xma, par_mod["k"]+1), color=wxc2mplc(par_plot["col_hist"]), density=True, **kwargs);
+    [(p.set_facecolor(col_panel), p.set_edgecolor(col_edge)) for p in patches.get_children()];
+    dbin=bins[1]-bins[0];
+    nbp=401;
+    xp=np.linspace(xmi, xma, nbp);
+    dxp=(xma-xmi)/(nbp-1.);
+    cdf=np.hstack(list(opar.loc["a", i]*tls.pnorm(xp, opar.loc["mean", i], opar.loc["sd", i]).reshape((len(xp), 1), order="F") for i in opar.columns));
+    pdf=np.diff(np.hstack((tls.rowSums(cdf), cdf)), axis=0)/dxp;
+    xpm=0.5*(xp[:-1]+xp[1:]);
+    # prepare colors
+    nneg=sum(opar.columns<0);
+    cneg=[colorFader(par_plot["col_neghigh"], par_plot["col_neglow"], i/nneg) for i in range(nneg)];
+    npos=sum(opar.columns>0);
+    cpos=[colorFader(par_plot["col_poslow"], par_plot["col_poshigh"], i/npos) for i in range(npos)];
+    colpar=[wxc2mplc(par_plot["col_tot"])]+cneg+[wxc2mplc(par_plot["col_ref"])]+cpos;
+    #import pdb; pdb.set_trace();
+    for i in range(pdf.shape[1]):
+        line,=plt.plot(xpm, pdf[:,i], color=colpar[i], linewidth=par_plot["lw"], label=str(opar.columns[i-1]) if i > 0 else "Total"); #, **kwargs);
+        lcol=line.get_color();
+        plt.fill_between(xpm, 0, pdf[:,i], color=lcol, alpha=par_plot["alpha"], **kwargs);
+    # x tics
+    plt.tick_params(colors='grey', which='minor');
+    if "set_xticks" in dir(plt):
+        plt.set_xticks(xv, minor=True);
+    plt.legend(loc='upper right', shadow=True); #, fontsize='x-large');
 def usage():
     print(__doc__);
 def make_gui():
@@ -764,6 +812,8 @@ def main():
             assert False, "unhandled option";
     if dogui:
         make_gui();
+    else:
+        gui.app=wx.App(False); # for wx.Colour converters in pdf
     fdata=args[0] if len(args) else "";
     if fdata and fdata.lower()[-4:] != ".tsv":
         fdata+=".tsv";
