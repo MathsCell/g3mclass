@@ -43,6 +43,9 @@ import wx.html;
 from wx.lib.wordwrap import wordwrap;
 import wx.lib.mixins.inspection as wit;
 import wx.lib.colourdb;
+#from wx.lib.agw.flatnotebook import FlatNotebook as wx_nb;
+wx_nb=wx.Notebook;
+
 import matplotlib as mpl;
 from matplotlib.backends.backend_wxagg import (
     FigureCanvasWxAgg as FigureCanvas,
@@ -73,6 +76,52 @@ def timeme(s="", dig=2):
 TIMEME=False;
 
 ## custom classes
+class wx_nbl(wx.Panel):
+    "replace notebook with pages selected in a list"
+    def __init__(self, *args, **kwargs):
+        wx.Panel.__init__(self, *args, **kwargs);  # main container for list and pages
+        self.lbox=wx.ListBox(self, style=wx.LB_SINGLE);
+        self.Bind(wx.EVT_LISTBOX, self.OnLbox, self.lbox);
+        self.panel=wx.Panel(self);
+        #self.panel.SetPosition((0, self.lbox.GetSize()[1]));
+        self.pages=[];
+        sizer=wx.BoxSizer(wx.VERTICAL);
+        sizer.Add(self.lbox, 0, wx.ALL | wx.ALIGN_CENTER, border=5);
+        sizer.Add(self.panel, 1, wx.EXPAND);
+        self.SetSizer(sizer);
+        self.panel.Bind(wx.EVT_SIZE, self.OnSize);
+        self.Fit();
+        w,h=self.GetSize();
+        self.SetSize(w,h+1);
+        self.SetSize(w,h);
+    def OnLbox(self, evt):
+        isel=self.lbox.GetSelection();
+        w,h=self.GetSize();
+        self.SetSize(w,h+1);
+        self.SetSize(w,h);
+        #print("lbox: selected", isel);
+        #print("pos=", self.panel.GetPosition());
+        #print("sz=", self.panel.GetSize());
+        # update pos and size then hide
+        [(pg.SetPosition(self.panel.GetPosition()), pg.SetSize(self.panel.GetSize()), pg.Hide()) for pg in self.pages];
+        # show selected page
+        self.pages[isel].Show();
+    def AddPage(self, pg, nm):
+        self.lbox.InsertItems([nm], self.lbox.Count);
+        self.pages.append(pg);
+        self.lbox.SetSelection(self.lbox.Count-1);
+        self.OnLbox(None);
+    def OnSize(self, evt):
+        evt.Skip();
+        sz=self.panel.GetSize();
+        [pg.SetSize(sz) for pg in self.pages];
+    def GetPageCount(self):
+        return self.lbox.Count;
+    def DeletePage(self, i):
+        if i < self.lbox.Count:
+            self.pages[i].Destroy();
+            del(self.pages[i]);
+            self.lbox.Delete(i);
 class df2grid(wx.grid.Grid):
     def __init__(self, parent, df, *args, **kwargs):
         #import pdb; pdb.set_trace();
@@ -366,14 +415,9 @@ def OnRemodel(evt):
     if dogui:
         for tab in ("sw_data", "sw_model", "sw_test", "sw_ref", "sw_qry", "sw_plot"):
             gtab=getattr(gui, tab);
-            if False and "grid" in dir(gtab):
-                # destroy the previous grid
-                gtab.grid.Destroy();
-                gtab.SetVirtualSize((0, 0));
-                delattr(gtab, "grid");
             if tab == "sw_data":
                 grid=df2grid(gtab, data);
-            elif tab in ("sw_model", "sw_test", "sw_ref", "sw_qry", "sw_plot"):
+            else:
                 dtype=tab[3:];
                 # remove previous sub-pages and create one page per marker
                 nb=getattr(gui, "nb_"+dtype);
@@ -462,20 +506,10 @@ def ToDo(evt):
                          wx.OK | wx.ICON_INFORMATION);
     dlg.ShowModal();
     dlg.Destroy();
-def d2grid(nm, df, nb, lock=None):
-    #print("nm=", nm, "; nb=", nb, "lock=", lock);
-    if not lock is None:
-        #print(nm+" waiting for lock1");
-        lock.acquire();
-        #print(nm+" lock1 is aquired");
+def d2grid(nm, df, nb):
     gtab2=wx.Panel(nb);
     nb.AddPage(gtab2, nm);
     #import pdb; pdb.set_trace();
-    if not lock is None:
-        time.sleep(0.1);
-        lock.release();
-        #print(nm+" lock1 is released");
-    #gtab2.SetSizer(wx.BoxSizer(wx.VERTICAL));
     gtab2.SetBackgroundColour("WHITE");
     gtab2.Bind(wx.EVT_SIZE, OnSize);
     grid2=df2grid(gtab2, df);

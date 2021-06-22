@@ -17,7 +17,7 @@ wx.Frame
 		callmeth
 			Append(gui.file_menu, '&File           ')
 			Append(gui.help_menu, '&Help')
-	wx.Notebook
+	wx_nb
 		varname	nb
 		param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 		wx.html.HtmlWindow
@@ -260,7 +260,7 @@ wx.Frame
 		wx.Panel
 			varname	sw_qry
 			param	.parent
-			wx.Notebook
+			wx_nbl
 				varname	nb_qry
 				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 			callmeth
