@@ -598,7 +598,8 @@ def cut(x, bins, labels=None):
     #import pdb; pdb.set_trace();
     if nlab > 0:
         if nlab != len(bins)-1:
-            raise Exception("len(labels) must be equal to len(labels)-1");
+            #import pdb; pdb.set_trace();
+            raise Exception("len(labels) must be equal to len(bins)-1");
         i=np.asarray(labels)[i];
     i=nma.asarray(i);
     i.mask=is_na(x);
@@ -616,6 +617,9 @@ def na_omit(x):
     return(xx[~is_na(xx)]);
 def starfun(t):
     return(t[0](*(t[1:])));
+def oset(x):
+    "returns a dict with keys in x and None in values"
+    return dict((v, None) for v in x);
 # EM part
 erfv=np.vectorize(erf);
 def dnorm(x, mean=np.array(0.), sd=np.array(1.)):
@@ -1043,7 +1047,7 @@ def rt2model(ref, test, par_mod):
                 cutoff["down_right"]=roots["right"];
             else:
                 # other down class
-                cutoff["down-"+str(iref-i)]=zeroin(lambda x: dgmmn(x, p1)[:, im1] - dgmmn(x, p1)[:, im], p1.loc["mean", im1]-0.5*p1.loc["sd", im1], p1.loc["mean", im]+0.5*p1.loc["sd", im]);
+                cutoff["down-"+str(iref-i-1)]=zeroin(lambda x: dgmmn(x, p1)[:, im1] - dgmmn(x, p1)[:, im], p1.loc["mean", im1]-0.5*p1.loc["sd", im1], p1.loc["mean", im]+0.5*p1.loc["sd", im]);
         else:
             # up classes
             if i == iref+1:
@@ -1060,6 +1064,9 @@ def rt2model(ref, test, par_mod):
     io=o.copy();
     io[o]=np.arange(len(o));
     cpar["par"].columns=io-io[0];
+    #print("classes=", cpar["par"].columns);
+    #if -2 in cpar["par"].columns:
+    #    import pdb; pdb.set_trace();
     #import pdb; pdb.set_trace();
     br=[-Inf];
     cllab=[];

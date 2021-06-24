@@ -32,6 +32,7 @@ wx.Frame
 			varname	sw_data
 			param	.parent
 			callmeth
+				SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
 				Bind(wx.EVT_SIZE, OnSize)
 				SetSizer(wx.BoxSizer(wx.VERTICAL))
 		wx.ScrolledWindow
@@ -283,10 +284,10 @@ wx.Frame
 			AddPage(gui.sw_data, "Data")
 			AddPage(gui.sw_param, "Parameters")
 			AddPage(gui.sw_model, "Model")
+			AddPage(gui.sw_plot, "Model plots")
 			AddPage(gui.sw_test, "Test class")
 			AddPage(gui.sw_ref, "Ref class")
 			AddPage(gui.sw_qry, "Query class")
-			AddPage(gui.sw_plot, "Plots")
 	callmeth
 		SetMenuBar(gui.menubar)
 		CreateStatusBar()

@@ -81,6 +81,7 @@ class wx_nbl(wx.Panel):
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs);  # main container for list and pages
         self.lbox=wx.ListBox(self, style=wx.LB_SINGLE);
+        self.lbox.Hide();
         self.Bind(wx.EVT_LISTBOX, self.OnLbox, self.lbox);
         self.panel=wx.Panel(self);
         #self.panel.SetPosition((0, self.lbox.GetSize()[1]));
@@ -90,6 +91,7 @@ class wx_nbl(wx.Panel):
         sizer.Add(self.panel, 1, wx.EXPAND);
         self.SetSizer(sizer);
         self.panel.Bind(wx.EVT_SIZE, self.OnSize);
+        self.panel.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND));
         self.Fit();
         w,h=self.GetSize();
         self.SetSize(w,h+1);
@@ -110,6 +112,7 @@ class wx_nbl(wx.Panel):
         self.lbox.InsertItems([nm], self.lbox.Count);
         self.pages.append(pg);
         self.lbox.SetSelection(self.lbox.Count-1);
+        self.lbox.Show();
         self.OnLbox(None);
     def OnSize(self, evt):
         evt.Skip();
@@ -122,6 +125,8 @@ class wx_nbl(wx.Panel):
             self.pages[i].Destroy();
             del(self.pages[i]);
             self.lbox.Delete(i);
+        if self.lbox.Count == 0:
+            self.lbox.Hide();
 class df2grid(wx.grid.Grid):
     def __init__(self, parent, df, *args, **kwargs):
         #import pdb; pdb.set_trace();
@@ -166,8 +171,6 @@ class df2grid(wx.grid.Grid):
         if not parent.GetSizer():
             parent.SetSizer(wx.BoxSizer(wx.VERTICAL));
         parent.GetSizer().Add(self, 1, wx.EXPAND);
-        #self.ShowScrollbars(True, True);
-
 class wx_FloatSlider(wx.Slider):
     def __init__(self, parent, value=0, minValue=0., maxValue=1., scale=100, frmt="%.2f", **kwargs):
         self._value = value;
@@ -211,7 +214,6 @@ class wx_FloatSlider(wx.Slider):
 with open(os.path.join(diri, "g3mclass", "version.txt"), "r") as fp:
     version=fp.read()
 # program name
-#me=os.path.basename(sys.argv[0]);
 me="G3Mclass";
 # message in welcome tab
 with open(os.path.join(diri, "g3mclass", "welcome.html"), "r") as fp:
@@ -228,6 +230,7 @@ dogui=False;
 fdata=""; # name of data file
 data=None;
 model=None;
+ids=None;
 prev_res_saved=True;
 dcols={};
 resdf=None; # dict for formatted output in .tsv
@@ -451,7 +454,7 @@ def OnReplot(evt):
         nb.DeletePage(i);
     for nm,dm in model.items():
         m2plot(nm, dm, nb);
-    if not evt is None:
+    if evt is not None:
         w,h=gui.mainframe.GetSize();
         gui.mainframe.SetSize(w+1,h);
         wx.CallAfter(gui.mainframe.SetSize, w,h);
@@ -460,7 +463,7 @@ def OnSlider(evt):
     "Slider for modeling parameters was moved"
     global par_mod;
     #print("evt=", evt);
-    if not data is None :
+    if data is not None :
         gui.btn_remod.Enable();
     par_mod["k"]=round(gui.sl_hbin.GetValue());
     #print("sl_hbin.GetValue()=", gui.sl_hbin.GetValue());
@@ -479,7 +482,7 @@ def OnCheck(evt):
     "a checkbow was checked/unchecked"
     win=evt.GetEventObject();
     par_mod["k_var"]=win.IsChecked();
-    if not data is None :
+    if data is not None :
         gui.btn_remod.Enable();
 def OnTabChange(evt):
     #import pdb; pdb.set_trace();
@@ -551,13 +554,15 @@ def vhbin(x):
 ## working functions
 def file2data(fn):
     "Read file name 'fn' into data.frame"
-    global data, dcols;
+    global data, dcols, ids;
     try:
         data=pa.read_csv(fn, header=None, sep="\t");
     except:
         err_mes("file '"+fn+"' could not be read");
         return;
     cols=[str(v).strip() if v==v else "" for v in data.iloc[0, :]];
+    data.columns=cols;
+    data=data.iloc[1:,:];
     iparse=[]; # collect parsed columns
     # search for (ref) and (test)
     suff="(ref)";
@@ -591,9 +596,9 @@ def file2data(fn):
         dcols[nm]["idref"]=iref-1 if iref > 0 and cols[iref-1].lower() == "id" else None;
         dcols[nm]["idtest"]=itest-1 if itest > 0 and cols[itest-1].lower() == "id" else None;
         iparse.append(itest);
-        if not dcols[nm]["idref"] is None:
+        if dcols[nm]["idref"] is not None:
             iparse.append(dcols[nm]["idref"]);
-        if not dcols[nm]["idtest"] is None:
+        if dcols[nm]["idtest"] is not None:
             iparse.append(dcols[nm]["idtest"]);
         # get query (if any)
         dqry=dict((i,v[len(nm):].strip("( )")) for i,v in enumerate(cols) if (v.startswith(nm+" ") or v.startswith(nm+"(")) and not (v.endswith("(test)") or v.endswith("(ref)")));
@@ -609,27 +614,68 @@ def file2data(fn):
             iparse.append(iq);
             iid=iq-1 if iq > 0 and cols[iq-1].lower() == "id" else None;
             dqry[nmq]["id"]=iid;
-            if not iid is None:
+            if iid is not None:
                 iparse.append(iid);
         dcols[nm]["qry"]=dqry;
-    # check that all columns are useful
+    # check that all columns are used
     iparse=set(iparse);
     for i,nm in enumerate(cols):
         if nm and i not in iparse:
             warn_mes("Column '"+nm+"' is not categorized in any of: ref, test, query or id of one of these");
     #tls.aff("dcols", dcols);
+    # gather ids
+    ids=dict();
+    idcom=dict(); # common id in all columns
+    for nm,d in dcols.items():
+        ids[nm]=dict();
+        for idt in ("idref", "idtest"):
+            icol=d[idt];
+            if icol is None:
+                continue;
+            idh=data.iloc[:,icol]; # id here
+            iu,ic=np.unique(idh[idh == idh], return_counts=True);
+            if np.max(ic) > 1:
+                err_mes("ID column "+str(icol+1)+" in '"+os.path.basename(fn)+"' has non unique entries");
+                return;
+            ids[nm][idt[2:]]=idh;
+            idcom=tls.oset(idh) if not idcom else tls.oset(idcom.keys() & tls.oset(idh).keys());
+        if d["qry"]:
+            ids[nm]["qry"]=dict();
+            for nmq,dq in d["qry"].items():
+                icol=dq["id"];
+                if icol is None:
+                    continue;
+                idh=data.iloc[:,icol];
+                iu,ic=np.unique(idh[idh == idh], return_counts=True);
+                if np.max(ic) > 1:
+                    err_mes("ID column "+str(icol+1)+" in '"+os.path.basename(fn)+"' has non unique entries");
+                    return;
+                ids[nm]["qry"][nmq]=idh;
+                idcom=tls.oset(idh) if not idcom else tls.oset(idcom.keys() & tls.oset(idh).keys());
+            if not ids[nm]["qry"]:
+                del(ids[nm]["qry"]);
+        if not ids[nm]:
+            del(ids[nm]);
+    # replace whole idh by indexes in idcom
+    if idcom:
+        #print("idcom=", idcom);
+        idcom=np.asarray(idcom.keys(), dtype=str);
+        for nm,d in ids.items():
+            for idt in d.keys():
+                if idt != "qry":
+                    d[idt]=tls.which(np.in1d(d[idt], idcom));
+                else:
+                    for nmq in d[idt].keys():
+                        d[idt][nmq]=tls.which(np.in1d(d[idt][nmq], idcom));
+    #print("ids=", ids);
     if dogui:
-        #wait=wx.BusyCursor();
         gui.mainframe.SetCursor(wx.Cursor(wx.CURSOR_WAIT));
-    data.columns=cols;
-    data=data.iloc[1:,:];
     # convert to float
     for nm,dc in dcols.items():
         for i in [dc["iref"], dc["itest"], *[dq["i"] for nmq,dq in dc["qry"].items()]]:
             data.iloc[:,i]=data.iloc[:,i].to_numpy(float);
     OnRemodel(None);
     if dogui:
-        #del(wait);
         gui.mainframe.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
 def data2model(data, dcols):
     "Learn models for each var in 'data' described in 'dcols'. Return a dict with models pointed by varname"
