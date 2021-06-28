@@ -223,8 +223,9 @@ with open(os.path.join(diri, "g3mclass", "licence_en.txt"), "r") as fp:
     licenseText=fp.read();
 
 ## global vars
+nan=np.nan;
+Inf=np.inf;
 nproc=os.cpu_count();
-#lock=threading.Lock();
 gui=wx.Object();
 dogui=False;
 fdata=""; # name of data file
@@ -566,9 +567,10 @@ def file2data(fn):
     iparse=[]; # collect parsed columns
     # search for (ref) and (test)
     suff="(ref)";
-    dcols=dict((i, re.sub(tls.escape(suff, "()")+"$", "", v).strip()) for i,v in enumerate(cols) if v.endswith(suff))
+    dcols=dict((i, re.sub(tls.escape(suff, "()")+"$", "", v).strip()) for i,v in enumerate(cols) if v.endswith(suff) and not re.match("^id *\(ref\)$", v));
+    #import pdb; pdb.set_trace();
     if not dcols:
-        err_mes("not found '"+suff+"' in column names");
+        err_mes("not found markers '"+suff+"' in column names");
         return;
     # check that varnames are unique and non empty
     cnt=tls.list2count(dcols.values());
@@ -578,7 +580,7 @@ def file2data(fn):
         return;
     iparse += list(dcols.keys());
     
-    # build dcols: varname => dict:iref, itest, idref, idtest, qry_dict). id(ref|test) can be None, qry_dict can be empty
+    # build dcols: varname => dict:iref, itest, qry_dict). qry_dict can be empty
     dcols=dict((v,k) for k,v in dcols.items());
     for nm in dcols.keys():
         # check that every ref has its test pair
@@ -593,13 +595,7 @@ def file2data(fn):
             iref=dcols[nm];
             itest=itest[0];
             dcols[nm]={"iref": iref, "itest": itest};
-        dcols[nm]["idref"]=iref-1 if iref > 0 and cols[iref-1].lower() == "id" else None;
-        dcols[nm]["idtest"]=itest-1 if itest > 0 and cols[itest-1].lower() == "id" else None;
         iparse.append(itest);
-        if dcols[nm]["idref"] is not None:
-            iparse.append(dcols[nm]["idref"]);
-        if dcols[nm]["idtest"] is not None:
-            iparse.append(dcols[nm]["idtest"]);
         # get query (if any)
         dqry=dict((i,v[len(nm):].strip("( )")) for i,v in enumerate(cols) if (v.startswith(nm+" ") or v.startswith(nm+"(")) and not (v.endswith("(test)") or v.endswith("(ref)")));
         #print(nm+" dqry=", dqry);
@@ -617,57 +613,44 @@ def file2data(fn):
             if iid is not None:
                 iparse.append(iid);
         dcols[nm]["qry"]=dqry;
+    #tls.aff("dcols", dcols);
+    # gather ids. id (ref) and id (test) are unique. id_qry (name) may be multiple
+    ids=dict();
+    for suff in ("ref", "test"):
+        ids[suff]=dict((i, None) for i,v in enumerate(cols) if re.match("id *\("+suff+"\)$", str(v)));
+        if len(ids[suff]) > 1:
+            err_mes("Column 'id ("+suff+") is not unique, cf. columns: "+", ".join(str(i+1) for i in ids[suff].keys()));
+        if ids[suff]:
+            icol=list(ids[suff].keys())[0];
+            idh=data.iloc[:,icol]; # id here
+            iu,ic=np.unique(idh[idh == idh], return_counts=True);
+            if np.max(ic) > 1:
+                err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+os.path.basename(fn)+"' has non unique entries. Each ID must be unique.");
+                return;
+            ids[suff]=idh;
+            iparse.append(icol);
+    # each id_qry (name) is relative to next qrys till next id_qry is found
+    ids["qry"]=dict((v[6:].strip("( )"), i) for i,v in enumerate(cols) if v.startswith("id_qry"));
+    # collect qry icols for each block
+    ib=list(ids["qry"].values());
+    nb=len(ids["qry"]);
+    for i,nmb in enumerate(ids["qry"].keys()):
+        icol=ids["qry"][nmb];
+        iparse.append(icol);
+        idh=data.iloc[:,icol]; # id here
+        iu,ic=np.unique(idh[idh == idh], return_counts=True);
+        if np.max(ic) > 1:
+            err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+os.path.basename(fn)+"' has non unique entries. Each ID must be unique.");
+            return;
+        iend=ib[i]+1 if i < nb-1 else len(cols);
+        nmqs=[(nmm, nmq) for nmm,d in dcols.items() for nmq,dq in d["qry"].items() if dq["i"] > icol and dq["i"] <= iend]; # collection of tuples (marker_name; qry_name)
+        ids["qry"][nmb]=nmqs;
+    #print("ids=", ids);
     # check that all columns are used
     iparse=set(iparse);
     for i,nm in enumerate(cols):
         if nm and i not in iparse:
             warn_mes("Column '"+nm+"' is not categorized in any of: ref, test, query or id of one of these");
-    #tls.aff("dcols", dcols);
-    # gather ids
-    ids=dict();
-    idcom=dict(); # common id in all columns
-    for nm,d in dcols.items():
-        ids[nm]=dict();
-        for idt in ("idref", "idtest"):
-            icol=d[idt];
-            if icol is None:
-                continue;
-            idh=data.iloc[:,icol]; # id here
-            iu,ic=np.unique(idh[idh == idh], return_counts=True);
-            if np.max(ic) > 1:
-                err_mes("ID column "+str(icol+1)+" in '"+os.path.basename(fn)+"' has non unique entries");
-                return;
-            ids[nm][idt[2:]]=idh;
-            idcom=tls.oset(idh) if not idcom else tls.oset(idcom.keys() & tls.oset(idh).keys());
-        if d["qry"]:
-            ids[nm]["qry"]=dict();
-            for nmq,dq in d["qry"].items():
-                icol=dq["id"];
-                if icol is None:
-                    continue;
-                idh=data.iloc[:,icol];
-                iu,ic=np.unique(idh[idh == idh], return_counts=True);
-                if np.max(ic) > 1:
-                    err_mes("ID column "+str(icol+1)+" in '"+os.path.basename(fn)+"' has non unique entries");
-                    return;
-                ids[nm]["qry"][nmq]=idh;
-                idcom=tls.oset(idh) if not idcom else tls.oset(idcom.keys() & tls.oset(idh).keys());
-            if not ids[nm]["qry"]:
-                del(ids[nm]["qry"]);
-        if not ids[nm]:
-            del(ids[nm]);
-    # replace whole idh by indexes in idcom
-    if idcom:
-        #print("idcom=", idcom);
-        idcom=np.asarray(idcom.keys(), dtype=str);
-        for nm,d in ids.items():
-            for idt in d.keys():
-                if idt != "qry":
-                    d[idt]=tls.which(np.in1d(d[idt], idcom));
-                else:
-                    for nmq in d[idt].keys():
-                        d[idt][nmq]=tls.which(np.in1d(d[idt][nmq], idcom));
-    #print("ids=", ids);
     if dogui:
         gui.mainframe.SetCursor(wx.Cursor(wx.CURSOR_WAIT));
     # convert to float

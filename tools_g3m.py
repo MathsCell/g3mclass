@@ -1047,7 +1047,7 @@ def rt2model(ref, test, par_mod):
                 cutoff["down_right"]=roots["right"];
             else:
                 # other down class
-                cutoff["down-"+str(iref-i-1)]=zeroin(lambda x: dgmmn(x, p1)[:, im1] - dgmmn(x, p1)[:, im], p1.loc["mean", im1]-0.5*p1.loc["sd", im1], p1.loc["mean", im]+0.5*p1.loc["sd", im]);
+                cutoff["down-"+str(iref-i+1)]=zeroin(lambda x: dgmmn(x, p1)[:, im1] - dgmmn(x, p1)[:, im], p1.loc["mean", im1]-0.5*p1.loc["sd", im1], p1.loc["mean", im]+0.5*p1.loc["sd", im]);
         else:
             # up classes
             if i == iref+1:
