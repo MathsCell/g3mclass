@@ -231,6 +231,7 @@ dogui=False;
 fdata=""; # name of data file
 data=None;
 model=None;
+classif=None;
 ids=None;
 prev_res_saved=True;
 dcols={};
@@ -385,7 +386,7 @@ def OnSize(evt):
     return;
 def OnRemodel(evt):
     "Model parameters changed => relearn and put results in gui"
-    global resdf, prev_res_saved, model;
+    global resdf, prev_res_saved, model, classif;
     timeme("OnRemodel");
     if dogui:
         gui.btn_remod.Disable();
@@ -450,6 +451,7 @@ def OnReplot(evt):
     "replot in tab Plots"
     if model is None:
         return;
+    # Model plots
     nb=gui.nb_plot;
     for i in range(nb.GetPageCount()-1, -1, -1):
         nb.DeletePage(i);
@@ -460,6 +462,10 @@ def OnReplot(evt):
         gui.mainframe.SetSize(w+1,h);
         wx.CallAfter(gui.mainframe.SetSize, w,h);
         gui.nb.SetSelection(lab2ip(gui.nb, "Plots")[0]);
+    # Heatmaps
+    for htype in ("ref", "test", "qry"):
+        tab=getattr(gui, "sw_heat_"+htype);
+        cl2heat(htype, tab, classif);
 def OnSlider(evt):
     "Slider for modeling parameters was moved"
     global par_mod;
@@ -533,6 +539,93 @@ def m2plot(nm, dm, nb):
     sizer.Add(canvas, 1, wx.EXPAND);
     sizer.Add(toolbar, 0, wx.LEFT | wx.EXPAND);
     gtab.SetSizer(sizer);
+def cl2heat(htype, pg, classif):
+    if len(ids[htype]) == 0:
+        return;
+    # clear previous plots
+    for ch in pg.GetChildren():
+        ch.Destroy();
+    figure=mpl.figure.Figure(dpi=None, figsize=(len(ids[htype])*0.3+1, 12));
+    canvas=FigureCanvas(pg, -1, figure);
+    toolbar=NavigationToolbar(canvas);
+    toolbar.Realize();
+    ax=[];
+    if htype != "qry":
+        ipl=0;
+        for ctype, item in (("proba", "cl"), ("cutoff", "cutnum"), ("cutoff with confidence", "confcutnum")):
+            ipl += 1;
+            # extract classes of given type
+            pcl=pa.DataFrame();
+            cls=[]; # all classes in this htype
+            for nm,d in classif.items():
+                co=model[nm]["par"].columns;
+                vmin=min(co);
+                vmax=max(co);
+                cls += co.to_list();
+                pcl[nm]=d[htype][item];
+            nr=pcl.shape[0];
+            nid=len(ids[htype]);
+            if nr > nid:
+                pcl=pcl.iloc[:nid,:];
+                nr=nid;
+            pcl.index=ids[htype][:nr];
+            # valid, i.e. non all empty rows
+            dn=pcl.to_numpy();
+            irv=(dn == dn).any(1)*(~tls.is_na(ids[htype][:nr]));
+            pcl=pcl.iloc[irv,:];
+            
+            # prepare cmap
+            cls=np.sort(list(set(cls)));
+            clist, cmap=cl2cmap(cls, par_plot);
+            # normalizer
+            norm_bins=cls+0.5;
+            norm_bins=np.insert(norm_bins, 0, np.min(norm_bins)-1.0);
+            ## Make normalizer
+            norm=mpl.colors.BoundaryNorm(norm_bins, len(cls), clip=True);
+            ax.append(figure.add_subplot(310+ipl));
+            im=heatmap(pcl, ax[-1], collab=(ipl == 1), cmap=cmap, norm=norm);
+            ax[-1].set_title(ctype);
+        figure.colorbar(im, ax=ax, ticks=cls);
+    sizer=wx.BoxSizer(wx.VERTICAL);
+    sizer.Add(canvas, 0);
+    sizer.Add(toolbar, 0);
+    pg.SetSizer(sizer);
+def heatmap(data, ax, collab=True, **kwargs):
+    """
+    Create a heatmap from a pandas DataFrame.
+
+    Parameters
+    ----------
+    data
+        A dataframe of shape (nr, nc).
+    ax
+        A `matplotlib.axes.Axes` instance to which the heatmap is plotted.  If
+        not provided, use current axes.
+    **kwargs
+        All other arguments are forwarded to `imshow`.
+    """
+
+    # Plot the heatmap
+    im = ax.imshow(data.to_numpy().transpose().astype(float), **kwargs);
+    #print("vmin=", kwargs["vmin"], "vmax=", kwargs["vmax"])
+    # We want to show all ticks...
+    ax.set_xticks(np.arange(data.shape[0]));
+    ax.set_yticks(np.arange(data.shape[1]));
+    # ... and label them with the respective list entries.
+    ax.set_yticklabels(data.columns);
+    # Let the horizontal axes labeling appear on top.
+    ax.tick_params(top=True, bottom=False,
+                   labeltop=True, labelbottom=False);
+    if collab:
+        ax.set_xticklabels(data.index);
+
+        # Rotate the tick labels and set their alignment.
+        plt.setp(ax.get_xticklabels(), rotation=-60, ha="right",
+                 rotation_mode="anchor")
+    else:
+        ax.set_xticklabels("");
+    return im;
+        
 def err_mes(mes):
     "Show error dialog in GUI mode or raise exception"
     if dogui:
@@ -627,7 +720,7 @@ def file2data(fn):
             if np.max(ic) > 1:
                 err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+os.path.basename(fn)+"' has non unique entries. Each ID must be unique.");
                 return;
-            ids[suff]=idh;
+            ids[suff]=idh[~tls.is_na_end(idh)];
             iparse.append(icol);
     # each id_qry (name) is relative to next qrys till next id_qry is found
     ids["qry"]=dict((v[6:].strip("( )"), i) for i,v in enumerate(cols) if v.startswith("id_qry"));
@@ -791,6 +884,16 @@ def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0)
     c1=np.asarray(wxc2mplc(c1));
     c2=np.asarray(wxc2mplc(c2));
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2);
+def cl2cmap(cls, par_plot):
+    "create a list of colors corresponding to classes in cls. Return the color list and cmap."
+    cls=np.sort(cls);
+    # prepare colors
+    nneg=sum(cls<0);
+    cneg=[colorFader(par_plot["col_neghigh"], par_plot["col_neglow"], i/nneg) for i in range(nneg)];
+    npos=sum(cls>0);
+    cpos=[colorFader(par_plot["col_poslow"], par_plot["col_poshigh"], i/npos) for i in range(npos)];
+    clist=cneg+[wxc2mplc(par_plot["col_ref"])]+cpos;
+    return (clist, mpl.colors.LinearSegmentedColormap.from_list('clist', clist, len(clist)));
 def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
     "Plot histogram of sample 'x' and GMM density plot on the same bins"
     #print("pp=", par_plot);
@@ -811,13 +914,9 @@ def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
     cdf=np.hstack(list(opar.loc["a", i]*tls.pnorm(xp, opar.loc["mean", i], opar.loc["sd", i]).reshape((len(xp), 1), order="F") for i in opar.columns));
     pdf=np.diff(np.hstack((tls.rowSums(cdf), cdf)), axis=0)/dxp;
     xpm=0.5*(xp[:-1]+xp[1:]);
-    # prepare colors
-    nneg=sum(opar.columns<0);
-    cneg=[colorFader(par_plot["col_neghigh"], par_plot["col_neglow"], i/nneg) for i in range(nneg)];
-    npos=sum(opar.columns>0);
-    cpos=[colorFader(par_plot["col_poslow"], par_plot["col_poshigh"], i/npos) for i in range(npos)];
-    colpar=[wxc2mplc(par_plot["col_tot"])]+cneg+[wxc2mplc(par_plot["col_ref"])]+cpos;
     #import pdb; pdb.set_trace();
+    clist,cmap=cl2cmap(par.columns, par_plot);
+    colpar=[wxc2mplc(par_plot["col_tot"])]+clist;
     for i in range(pdf.shape[1]):
         line,=plt.plot(xpm, pdf[:,i], color=colpar[i], linewidth=par_plot["lw"], label=str(opar.columns[i-1]) if i > 0 else "Total"); #, **kwargs);
         lcol=line.get_color();

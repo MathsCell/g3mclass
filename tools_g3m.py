@@ -845,7 +845,8 @@ def em1(x, par=None, imposed=pa.DataFrame(index=["a", "mean", "sd"]), G=range(1,
                 lp[lp == -np.inf]=-746
                 loglike=sum(lp);
                 BIC=-2*loglike+np.log(nv)*(3*parnew.shape[1]-sum(ninaa)-sum(ninam)-sum(ninas));
-                #print("it=", it, "BIC=", BIC);
+                #if BIC < 0:
+                #    print("it=", it, "\tBIC=", BIC, ";\t-2*loglike=", -2*loglike, ";\tpar=", np.log(nv)*(3*parnew.shape[1]-sum(ninaa)-sum(ninam)-sum(ninas)));
                 if BIC > BIC_prec:
                     BIC=BIC_prec;
                     if DEBUG:

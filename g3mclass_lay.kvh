@@ -279,6 +279,29 @@ wx.Frame
 				Bind(wx.EVT_SIZE, OnSize)
 				SetSizer(wx.BoxSizer(wx.VERTICAL))
 				GetSizer().Add(gui.nb_plot, 1, wx.EXPAND)
+		wx.Notebook
+			varname	nb_heat
+			param	.parent
+			wx.ScrolledWindow
+				varname	sw_heat_ref
+				param	.parent
+				callmeth
+					SetScrollRate(20,20)
+			wx.ScrolledWindow
+				varname	sw_heat_test
+				param	.parent
+				callmeth
+					SetScrollRate(20,20)
+			wx.ScrolledWindow
+				varname	sw_heat_qry
+				param	.parent
+				callmeth
+					SetScrollRate(20,20)
+			callmeth
+				Bind(wx.EVT_SIZE, OnSize)
+				AddPage(gui.sw_heat_ref, "Ref")
+				AddPage(gui.sw_heat_test, "Test")
+				AddPage(gui.sw_heat_qry, "Query")
 		callmeth
 			AddPage(gui.win_welc, "Welcome")
 			AddPage(gui.sw_data, "Data")
@@ -288,6 +311,7 @@ wx.Frame
 			AddPage(gui.sw_test, "Test class")
 			AddPage(gui.sw_ref, "Ref class")
 			AddPage(gui.sw_qry, "Query class")
+			AddPage(gui.nb_heat, "Heatmaps")
 	callmeth
 		SetMenuBar(gui.menubar)
 		CreateStatusBar()
