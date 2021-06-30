@@ -239,6 +239,7 @@ dcols={};
 resdf=None; # dict for formatted output in .tsv
 par_mod={
     "k": 25,
+    "k_hlen": 3,
     "k_var": False,
     "thr_di": 0.5,
     "thr_w": 1.,
@@ -288,7 +289,7 @@ def OnOpen(evt):
         if wx.MessageBox("Current results have not been saved! Proceed?", "Please confirm",
                          wx.ICON_QUESTION | wx.YES_NO, win) == wx.NO:
             return;
-    with wx.FileDialog(None, defaultDir=wd, wildcard="Data files (*.tsv)|*.tsv|Data files (*.csv)|*.csv",
+    with wx.FileDialog(None, defaultDir=str(wd), wildcard="Data files (*.tsv)|*.tsv|Data files (*.csv)|*.csv",
         style=wx.FD_OPEN) as dlg:
         wait=wx.BusyCursor();
         if dlg.ShowModal() == wx.ID_OK:
@@ -470,16 +471,16 @@ def OnReplot(evt):
 def OnSlider(evt):
     "Slider for modeling parameters was moved"
     global par_mod;
+    win=evt.GetEventObject();
     #print("evt=", evt);
     if data is not None :
         gui.btn_remod.Enable();
-    par_mod["k"]=round(gui.sl_hbin.GetValue());
-    #print("sl_hbin.GetValue()=", gui.sl_hbin.GetValue());
-    #print("k=", par_mod["k"]);
-    par_mod["thr_di"]=gui.sl_thr_di.GetValue();
-    par_mod["thr_w"]=gui.sl_thr_w.GetValue();
-    gui.chk_hbin.SetLabel("  "+", ".join(vhbin(par_mod["k"]).astype(str)));
-    evt.GetEventObject()._OnSlider(evt);
+    par_mod[win.GetName()]=win.GetValue();
+    #par_mod["k"]=round(gui.sl_hbin.GetValue());
+    #par_mod["thr_di"]=gui.sl_thr_di.GetValue();
+    #par_mod["thr_w"]=gui.sl_thr_w.GetValue();
+    gui.chk_hbin.SetLabel("  "+", ".join(vhbin(par_mod).astype(str)));
+    win._OnSlider(evt);
 def OnSliderPlot(evt):
     "Slider for plot parameters was moved"
     global par_plot;
@@ -646,9 +647,11 @@ def warn_mes(mes):
         dlg.Destroy();
     else:
         print(me+": "+mes, file=sys.stderr);
-def vhbin(x):
+def vhbin(par_mod):
     "produce a vector of hbin values"
-    return(tls.c(np.linspace(max(10, par_mod["k"]-15), par_mod["k"], min(4, int(np.ceil((par_mod["k"]-10)/5))+1)), par_mod["k"]+np.linspace(5, 15, 3)).astype(int));
+    v=par_mod["k"]+5*np.linspace(-par_mod["k_hlen"], par_mod["k_hlen"], round(2*par_mod["k_hlen"]+1));
+    v=v[v >= 10];
+    return(v.astype(int));
 ## working functions
 def file2data(fn):
     "Read Path 'fn' into data.frame"
@@ -784,7 +787,7 @@ def data2model(data, dcols):
             test=data.iloc[:,dc["itest"]].values;
             if par_mod["k_var"]:
                 # run hbin numbers through vbin and get the best BIC
-                vbin=vhbin(par_mod["k"]);
+                vbin=vhbin(par_mod);
                 #import pdb; pdb.set_trace();
                 dl=dict();
                 par_loc=[(dl.update({"tmp": par_mod.copy()}), dl["tmp"].update({"k": nbin}), dl["tmp"])[-1] for nbin in vbin]; # create n copies of par_mod with diff hbin

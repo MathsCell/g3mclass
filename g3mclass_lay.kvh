@@ -45,10 +45,10 @@ wx.Frame
 					SetFont(wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL))
 			wx.StaticText
 				varname	txt_hbin
-				param	.parent, label="Number of equal-width bins in histogram (k)", style=wx.ALIGN_LEFT
+				param	.parent, label="Number of bins in histogram (k)", style=wx.ALIGN_LEFT
 			wx_FloatSlider
 				varname	sl_hbin
-				param	.parent, value=par_mod["k"], minValue=10, maxValue=100, scale=1, frmt="%3.0f", style=wx.SL_HORIZONTAL
+				param	.parent, value=par_mod["k"], minValue=10, maxValue=100, scale=1, frmt="%3.0f", style=wx.SL_HORIZONTAL, name="k"
 				callmeth
 					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.StaticText
@@ -56,15 +56,23 @@ wx.Frame
 				param	.parent, label="Choose the best model (based on BIC) for the following number of bins:", style=wx.ALIGN_LEFT
 			wx.CheckBox
 				varname	chk_hbin
-				param	.parent, label="  "+", ".join(vhbin(par_mod["k"]).astype(str))
+				param	.parent, label="  "+", ".join(vhbin(par_mod).astype(str))
 				callmeth
 					Bind(wx.EVT_CHECKBOX, OnCheck)
+			wx.StaticText
+				varname	txt_hbin_hlen
+				param	.parent, label="Half length of vector for variable bins in histogram", style=wx.ALIGN_LEFT
+			wx_FloatSlider
+				varname	sl_hbin_hlen
+				param	.parent, value=par_mod["k_hlen"], minValue=1, maxValue=10, scale=1, frmt="%2.0f", style=wx.SL_HORIZONTAL, name="k_hlen"
+				callmeth
+					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.StaticText
 				varname	txt_thr_di
 				param	.parent, label="Threshold for fusing too close Gaussian groups", style=wx.ALIGN_LEFT
 			wx_FloatSlider
 				varname	sl_thr_di
-				param	.parent, value=par_mod["thr_di"], minValue=0, maxValue=1,  scale=100
+				param	.parent, value=par_mod["thr_di"], minValue=0, maxValue=1,  scale=100, name="thr_di"
 				callmeth
 					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.StaticText
@@ -72,7 +80,7 @@ wx.Frame
 				param	.parent, label="Threshold for vanishing Gaussian groups", style=wx.ALIGN_LEFT
 			wx_FloatSlider
 				varname	sl_thr_w
-				param	.parent, value=par_mod["thr_w"], minValue=0, maxValue=10,  scale=100
+				param	.parent, value=par_mod["thr_w"], minValue=0, maxValue=10,  scale=100, name="thr_w"
 				callmeth
 					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.Button
@@ -178,6 +186,9 @@ wx.Frame
 					Add(gui.txt_par_mod, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
 					Add(gui.txt_hbin, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
 					Add(gui.sl_hbin.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
+					Add(gui.txt_hbin_hlen, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
+					Add(gui.sl_hbin_hlen.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
 					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
 					Add(gui.txt_hbin_var, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
 					Add(gui.chk_hbin, 0, flag = wx.EXPAND | wx.ALL, border = 5)
