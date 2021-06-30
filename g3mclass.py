@@ -28,6 +28,7 @@ usage: g3mclass.py [-h|--help] [--DEBUG] [-w] [data[.tsv]]
 ## imports
 import sys;
 import os;
+from pathlib import Path;
 import getopt;
 import re;
 import itertools as itr;
@@ -58,8 +59,8 @@ import pandas as pa;
 import webbrowser;
 
 import g3mclass
-dirx=os.path.dirname(os.path.abspath(sys.argv[0])); # execution dir
-diri=os.path.dirname(os.path.abspath(g3mclass.__file__)); # install dir
+dirx=Path(sys.argv[0]).resolve().parent; # execution dir
+diri=Path(g3mclass.__file__).resolve().parent; # install dir
 import tools_g3m as tls;
 
 # timeit
@@ -211,15 +212,15 @@ class wx_FloatSlider(wx.Slider):
         return self._value;
 
 ## config constants
-with open(os.path.join(diri, "g3mclass", "version.txt"), "r") as fp:
+with (diri/"g3mclass"/"version.txt").open() as fp:
     version=fp.read()
 # program name
 me="G3Mclass";
 # message in welcome tab
-with open(os.path.join(diri, "g3mclass", "welcome.html"), "r") as fp:
+with (diri/"g3mclass"/"welcome.html").open() as fp:
     welc_text=fp.read() % {"me": me};
 welc_text=re.sub("\n\n", "<br>\n", welc_text);
-with open(os.path.join(diri, "g3mclass", "licence_en.txt"), "r") as fp:
+with (diri/"g3mclass"/"licence_en.txt").open() as fp:
     licenseText=fp.read();
 
 ## global vars
@@ -293,10 +294,10 @@ def OnOpen(evt):
         if dlg.ShowModal() == wx.ID_OK:
             #print "selected file="+dlg.GetPath();
             # proceed the data file
-            fdata=dlg.GetPath()
+            fdata=Path(dlg.GetPath());
             file2data(fdata);
             gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
-            gui.mainframe.SetStatusText("'%s' is read"%os.path.basename(fdata));
+            gui.mainframe.SetStatusText("'%s' is read"%fdata.name);
             pre_res_saved=False;
         del(wait);
 def OnSave(evt):
@@ -312,32 +313,32 @@ def OnSave(evt):
     if dogui:
         win=evt.GetEventObject();
         win=win.GetWindow();
-        with wx.FileDialog(win, "Save model, test, ref and query results in TSV files (silently overwritten). Choose base-name file (e.g. input data). It will be appended with suffixes like '_test_geneA.tsv'", defaultFile=fdata, wildcard="TSV files (*.tsv)|*.tsv", style=wx.FD_SAVE ) as fileDialog:
+        with wx.FileDialog(win, "Save model, test, ref and query results in TSV files (silently overwritten). Choose base-name file (e.g. input data). It will be appended with suffixes like '_test_geneA.tsv'", defaultFile=fdata.name, defaultDir=str(wd), wildcard="TSV files (*.tsv)|*.tsv", style=wx.FD_SAVE ) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return # the user changed their mind
 
             # save the current contents in the file
-            fpath=fileDialog.GetPath();
+            fpath=Path(fileDialog.GetPath());
     else:
         fpath=fdata;
-    fbase=fpath if fpath.lower()[-4:] != ".tsv" else fpath[:-4];
+    fbase=fpath if fpath.name.lower()[-4:] != ".tsv" else Path(str(fpath)[:-4]);
     try:
         # save *.tsv
         for dtype in ("model", "test", "ref", "qry"):
             if dtype == "model":
-                fnm=fbase+"_model.tsv";
+                fnm=fbase.parent/(fbase.name+"_model.tsv");
                 df=resdf["model"];
                 res2file(df, fnm);
                 if dogui:
-                    gui.mainframe.SetStatusText("Written '"+os.path.basename(fnm)+"'");
+                    gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
             else:
                 for nm,d in resdf[dtype].items():
-                    fnm=fbase+"_"+dtype+"_"+nm+".tsv";
+                    fnm=fbase.parent/(fbase.name+"_"+dtype+"_"+nm+".tsv");
                     res2file(d, fnm);
                     if dogui:
-                        gui.mainframe.SetStatusText("Written '"+os.path.basename(fnm)+"'");
+                        gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
         # save .pdf
-        fnm=fbase+".pdf";
+        fnm=fbase.with_suffix(".pdf");
         with mpdf(fnm) as pdf:
             for nm, dm in model.items():
                 figure=mpl.figure.Figure(dpi=None, figsize=(8, 6));
@@ -348,7 +349,7 @@ def OnSave(evt):
                 pdf.savefig(figure);
                 #ax.close();
         if dogui:
-            gui.mainframe.SetStatusText("Written '"+os.path.basename(fnm)+"'");
+            gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
     except IOError:
         #import pdb; pdb.set_trace();
         err_mes("Cannot save results in file '%s'." % fpath);
@@ -363,7 +364,7 @@ def OnAbout(evt):
     info.SetCopyright("(C) 2021 INRAE/INSA/CNRS, Marina Guvakova");
     info.SetDescription(wordwrap(
         "g3mclass is Gaussian Mixture Model for Marker Classification"
-        " It reads data and writes classification results form and to TSV files",
+        " It reads data from and writes classification results to TSV files",
         350, wx.ClientDC(win)));
     info.SetWebSite("https://pypi.org/project/g3mclass");
     info.AddDeveloper("Serguei SOKOL");
@@ -583,7 +584,7 @@ def cl2heat(htype, pg, classif):
             ## Make normalizer
             norm=mpl.colors.BoundaryNorm(norm_bins, len(cls), clip=True);
             ax.append(figure.add_subplot(310+ipl));
-            im=heatmap(pcl, ax[-1], collab=(ipl == 1), cmap=cmap, norm=norm);
+            im=heatmap(pcl, ax[-1], collab=True, cmap=cmap, norm=norm); # (ipl == 1)
             ax[-1].set_title(ctype);
         figure.colorbar(im, ax=ax, ticks=cls);
     sizer=wx.BoxSizer(wx.VERTICAL);
@@ -613,6 +614,9 @@ def heatmap(data, ax, collab=True, **kwargs):
     ax.set_yticks(np.arange(data.shape[1]));
     # ... and label them with the respective list entries.
     ax.set_yticklabels(data.columns);
+    ax.set_xticks(np.arange(data.shape[0]+1)-.5, minor=True);
+    ax.set_yticks(np.arange(data.shape[1]+1)-.5, minor=True);
+    ax.grid(which="minor", color="w", linestyle='-', linewidth=1);
     # Let the horizontal axes labeling appear on top.
     ax.tick_params(top=True, bottom=False,
                    labeltop=True, labelbottom=False);
@@ -647,12 +651,12 @@ def vhbin(x):
     return(tls.c(np.linspace(max(10, par_mod["k"]-15), par_mod["k"], min(4, int(np.ceil((par_mod["k"]-10)/5))+1)), par_mod["k"]+np.linspace(5, 15, 3)).astype(int));
 ## working functions
 def file2data(fn):
-    "Read file name 'fn' into data.frame"
+    "Read Path 'fn' into data.frame"
     global data, dcols, ids;
     try:
         data=pa.read_csv(fn, header=None, sep="\t");
     except:
-        err_mes("file '"+fn+"' could not be read");
+        err_mes("file '"+str(fn)+"' could not be read");
         return;
     cols=[str(v).strip() if v==v else "" for v in data.iloc[0, :]];
     data.columns=cols;
@@ -698,30 +702,37 @@ def file2data(fn):
             err_mes("following column names are not unique in '(query)' set: '"+"', '".join([v for v,i in cnt.items() if i > 1])+"'");
             return;
         dqry=dict((v,{"i": i}) for i,v in dqry.items());
+        to_rm=[];
         for nmq in dqry.keys():
             iq=dqry[nmq]["i"];
             iparse.append(iq);
-            iid=iq-1 if iq > 0 and cols[iq-1].lower() == "id" else None;
-            dqry[nmq]["id"]=iid;
-            if iid is not None:
-                iparse.append(iid);
+            if all(tls.is_na(data.iloc[:,iq])):
+                to_rm.append(nmq);
+        for nmq in to_rm:
+            del(dqry[nmq]);
         dcols[nm]["qry"]=dqry;
     #tls.aff("dcols", dcols);
     # gather ids. id (ref) and id (test) are unique. id_qry (name) may be multiple
     ids=dict();
+    #import pdb; pdb.set_trace();
     for suff in ("ref", "test"):
         ids[suff]=dict((i, None) for i,v in enumerate(cols) if re.match("id *\("+suff+"\)$", str(v)));
         if len(ids[suff]) > 1:
             err_mes("Column 'id ("+suff+") is not unique, cf. columns: "+", ".join(str(i+1) for i in ids[suff].keys()));
         if ids[suff]:
             icol=list(ids[suff].keys())[0];
+            iparse.append(icol);
             idh=data.iloc[:,icol]; # id here
+            idh=idh[~tls.is_na_end(idh)];
+            if len(idh) == 0:
+                ids[suff]=None;
+                continue;
             iu,ic=np.unique(idh[idh == idh], return_counts=True);
             if np.max(ic) > 1:
-                err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+os.path.basename(fn)+"' has non unique entries. Each ID must be unique.");
+                err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+fn.name+"' has non unique entries. Each ID must be unique.");
                 return;
-            ids[suff]=idh[~tls.is_na_end(idh)];
-            iparse.append(icol);
+            ids[suff]=idh;
+            
     # each id_qry (name) is relative to next qrys till next id_qry is found
     ids["qry"]=dict((v[6:].strip("( )"), i) for i,v in enumerate(cols) if v.startswith("id_qry"));
     # collect qry icols for each block
@@ -731,9 +742,12 @@ def file2data(fn):
         icol=ids["qry"][nmb];
         iparse.append(icol);
         idh=data.iloc[:,icol]; # id here
+        idh=idh[~tls.is_na_end(idh)];
+        if len(idh) == 0:
+            continue;
         iu,ic=np.unique(idh[idh == idh], return_counts=True);
         if np.max(ic) > 1:
-            err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+os.path.basename(fn)+"' has non unique entries. Each ID must be unique.");
+            err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+fn.name+"' has non unique entries. Each ID must be unique.");
             return;
         iend=ib[i]+1 if i < nb-1 else len(cols);
         nmqs=[(nmm, nmq) for nmm,d in dcols.items() for nmq,dq in d["qry"].items() if dq["i"] > icol and dq["i"] <= iend]; # collection of tuples (marker_name; qry_name)
@@ -852,10 +866,10 @@ def class2tcol(d, ucl):
 def res2file(res, fpath=None, objname=None):
     if fpath == None:
         if fdata:
-            fpath=os.path.join(wd, re.sub("\.tsv", "", fdata)+"_res.tsv");
+            fpath=wd/(re.sub("\.tsv", "", fdata.name)+"_res.tsv");
         else:
-            raise Exception("fpath is not set for writing");
-    tls.obj2kvh(res, objname, fpath);
+            err_mes("'fpath' variable is not set for writing");
+    tls.obj2kvh(res, objname, str(fpath));
 def s2ftime(s=0.):
     """s2ftime(s=0) -> String
     Format second number as hh:mm:ss.cc
@@ -934,7 +948,7 @@ def make_gui():
     gui=wx.Object();
     gui.app=wx.App();
     wx.lib.colourdb.updateColourDB();
-    code=tls.wxlay2py(tls.kvh2tlist(os.path.join(diri, "g3mclass", "g3mclass_lay.kvh")), pref="gui.");
+    code=tls.wxlay2py(tls.kvh2tlist(str(diri/"g3mclass"/"g3mclass_lay.kvh")), pref="gui.");
     exec(code);
 ## take arguments
 def main():
@@ -976,21 +990,20 @@ def main():
         make_gui();
     else:
         gui.app=wx.App(False); # for wx.Colour converters in pdf
-    fdata=args[0] if len(args) else "";
-    if fdata and fdata.lower()[-4:] != ".tsv":
-        fdata+=".tsv";
-    if fdata and not os.path.exists(fdata):
-        raise Exception(me+": file '"+fdata+"' does not exist.\n");
+    fdata=Path(args[0]).resolve() if len(args) else "";
+    if fdata and fdata.name.lower()[-4:] != ".tsv":
+        fdata=fdata.parent/(fdata.name+".tsv");
+    if fdata and not fdata.exists():
+        err_mes(me+": file '"+str(fdata)+"' does not exist.\n");
     if fdata:
         file2data(fdata);
-        wd=os.path.dirname(os.path.abspath(fdata));
+        wd=Path(fdata.parent);
         os.chdir(wd);
-        fdata=os.path.basename(fdata);
         if dogui:
             gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
-            gui.mainframe.SetStatusText("'%s' is read"%fdata)
+            gui.mainframe.SetStatusText("'%s' is read"%fdata.name)
     else:
-        wd=os.path.abspath(os.getcwd());
+        wd=Path(os.getcwd()).resolve();
     if fdata and write_res:
         #print("todo: write all results");
         OnRemodel(None);
