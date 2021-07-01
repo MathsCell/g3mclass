@@ -547,50 +547,59 @@ def cl2heat(htype, pg, classif):
     # clear previous plots
     for ch in pg.GetChildren():
         ch.Destroy();
-    figure=mpl.figure.Figure(dpi=None, figsize=(len(ids[htype])*0.3+1, 12));
-    canvas=FigureCanvas(pg, -1, figure);
-    toolbar=NavigationToolbar(canvas);
-    toolbar.Realize();
-    ax=[];
-    if htype != "qry":
-        ipl=0;
+    sizer=wx.BoxSizer(wx.VERTICAL);
+    for fig in [htype] if htype != "qry" else list(ids[htype].keys()):
+        idh=ids[htype][fig]["id"] if htype == "qry" else ids[htype];
+        nid=len(idh);
+        # gather classif data s.t. can be indexed by "cl", "cutnum" etc.
+        cdata={};
+        cls=[];
+        if htype == "qry":
+            for nmm,nmq in ids[htype][fig]["m,q"]:
+                cdata[nmm+" ("+nmq+")"]=classif[nmm]["qry"][nmq];
+                cls += model[nmm]["par"].columns.to_list();
+            #print("keys=", cdata.keys());
+            #import pdb; pdb.set_trace();
+        else:
+            for nm,d in classif.items():
+                cdata[nm]=d[htype];
+                cls += model[nm]["par"].columns.to_list();
+        cls=np.sort(list(set(cls)));
+        figure=mpl.figure.Figure(dpi=None, figsize=(len(idh)*0.4+6, len(cdata)*1.2+10));
+        if htype == "qry":
+            figure.suptitle(fig, fontsize=16);
+        canvas=FigureCanvas(pg, -1, figure);
+        toolbar=NavigationToolbar(canvas);
+        toolbar.Realize();
+        ax=[];
         for ctype, item in (("proba", "cl"), ("cutoff", "cutnum"), ("cutoff with confidence", "confcutnum")):
-            ipl += 1;
             # extract classes of given type
             pcl=pa.DataFrame();
-            cls=[]; # all classes in this htype
-            for nm,d in classif.items():
-                co=model[nm]["par"].columns;
-                vmin=min(co);
-                vmax=max(co);
-                cls += co.to_list();
-                pcl[nm]=d[htype][item];
+            for nm,d in cdata.items():
+                pcl[nm]=d[item];
             nr=pcl.shape[0];
-            nid=len(ids[htype]);
             if nr > nid:
                 pcl=pcl.iloc[:nid,:];
                 nr=nid;
-            pcl.index=ids[htype][:nr];
+            pcl.index=idh[:nr];
             # valid, i.e. non all empty rows
             dn=pcl.to_numpy();
-            irv=(dn == dn).any(1)*(~tls.is_na(ids[htype][:nr]));
+            irv=(dn == dn).any(1)*(~tls.is_na(idh[:nr]));
             pcl=pcl.iloc[irv,:];
             
             # prepare cmap
-            cls=np.sort(list(set(cls)));
             clist, cmap=cl2cmap(cls, par_plot);
             # normalizer
             norm_bins=cls+0.5;
             norm_bins=np.insert(norm_bins, 0, np.min(norm_bins)-1.0);
             ## Make normalizer
             norm=mpl.colors.BoundaryNorm(norm_bins, len(cls), clip=True);
-            ax.append(figure.add_subplot(310+ipl));
+            ax.append(figure.add_subplot(311+len(ax))); # 3x1 grid ipl-th plot
             im=heatmap(pcl, ax[-1], collab=True, cmap=cmap, norm=norm); # (ipl == 1)
             ax[-1].set_title(ctype);
         figure.colorbar(im, ax=ax, ticks=cls);
-    sizer=wx.BoxSizer(wx.VERTICAL);
-    sizer.Add(canvas, 0);
-    sizer.Add(toolbar, 0);
+        sizer.Add(canvas, 0);
+        sizer.Add(toolbar, 0);
     pg.SetSizer(sizer);
 def heatmap(data, ax, collab=True, **kwargs):
     """
@@ -752,9 +761,10 @@ def file2data(fn):
         if np.max(ic) > 1:
             err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+fn.name+"' has non unique entries. Each ID must be unique.");
             return;
-        iend=ib[i]+1 if i < nb-1 else len(cols);
+        iend=ib[i+1] if i < nb-1 else len(cols);
         nmqs=[(nmm, nmq) for nmm,d in dcols.items() for nmq,dq in d["qry"].items() if dq["i"] > icol and dq["i"] <= iend]; # collection of tuples (marker_name; qry_name)
-        ids["qry"][nmb]=nmqs;
+        #import pdb; pdb.set_trace();
+        ids["qry"][nmb]={"id": idh, "m,q": nmqs};
     #print("ids=", ids);
     # check that all columns are used
     iparse=set(iparse);
