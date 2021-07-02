@@ -36,6 +36,9 @@ import multiprocessing as mp;
 from concurrent.futures import ThreadPoolExecutor as thpool;
 import threading;
 import time;
+import warnings;
+import tempfile;
+import zipfile;
 
 import wx;
 import wx.grid;
@@ -314,46 +317,56 @@ def OnSave(evt):
     if dogui:
         win=evt.GetEventObject();
         win=win.GetWindow();
-        with wx.FileDialog(win, "Save model, test, ref and query results in TSV files (silently overwritten). Choose base-name file (e.g. input data). It will be appended with suffixes like '_test_geneA.tsv'", defaultFile=fdata.name, defaultDir=str(wd), wildcard="TSV files (*.tsv)|*.tsv", style=wx.FD_SAVE ) as fileDialog:
+        with wx.FileDialog(win, "Save results in a ZIP archive", defaultFile=fdata.with_suffix(".zip").name, defaultDir=str(wd), wildcard="ZIP files (*.zip)|*.zip", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return # the user changed their mind
 
             # save the current contents in the file
-            fpath=Path(fileDialog.GetPath());
+            fzip=Path(fileDialog.GetPath());
     else:
-        fpath=fdata;
-    fbase=fpath if fpath.name.lower()[-4:] != ".tsv" else Path(str(fpath)[:-4]);
-    try:
-        # save *.tsv
-        for dtype in ("model", "test", "ref", "qry"):
-            if dtype == "model":
-                fnm=fbase.parent/(fbase.name+"_model.tsv");
-                df=resdf["model"];
-                res2file(df, fnm);
-                if dogui:
-                    gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
-            else:
-                for nm,d in resdf[dtype].items():
-                    fnm=fbase.parent/(fbase.name+"_"+dtype+"_"+nm+".tsv");
-                    res2file(d, fnm);
+        fzip=fdata.with_suffix(".zip");
+    with tempfile.TemporaryDirectory() as tmpd:
+        #import pdb; pdb.set_trace();
+        fbase=Path(tmpd);
+        try:
+            # save *.tsv
+            for dtype in ("model", "test", "ref", "qry"):
+                if dtype == "model":
+                    fnm=fbase/"model.tsv";
+                    df=resdf["model"];
+                    res2file(df, fnm);
                     if dogui:
                         gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
-        # save .pdf
-        fnm=fbase.with_suffix(".pdf");
-        with mpdf(fnm) as pdf:
-            for nm, dm in model.items():
-                figure=mpl.figure.Figure(dpi=None, figsize=(8, 6));
-                ax=figure.gca();
-                dc=dcols[nm];
-                histgmm(data.iloc[:,dc["itest"]].values, dm["par"], ax, dm["par_mod"], par_plot) # hist of test
-                ax.set_title(nm);
-                pdf.savefig(figure);
-                #ax.close();
-        if dogui:
-            gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
-    except IOError:
-        #import pdb; pdb.set_trace();
-        err_mes("Cannot save results in file '%s'." % fpath);
+                else:
+                    for nm,d in resdf[dtype].items():
+                        fnm=fbase/(dtype+"_"+nm+".tsv");
+                        res2file(d, fnm);
+                        if dogui:
+                            gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
+            # save .pdf
+            fnm=fbase/"plots.pdf";
+            with mpdf(fnm) as pdf:
+                for nm, dm in model.items():
+                    figure=mpl.figure.Figure(dpi=None, figsize=(8, 6));
+                    ax=figure.gca();
+                    dc=dcols[nm];
+                    histgmm(data.iloc[:,dc["itest"]].values, dm["par"], ax, dm["par_mod"], par_plot) # hist of test
+                    ax.set_title(nm);
+                    pdf.savefig(figure);
+            # save heatmaps
+            fnm=fbase/"heatmaps.pdf";
+            with mpdf(fnm) as pdf:
+                for htype in ("ref", "test", "qry"):
+                    cl2heat(htype, None, classif, pdf);
+            if dogui:
+                gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
+            # prepare zip
+            with zipfile.ZipFile(fzip, "w") as zf:
+                for f in fbase.glob("**/*"):
+                    zf.write(f, fzip.with_suffix("").name+"/"+f.name);
+        except IOError:
+            #import pdb; pdb.set_trace();
+            err_mes("Cannot save results in file '%s'." % fpath);
     prev_res_saved=True;
 def OnAbout(evt):
     "show about dialog"
@@ -541,13 +554,14 @@ def m2plot(nm, dm, nb):
     sizer.Add(canvas, 1, wx.EXPAND);
     sizer.Add(toolbar, 0, wx.LEFT | wx.EXPAND);
     gtab.SetSizer(sizer);
-def cl2heat(htype, pg, classif):
+def cl2heat(htype, pg, classif, pdf=None):
     if len(ids[htype]) == 0:
         return;
     # clear previous plots
-    for ch in pg.GetChildren():
-        ch.Destroy();
-    sizer=wx.BoxSizer(wx.VERTICAL);
+    if pdf is None:
+        for ch in pg.GetChildren():
+            ch.Destroy();
+        sizer=wx.BoxSizer(wx.VERTICAL);
     for fig in [htype] if htype != "qry" else list(ids[htype].keys()):
         idh=ids[htype][fig]["id"] if htype == "qry" else ids[htype];
         nid=len(idh);
@@ -558,19 +572,22 @@ def cl2heat(htype, pg, classif):
             for nmm,nmq in ids[htype][fig]["m,q"]:
                 cdata[nmm+" ("+nmq+")"]=classif[nmm]["qry"][nmq];
                 cls += model[nmm]["par"].columns.to_list();
-            #print("keys=", cdata.keys());
-            #import pdb; pdb.set_trace();
         else:
             for nm,d in classif.items():
                 cdata[nm]=d[htype];
                 cls += model[nm]["par"].columns.to_list();
         cls=np.sort(list(set(cls)));
-        figure=mpl.figure.Figure(dpi=None, figsize=(len(idh)*0.4+6, len(cdata)*1.2+10));
+        figsize=(len(idh)*0.1+12, len(cdata)*0.3+12);
+        #print("htype=", htype, "figsize=", figsize);
+        figure=mpl.figure.Figure(dpi=None, figsize=figsize);
         if htype == "qry":
             figure.suptitle(fig, fontsize=16);
-        canvas=FigureCanvas(pg, -1, figure);
-        toolbar=NavigationToolbar(canvas);
-        toolbar.Realize();
+        elif pdf is not None:
+            figure.suptitle(htype, fontsize=16);
+        if pdf is None:
+            canvas=FigureCanvas(pg, -1, figure);
+            toolbar=NavigationToolbar(canvas);
+            toolbar.Realize();
         ax=[];
         for ctype, item in (("proba", "cl"), ("cutoff", "cutnum"), ("cutoff with confidence", "confcutnum")):
             # extract classes of given type
@@ -595,12 +612,23 @@ def cl2heat(htype, pg, classif):
             ## Make normalizer
             norm=mpl.colors.BoundaryNorm(norm_bins, len(cls), clip=True);
             ax.append(figure.add_subplot(311+len(ax))); # 3x1 grid ipl-th plot
-            im=heatmap(pcl, ax[-1], collab=True, cmap=cmap, norm=norm); # (ipl == 1)
+            figure.subplots_adjust(hspace = 0.5);
+            im=heatmap(pcl, ax[-1], collab=True, cmap=cmap, norm=norm, aspect="auto"); # (ipl == 1)
             ax[-1].set_title(ctype);
-        figure.colorbar(im, ax=ax, ticks=cls);
-        sizer.Add(canvas, 0);
-        sizer.Add(toolbar, 0);
-    pg.SetSizer(sizer);
+        position=figure.add_axes([0.93, 0.3, 0.02, 0.35])  ## the parameters are the specified position you set 
+        figure.colorbar(im, ticks=cls, cax=position);
+        #figure.colorbar(im, ax=ax, ticks=cls, shrink=0.5);
+        warnings.filterwarnings("ignore");
+        figure.tight_layout(rect=[0, 0, 0.9, 1.0]);
+        #import pdb; pdb.set_trace();
+        warnings.filterwarnings("default");
+        if pdf is None:
+            sizer.Add(canvas, 0); #1, wx.EXPAND);
+            sizer.Add(toolbar, 0);
+        else:
+            pdf.savefig(figure);
+    if pdf is None:
+        pg.SetSizer(sizer);
 def heatmap(data, ax, collab=True, **kwargs):
     """
     Create a heatmap from a pandas DataFrame.
