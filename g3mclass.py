@@ -323,6 +323,9 @@ def OnSave(evt):
 
             # save the current contents in the file
             fzip=Path(fileDialog.GetPath());
+            wait=wx.BusyCursor();
+            #wx.BeginBusyCursor();
+            #print("wait");
     else:
         fzip=fdata.with_suffix(".zip");
     with tempfile.TemporaryDirectory() as tmpd:
@@ -366,8 +369,14 @@ def OnSave(evt):
                     zf.write(f, fzip.with_suffix("").name+"/"+f.name);
         except IOError:
             #import pdb; pdb.set_trace();
+            if dogui:
+                del(wait);
             err_mes("Cannot save results in file '%s'." % fpath);
     prev_res_saved=True;
+    if dogui:
+        #wx.EndBusyCursor();
+        #print("del wait");
+        del(wait);
 def OnAbout(evt):
     "show about dialog"
     win=evt.GetEventObject();
@@ -481,6 +490,8 @@ def OnReplot(evt):
     for htype in ("ref", "test", "qry"):
         tab=getattr(gui, "sw_heat_"+htype);
         cl2heat(htype, tab, classif);
+    #import pdb; pdb.set_trace();
+    #pass;
 def OnSlider(evt):
     "Slider for modeling parameters was moved"
     global par_mod;
@@ -562,6 +573,8 @@ def cl2heat(htype, pg, classif, pdf=None):
         for ch in pg.GetChildren():
             ch.Destroy();
         sizer=wx.BoxSizer(wx.VERTICAL);
+        pg.figs=[];
+    dpi=100;
     for fig in [htype] if htype != "qry" else list(ids[htype].keys()):
         idh=ids[htype][fig]["id"] if htype == "qry" else ids[htype];
         nid=len(idh);
@@ -577,24 +590,23 @@ def cl2heat(htype, pg, classif, pdf=None):
                 cdata[nm]=d[htype];
                 cls += model[nm]["par"].columns.to_list();
         cls=np.sort(list(set(cls)));
-        figsize=(len(idh)*0.1+12, len(cdata)*0.3+12);
+        figsize=np.array((len(idh)*0.1+12, len(cdata)*0.3+12))*dpi;
         #print("htype=", htype, "figsize=", figsize);
-        figure=mpl.figure.Figure(dpi=None, figsize=figsize);
+        figure=mpl.figure.Figure(dpi=dpi, figsize=figsize/dpi);
+        if pdf is None:
+            pg.figs.append(figure);
         if htype == "qry":
             figure.suptitle(fig, fontsize=16);
         elif pdf is not None:
             figure.suptitle(htype, fontsize=16);
-        if pdf is None:
-            canvas=FigureCanvas(pg, -1, figure);
-            toolbar=NavigationToolbar(canvas);
-            toolbar.Realize();
         ax=[];
+        im=[];
         for ctype, item in (("proba", "cl"), ("cutoff", "cutnum"), ("cutoff with confidence", "confcutnum")):
             # extract classes of given type
             pcl=pa.DataFrame();
             for nm,d in cdata.items():
                 pcl[nm]=d[item];
-            nr=pcl.shape[0];
+            nr,nc=pcl.shape;
             if nr > nid:
                 pcl=pcl.iloc[:nid,:];
                 nr=nid;
@@ -603,6 +615,18 @@ def cl2heat(htype, pg, classif, pdf=None):
             dn=pcl.to_numpy();
             irv=(dn == dn).any(1)*(~tls.is_na(idh[:nr]));
             pcl=pcl.iloc[irv,:];
+            nr,nc=pcl.shape;
+            if ctype == "proba":
+                # recalculate figure size
+                mh=35; # all horizontal margins/pads
+                lh=max(len(str(v)) for v in pcl.columns)*14;  # nb char * 12 pix = horizontal label length
+                imh=nr*30; # image width
+                mv=60+(16 if pdf or htype == "qry" else 0); # all vertical margins/pads
+                lv=max(len(str(v)) for v in pcl.index)*9;
+                imv=nc*30; # image height
+                wcb=100; # width of colorbar
+                figsize=np.array([mh+lh+imh+wcb, (mv+lv+imv)*3]);
+                figure.set_size_inches(figsize/dpi);
             
             # prepare cmap
             clist, cmap=cl2cmap(cls, par_plot);
@@ -612,17 +636,26 @@ def cl2heat(htype, pg, classif, pdf=None):
             ## Make normalizer
             norm=mpl.colors.BoundaryNorm(norm_bins, len(cls), clip=True);
             ax.append(figure.add_subplot(311+len(ax))); # 3x1 grid ipl-th plot
-            figure.subplots_adjust(hspace = 0.5);
-            im=heatmap(pcl, ax[-1], collab=True, cmap=cmap, norm=norm, aspect="auto"); # (ipl == 1)
+            #figure.subplots_adjust(hspace = 0.5);
+            im.append(heatmap(pcl, ax[-1], collab=True, cmap=cmap, norm=norm));
             ax[-1].set_title(ctype);
-        position=figure.add_axes([0.93, 0.3, 0.02, 0.35])  ## the parameters are the specified position you set 
-        figure.colorbar(im, ticks=cls, cax=position);
+            #ax[-1].apply_aspect();
+            #print(htype, ctype, "im bbox=", im[-1].get_window_extent());
+        cbm2=(figsize[0]-wcb+15)/figsize[0]; # colbar width in 0-1 figure coords
+        cbm=(figsize[0]-wcb)/figsize[0]; # colbar width in 0-1 figure coords
+        #print("cbm=", cbm, "cbm2=", cbm2);
+        position=figure.add_axes([cbm2, 0.3, (1-cbm2)*0.5, 0.35]); #0.93, 0.02
+        figure.colorbar(im[-1], ticks=cls, cax=position);
         #figure.colorbar(im, ax=ax, ticks=cls, shrink=0.5);
-        warnings.filterwarnings("ignore");
-        figure.tight_layout(rect=[0, 0, 0.9, 1.0]);
+        warnings.filterwarnings("ignore");(figsize[0]-wcb)/figsize[0]
+        figure.tight_layout(rect=[10/figsize[0], 0, cbm, 1]); #0.9
+        #print("plot w=", (figsize[0]-wcb)/figsize[0]);
         #import pdb; pdb.set_trace();
         warnings.filterwarnings("default");
         if pdf is None:
+            canvas=FigureCanvas(pg, -1, figure);
+            toolbar=NavigationToolbar(canvas);
+            toolbar.Realize();
             sizer.Add(canvas, 0); #1, wx.EXPAND);
             sizer.Add(toolbar, 0);
         else:
@@ -667,7 +700,7 @@ def heatmap(data, ax, collab=True, **kwargs):
     else:
         ax.set_xticklabels("");
     return im;
-        
+
 def err_mes(mes):
     "Show error dialog in GUI mode or raise exception"
     if dogui:
@@ -703,7 +736,7 @@ def file2data(fn):
     data=data.iloc[1:,:];
     iparse=[]; # collect parsed columns
     # search for (ref) and (test)
-    suff="(ref)";
+    suff=r"(ref)";
     dcols=dict((i, re.sub(tls.escape(suff, "()")+"$", "", v).strip()) for i,v in enumerate(cols) if v.endswith(suff) and not re.match("^id *\(ref\)$", v));
     #import pdb; pdb.set_trace();
     if not dcols:
@@ -778,12 +811,13 @@ def file2data(fn):
     # collect qry icols for each block
     ib=list(ids["qry"].values());
     nb=len(ids["qry"]);
-    for i,nmb in enumerate(ids["qry"].keys()):
+    for i,nmb in enumerate(list(ids["qry"].keys())):
         icol=ids["qry"][nmb];
         iparse.append(icol);
         idh=data.iloc[:,icol]; # id here
         idh=idh[~tls.is_na_end(idh)];
         if len(idh) == 0:
+            del(ids["qry"][nmb])
             continue;
         iu,ic=np.unique(idh[idh == idh], return_counts=True);
         if np.max(ic) > 1:
