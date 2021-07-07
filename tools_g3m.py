@@ -214,9 +214,9 @@ def kvh2dict(fp):
     Repeated keys at the same level of a dictionnary are
     silently overwritten"""
     return kvh_tlist2dict(kvh2tlist(fp));
-def dict2kvh(d, fp=sys.stdout, indent=0):
+def dict2kvh(d, fp=sys.stdout, indent=0, dig=None):
     """dict2kvh(d, fp=sys.stdout, indent=0)
-    Write a nested dictionary on the stream fp (stdout by default).
+    Write a nested dictionary on the stream fp (stdout by default). 'dig' is digit number for rounding.
     """
     open_here=False;
     if isstr(fp):
@@ -226,16 +226,16 @@ def dict2kvh(d, fp=sys.stdout, indent=0):
         if issubclass(type(v), dict):
             # recursive call with incremented indentation
             fp.write("%s%s\n"%("\t"*indent, escape(str(k), "\t\\\n")));
-            dict2kvh(v, fp, indent+1);
+            dict2kvh(v, fp, indent+1, dig=dig);
         elif issubclass(type(v), pa.DataFrame):
-            obj2kvh(v, k, fp, indent);
+            obj2kvh(v, k, fp, indent, dig=dig);
         else:
-            obj2kvh(v, k, fp, indent);
+            obj2kvh(v, k, fp, indent, dig=dig);
             #fp.write("%s%s\t%s\n" % ("\t"*indent, escape(str(k), "\t\\\n"), escape(str(v), "\\\n")));
     if open_here:
         fp.close();
-def obj2kvh(o, oname=None, fp=sys.stdout, indent=0):
-    "write data.frame or dict to kvh file"
+def obj2kvh(o, oname=None, fp=sys.stdout, indent=0, dig=None):
+    "write data.frame or dict to kvh file. 'dig' is digit number for rounding"
     open_here=False;
     if isstr(fp):
         open_here=True;
@@ -248,7 +248,7 @@ def obj2kvh(o, oname=None, fp=sys.stdout, indent=0):
         if have_name:
             fp.write("\n");
         for i,v in enumerate(o):
-            obj2kvh(v, str(i), fp, indent+1);
+            obj2kvh(v, str(i), fp, indent+1, dig=dig);
     elif issubclass(to, dict):
         if have_name:
             fp.write("\n");
@@ -257,12 +257,17 @@ def obj2kvh(o, oname=None, fp=sys.stdout, indent=0):
         if have_name:
             fp.write("\n");
         fp.write("\t"*(indent+have_name)+"row_col\t"+"\t".join(escape(v, "\\\n") for v in o.columns)+"\n");
-        s=o.to_csv(header=False, sep="\t", quoting=csv.QUOTE_NONE, na_rep="");
+        s=o.to_csv(header=False, sep="\t", quoting=csv.QUOTE_NONE, na_rep="", float_format=None if dig is None else "%."+str(int(dig))+"g");
         li=s.split("\n");
         if len(li) == o.shape[0]+1:
             fp.write("\t"*(indent+have_name)+("\n"+"\t"*(indent+have_name)).join(li[:-1])+"\n");
         else:
             raise Exception("Not yet implemented newline in data.frame")
+    elif issubclass(to, float):
+        if dig is None:
+            fp.write("\t%s\n" % str(o));
+        else:
+            fp.write("\t%s\n" % str(round(o, dig)));
     else:
         fp.write("\t%s\n" % (escape(str(o), "\\\n")));
     if open_here:
@@ -295,10 +300,10 @@ def kvh_getv_by_k(kvt, kl):
             elif len(kl) > 1:
                 # recursive call
                 return(kvh_getv_by_k(v, kl[1:]));
-def dict2df(d):
-    "Return a dict 'd' converted to DataFrame in kvh way"
+def dict2df(d, dig=None):
+    "Return a dict 'd' converted to DataFrame in kvh way. 'dig' is a digit number for rounding"
     fp=StringIO();
-    dict2kvh(d, fp);
+    dict2kvh(d, fp, dig=dig);
     s=fp.getvalue();
     fp.close();
     if s[-1] == "\n":

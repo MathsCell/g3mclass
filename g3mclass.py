@@ -144,6 +144,7 @@ class df2grid(wx.grid.Grid):
         if "grid" in dir(parent):
             parent.grid.Destroy();
         self.CreateGrid(nrow, ncol);
+        self.EnableEditing(False);
         if bg_grey is None:
             bg_grey=self.GetLabelBackgroundColour();
         self.SetDefaultCellBackgroundColour(bg_white);
@@ -160,6 +161,8 @@ class df2grid(wx.grid.Grid):
                 self.SetColAttr(j, bg);
                 bg.IncRef();
                 continue;
+            if vcol.dtype == float:
+                vcol=np.round(vcol, 3);
             for k in range(nrow):
                 if empty or empty_end[k]:
                     pass;
@@ -248,6 +251,9 @@ par_mod={
     "thr_w": 1.,
 };
 par_plot={
+    "hcl_proba": False,
+    "hcl_cutoff": False,
+    "hcl_ccutoff": True,
     "col_hist": "black",
     "col_panel": "white",
     "col_tot": "grey",
@@ -262,6 +268,11 @@ par_plot={
 wd=""; # working dir
 bg_grey=None;
 bg_white=wx.WHITE;
+hcl2item={
+    "hcl_proba": ("proba", "cl"),
+    "hcl_cutoff": ("cutoff", "cutnum"),
+    "hcl_ccutoff": ("cutoff with confidence", "confcutnum")
+};
 ## call back functions
 def OnExit(evt):
     """
@@ -365,6 +376,7 @@ def OnSave(evt):
                 gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
             # prepare zip
             with zipfile.ZipFile(fzip, "w") as zf:
+                zf.write(fdata, fdata.name);
                 for f in fbase.glob("**/*"):
                     zf.write(f, fzip.with_suffix("").name+"/"+f.name);
         except IOError:
@@ -429,7 +441,7 @@ def OnRemodel(evt):
         if dtype == "model":
             resdf[dtype]={};
             for nm,dm in model.items():
-                resdf[dtype][nm]=tls.dict2df(dm);
+                resdf[dtype][nm]=tls.dict2df(dm, dig=3);
         else:
             resdf[dtype]={};
             for nm,d in classif.items():
@@ -437,9 +449,12 @@ def OnRemodel(evt):
                 if dtype == "qry":
                     for nmq,dq in d[dtype].items():
                         vnm=nm+" ("+nmq+")";
-                        resdf[dtype][vnm]=tls.tcol2df(class2tcol(dq, ucl));
+                        resdf[dtype][vnm]=tls.tcol2df(class2tcol(dq, ucl, ids["m,q2id"].get(nm+"\t"+nmq)));
                 else:
-                    resdf[dtype][nm]=tls.tcol2df(class2tcol(d[dtype], ucl));
+                    idh=ids.get(dtype);
+                    if idh is not None and len(idh) == 0:
+                        idh=None;
+                    resdf[dtype][nm]=tls.tcol2df(class2tcol(d[dtype], ucl, idh));
     timeme("resdf");
     if dogui:
         for tab in ("sw_data", "sw_model", "sw_test", "sw_ref", "sw_qry", "sw_plot"):
@@ -485,7 +500,7 @@ def OnReplot(evt):
         w,h=gui.mainframe.GetSize();
         gui.mainframe.SetSize(w+1,h);
         wx.CallAfter(gui.mainframe.SetSize, w,h);
-        gui.nb.SetSelection(lab2ip(gui.nb, "Plots")[0]);
+        gui.nb.SetSelection(lab2ip(gui.nb, "Model plots")[0]);
     # Heatmaps
     for htype in ("ref", "test", "qry"):
         tab=getattr(gui, "sw_heat_"+htype);
@@ -512,11 +527,15 @@ def OnSliderPlot(evt):
     par_plot[win.GetName()]=win.GetValue();
     win._OnSlider(evt);
 def OnCheck(evt):
-    "a checkbow was checked/unchecked"
+    "a checkbox was checked/unchecked"
     win=evt.GetEventObject();
     par_mod["k_var"]=win.IsChecked();
     if data is not None :
         gui.btn_remod.Enable();
+def OnCheckHcl(evt):
+    "a checkbox of heatmap classif was checked/unchecked"
+    win=evt.GetEventObject();
+    par_plot[win.GetName()]=win.IsChecked();
 def OnTabChange(evt):
     #import pdb; pdb.set_trace();
     win=evt.GetEventObject();
@@ -590,7 +609,7 @@ def cl2heat(htype, pg, classif, pdf=None):
                 cdata[nm]=d[htype];
                 cls += model[nm]["par"].columns.to_list();
         cls=np.sort(list(set(cls)));
-        figsize=np.array((len(idh)*0.1+12, len(cdata)*0.3+12))*dpi;
+        figsize=np.array((0, 0)); # will be set later
         #print("htype=", htype, "figsize=", figsize);
         figure=mpl.figure.Figure(dpi=dpi, figsize=figsize/dpi);
         if pdf is None:
@@ -601,7 +620,13 @@ def cl2heat(htype, pg, classif, pdf=None):
             figure.suptitle(htype, fontsize=16);
         ax=[];
         im=[];
-        for ctype, item in (("proba", "cl"), ("cutoff", "cutnum"), ("cutoff with confidence", "confcutnum")):
+        nhcl=(par_plot["hcl_proba"]+par_plot["hcl_cutoff"]+par_plot["hcl_ccutoff"]);
+        ihcl=0;
+        for hcl in ("hcl_proba", "hcl_cutoff", "hcl_ccutoff"):
+            if not par_plot[hcl]:
+                continue;
+            ihcl += 1;
+            ctype,item=hcl2item[hcl];
             # extract classes of given type
             pcl=pa.DataFrame();
             for nm,d in cdata.items():
@@ -616,16 +641,16 @@ def cl2heat(htype, pg, classif, pdf=None):
             irv=(dn == dn).any(1)*(~tls.is_na(idh[:nr]));
             pcl=pcl.iloc[irv,:];
             nr,nc=pcl.shape;
-            if ctype == "proba":
+            if ihcl == 1:
                 # recalculate figure size
                 mh=35; # all horizontal margins/pads
                 lh=max(len(str(v)) for v in pcl.columns)*14;  # nb char * 12 pix = horizontal label length
                 imh=nr*30; # image width
-                mv=60+(16 if pdf or htype == "qry" else 0); # all vertical margins/pads
+                mv=60; # all vertical margins/pads
                 lv=max(len(str(v)) for v in pcl.index)*9;
                 imv=nc*30; # image height
                 wcb=100; # width of colorbar
-                figsize=np.array([mh+lh+imh+wcb, (mv+lv+imv)*3]);
+                figsize=np.array([mh+lh+imh+wcb, (mv+lv+imv)*nhcl+(16 if pdf or htype == "qry" else 0)]);
                 figure.set_size_inches(figsize/dpi);
             
             # prepare cmap
@@ -635,7 +660,7 @@ def cl2heat(htype, pg, classif, pdf=None):
             norm_bins=np.insert(norm_bins, 0, np.min(norm_bins)-1.0);
             ## Make normalizer
             norm=mpl.colors.BoundaryNorm(norm_bins, len(cls), clip=True);
-            ax.append(figure.add_subplot(311+len(ax))); # 3x1 grid ipl-th plot
+            ax.append(figure.add_subplot(nhcl*100+10+ihcl)); # nx1 grid ipl-th plot
             #figure.subplots_adjust(hspace = 0.5);
             im.append(heatmap(pcl, ax[-1], collab=True, cmap=cmap, norm=norm));
             ax[-1].set_title(ctype);
@@ -808,6 +833,7 @@ def file2data(fn):
             
     # each id_qry (name) is relative to next qrys till next id_qry is found
     ids["qry"]=dict((v[6:].strip("( )"), i) for i,v in enumerate(cols) if v.startswith("id_qry"));
+    ids["m,q2id"]=dict();
     # collect qry icols for each block
     ib=list(ids["qry"].values());
     nb=len(ids["qry"]);
@@ -827,6 +853,7 @@ def file2data(fn):
         nmqs=[(nmm, nmq) for nmm,d in dcols.items() for nmq,dq in d["qry"].items() if dq["i"] > icol and dq["i"] <= iend]; # collection of tuples (marker_name; qry_name)
         #import pdb; pdb.set_trace();
         ids["qry"][nmb]={"id": idh, "m,q": nmqs};
+        ids["m,q2id"].update(dict((m+"\t"+q, idh) for m,q in nmqs));
     #print("ids=", ids);
     # check that all columns are used
     iparse=set(iparse);
@@ -903,29 +930,34 @@ def dclass(data, dcols, model):
             "qry": dict((nmq, tls.xmod2class(data.iloc[:,dq["i"]].values, model[nm])) for nmq,dq in dc["qry"].items())
         };
     return(res);
-def class2tcol(d, ucl):
+def class2tcol(d, ucl, idh=None):
     "Format classification in d in tuple-column collection"
     # prepare text table
     x=d["x"];
-    tcol=[("x", x)];
+    tcol=[("x", np.round(x, 3))];
+    if idh is not None:
+        tcol.insert(0, ("id", idh));
     # add class & repartition
     #ucl=sorted(set(tls.na_omit(d["cl"])));
     for cl,clname in (("cl", "proba"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
         #import pdb; pdb.set_trace();
         tcol.append((clname, []));
         if clname == "proba":
-            tcol.append(("max", d["wmax"]));
+            tcol.append(("max", np.round(d["wmax"], 3)));
         vcl=d[cl].astype(object);
         i=tls.which(~tls.is_na(vcl));
         vcl[i]=vcl[i].astype(int);
         tcol.append(("class", vcl));
         #import pdb; pdb.set_trace();
         
-        dstat={"x": x.describe().astype(object)};
+        dstat={"x": np.round(x.describe(), 3).astype(object)};
         for icl in ucl:
-            xcl=x[tls.which(vcl==icl)];
-            tcol.append((str(icl), xcl));
-            dstat[str(icl)]=xcl.describe().astype(object);
+            ix=tls.which(vcl==icl);
+            xcl=x[ix];
+            if idh is not None:
+                tcol.append(("id", idh.iloc[ix]));
+            tcol.append((str(icl), np.round(xcl, 3)));
+            dstat[str(icl)]=np.round(xcl.describe(), 3).astype(object);
         dstat=pa.DataFrame(dstat);
         dstat.loc["count"]=dstat.loc["count"].astype(int);
         dstat.loc["percent"]=(np.round((100*dstat.loc["count"]/dstat.loc["count", "x"]).astype(float), 2)).astype(str)+"%";
