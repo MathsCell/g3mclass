@@ -1,4 +1,5 @@
 import sys;
+from pathlib import Path;
 import pandas as pa;
 import csv;
 import numpy as np;
@@ -8,6 +9,7 @@ from io import StringIO;
 import wx;
 import matplotlib as mpl;
 from math import erf, fabs, nan;
+from distutils.util import strtobool;
 DEBUG=False;
 nan=np.nan;
 Inf=np.inf;
@@ -65,21 +67,19 @@ def trd(l, d, p="", s="", a=""):
     No prefix or suffix are applied in both case.
     Returns an iterator"""
     return (p+str(d[i])+s if i in d else i if a==None else a for i in l);
-def arr2pbm(A, fp):
-    """arr2pbm(A, fp)
-    Write an image map of non-zero entries of matrix A to file pointer fp.
-    Matrix A is an array"""
-    fp.write("P1\n%d %d\n" % A.shape[::-1]);
-    for row in A:
-        p=0;
-        for c in row:
-            fp.write("1 " if c else "0 ");
-            p+=2;
-            if p >= 69:
-                fp.write("\n");
-                p=0;
-        fp.write("\n");
-        p=0;
+def s2bif(s):
+    "try to convert s to bool, int, float. If failed, leave it as is"
+    res=s;
+    for t in (strtobool, int, float):
+        try:
+            res=t(s);
+            break;
+        except:
+            continue;
+    return(res);
+def kvhd2type(d, conv=s2bif):
+    "Recursively convert values in d to conv(d)"
+    return(dict((k,conv(v)) if isstr(v) else (k, kvhd2type(v)) for k,v in d.items()));
 def kvh2tlist(fp, lev=[0], indent=[0]):
     """kvh2tlist(fp, lev=[0], indent=[0])
     Read a kvh file from fp stream descriptor
@@ -88,7 +88,7 @@ def kvh2tlist(fp, lev=[0], indent=[0]):
     """
     # check the stream
     open_here=False;
-    if isstr(fp):
+    if isstr(fp) or type(fp) == type(Path()):
         fp=open(fp, "r");
         fp.seek(0);
         open_here=True;
@@ -219,7 +219,7 @@ def dict2kvh(d, fp=sys.stdout, indent=0, dig=None):
     Write a nested dictionary on the stream fp (stdout by default). 'dig' is digit number for rounding.
     """
     open_here=False;
-    if isstr(fp):
+    if isstr(fp) or type(fp) == type(Path()):
         open_here=True;
         fp=open(fp, "w");
     for (k,v) in d.items():
@@ -237,7 +237,7 @@ def dict2kvh(d, fp=sys.stdout, indent=0, dig=None):
 def obj2kvh(o, oname=None, fp=sys.stdout, indent=0, dig=None):
     "write data.frame or dict to kvh file. 'dig' is digit number for rounding"
     open_here=False;
-    if isstr(fp):
+    if isstr(fp) or type(fp) == type(Path()):
         open_here=True;
         fp=open(fp, "w");
     have_name=oname != None;
@@ -1031,7 +1031,7 @@ def rt2model(ref, test, par_mod):
         cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-ncol(imp), restart=1, maxit=200, classify=True)["win"];
         ng=ncol(cpar["par"]);
         neglige=(ng > 1) and any(cpar["par"].loc["a",1:] <= athr);
-    cpar.update({"par_hist": par_hist});
+    #cpar.update({"par_hist": par_hist});
     # find cutoffs
     iom=np.argsort(cpar["par"].loc["mean",:]); # indexes of ordered means
     iref=which(iom == 0)[0];

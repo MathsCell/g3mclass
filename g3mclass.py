@@ -95,7 +95,7 @@ class wx_nbl(wx.Panel):
         sizer.Add(self.panel, 1, wx.EXPAND);
         self.SetSizer(sizer);
         self.panel.Bind(wx.EVT_SIZE, self.OnSize);
-        self.panel.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND));
+        self.panel.SetBackgroundColour(bg_sys);
         self.Fit();
         w,h=self.GetSize();
         self.SetSize(w,h+1);
@@ -147,10 +147,10 @@ class df2grid(wx.grid.Grid):
         self.EnableEditing(False);
         if bg_grey is None:
             bg_grey=self.GetLabelBackgroundColour();
-        self.SetDefaultCellBackgroundColour(bg_white);
+        self.SetDefaultCellBackgroundColour(bg_sys);
         parent.grid=self;
         bg=wx.grid.GridCellAttr();
-        bg.SetBackgroundColour(bg_grey);
+        bg.SetBackgroundColour(bg_sys);
         #import pdb; pdb.set_trace();
         for j in range(ncol):
             self.SetColLabelValue(j, str(nmc[j]));
@@ -170,7 +170,7 @@ class df2grid(wx.grid.Grid):
                     #break;
                     #self.SetCellValue(k, j, "");
                 else:
-                    #self.SetCellBackgroundColour(k, j, bg_white);
+                    #self.SetCellBackgroundColour(k, j, bg_null);
                     val=vcol[k];
                     val=str(val) if val == val else "";
                     self.SetCellValue(k, j, val);
@@ -209,6 +209,8 @@ class wx_FloatSlider(wx.Slider):
             self._value = self._max;
         else:
             self._value = ival / self._scale;
+        if self._scale <= 1:
+            self._value=int(self._value);
         self.txt.SetLabel(self.frmt%self._value);
         #print("ival=", ival);
         #print("_val=", self._value);
@@ -216,6 +218,12 @@ class wx_FloatSlider(wx.Slider):
         return self.hbox;
     def GetValue(self):
         return self._value;
+    def SetValue(self, val):
+        self._islider.SetValue(round(val*self._scale));
+        self._value=val;
+        if self._scale <= 1:
+            self._value=int(self._value);
+        self.txt.SetLabel(self.frmt%self._value);
 
 ## config constants
 with (diri/"g3mclass"/"version.txt").open() as fp:
@@ -241,6 +249,7 @@ model=None;
 classif=None;
 ids=None;
 prev_res_saved=True;
+prev_par_saved=True;
 dcols={};
 resdf=None; # dict for formatted output in .tsv
 par_mod={
@@ -265,14 +274,23 @@ par_plot={
     "alpha": 0.5,
     "lw": 2,
 };
+# default values
+#wx.App(False);
+par_def={
+    "par_mod": par_mod,
+    "par_plot": par_plot
+};
 wd=""; # working dir
 bg_grey=None;
 bg_white=wx.WHITE;
+bg_null=wx.NullColour;
 hcl2item={
     "hcl_proba": ("proba", "cl"),
     "hcl_cutoff": ("cutoff", "cutnum"),
     "hcl_ccutoff": ("cutoff with confidence", "confcutnum")
 };
+ID_OPEN_KVH=None;
+ID_SAVE_KVH=None;
 ## call back functions
 def OnExit(evt):
     """
@@ -296,7 +314,7 @@ def OnOpen(evt):
     This is executed when the user clicks the 'Open' option
     under the 'File' menu.  We ask the user to choose a TSV file.
     """
-    global fdata, prev_res_saved;
+    global fdata, prev_res_saved, par_mod, par_plot;
     win=evt.GetEventObject();
     win=win.GetWindow();
     if not prev_res_saved:
@@ -311,14 +329,43 @@ def OnOpen(evt):
             # proceed the data file
             fdata=Path(dlg.GetPath());
             file2data(fdata);
+            if fdata.with_suffix(".kvh").exists():
+                file2par(fdata.with_suffix(".kvh"));
+            else:
+                par_mod=par_def["par_mod"];
+                par_plot=par_def["par_plot"];
+            par2gui(par_mod, par_plot);
             gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
             gui.mainframe.SetStatusText("'%s' is read"%fdata.name);
             pre_res_saved=False;
         del(wait);
+def OnOpenPar(evt):
+    """
+    This is executed when the user clicks the 'Open parameters' option
+    under the 'File' menu.  We ask the user to choose a KVH file.
+    """
+    global fdata, prev_par_saved, par_mod, par_plot;
+    win=evt.GetEventObject().GetWindow();
+    if not prev_par_saved:
+        if wx.MessageBox("Current parameters have not been saved! Proceed?", "Please confirm",
+                         wx.ICON_QUESTION | wx.YES_NO, win) == wx.NO:
+            return;
+    with wx.FileDialog(None, defaultDir=str(wd), wildcard="Parameter files (*.kvh)|*.kvh",
+        style=wx.FD_OPEN) as dlg:
+        if dlg.ShowModal() == wx.ID_OK:
+            #print "selected file="+dlg.GetPath();
+            # proceed the parameter file
+            fpar=Path(dlg.GetPath());
+            #import pdb; pdb.set_trace();
+            file2par(fpar);
+            par2gui(par_mod, par_plot);
+            gui.nb.SetSelection(lab2ip(gui.nb, "Parameters")[0]);
+            gui.mainframe.SetStatusText("'%s' is read"%fpar.name);
+            prev_par_saved=True;
 def OnSave(evt):
     """
     This is executed when the user clicks the 'Save results' option
-    under the 'File' menu. Results are stored in <fdata>_test_geneA.tsv, <fdata>_ref_geneA.tsv and so on.
+    under the 'File' menu. Results are stored in a zip archive.
     """
     global fdata, resdf, prev_res_saved;
     if not fdata:
@@ -379,16 +426,41 @@ def OnSave(evt):
                 zf.write(fdata, fdata.name);
                 for f in fbase.glob("**/*"):
                     zf.write(f, fzip.with_suffix("").name+"/"+f.name);
+            prev_res_saved=True;
         except IOError:
             #import pdb; pdb.set_trace();
             if dogui:
                 del(wait);
             err_mes("Cannot save results in file '%s'." % fpath);
-    prev_res_saved=True;
+            return;
     if dogui:
         #wx.EndBusyCursor();
         #print("del wait");
         del(wait);
+def OnSavePar(evt):
+    """
+    This is executed when the user clicks the 'Save parameters' option
+    under the 'File' menu. Parameters are stored in <fdata>.kvh.
+    """
+    global fdata, resdf, prev_res_saved, prev_par_saved;
+    if dogui:
+        win=evt.GetEventObject().GetWindow();
+        with wx.FileDialog(win, "Save parameters in a KVH file", defaultFile=fdata.with_suffix(".kvh").name if fdata else "parameters.kvh", defaultDir=str(wd), wildcard="KVH files (*.kvh)|*.kvh", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return # the user changed their mind
+
+            # save the current contents in the file
+            fpar=Path(fileDialog.GetPath());
+    else:
+        fpar=fdata.with_suffix(".kvh");
+    try:
+        # save *.kvh
+        with fpar.open("w") as f:
+            tls.dict2kvh({"par_mod": par_mod, "par_plot": par_plot}, f);
+        prev_par_saved=True;
+    except IOError:
+        #import pdb; pdb.set_trace();
+        err_mes("Cannot save parameters in file '%s'." % fpar);
 def OnAbout(evt):
     "show about dialog"
     win=evt.GetEventObject();
@@ -483,6 +555,7 @@ def OnRemodel(evt):
         w,h=gui.mainframe.GetSize();
         gui.mainframe.SetSize(w+1,h);
         wx.CallAfter(gui.mainframe.SetSize, w,h);
+        wx.CallAfter(OnReheat, None);
         del(wait);
         prev_res_saved=False;
     timeme("dogui");
@@ -501,39 +574,52 @@ def OnReplot(evt):
         gui.mainframe.SetSize(w+1,h);
         wx.CallAfter(gui.mainframe.SetSize, w,h);
         gui.nb.SetSelection(lab2ip(gui.nb, "Model plots")[0]);
+        wx.CallAfter(OnReheat, None);
+def OnReheat(evt):
     # Heatmaps
+    if ids is None:
+        return;
+    if dogui:
+        wait=wx.BusyCursor();
     for htype in ("ref", "test", "qry"):
         tab=getattr(gui, "sw_heat_"+htype);
         cl2heat(htype, tab, classif);
     #import pdb; pdb.set_trace();
     #pass;
+    if evt is not None:
+        gui.nb.SetSelection(lab2ip(gui.nb, "Heatmaps")[0]);
+    if dogui:
+        del(wait);
 def OnSlider(evt):
     "Slider for modeling parameters was moved"
-    global par_mod;
+    global par_mod, prev_par_saved;
+    prev_par_saved=False;
     win=evt.GetEventObject();
     #print("evt=", evt);
     if data is not None :
         gui.btn_remod.Enable();
     par_mod[win.GetName()]=win.GetValue();
-    #par_mod["k"]=round(gui.sl_hbin.GetValue());
-    #par_mod["thr_di"]=gui.sl_thr_di.GetValue();
-    #par_mod["thr_w"]=gui.sl_thr_w.GetValue();
     gui.chk_hbin.SetLabel("  "+", ".join(vhbin(par_mod).astype(str)));
     win._OnSlider(evt);
 def OnSliderPlot(evt):
     "Slider for plot parameters was moved"
-    global par_plot;
+    global par_plot, prev_par_saved;
+    prev_par_saved=False;
     win=evt.GetEventObject();
     par_plot[win.GetName()]=win.GetValue();
     win._OnSlider(evt);
 def OnCheck(evt):
     "a checkbox was checked/unchecked"
+    global prev_par_saved;
+    prev_par_saved=False;
     win=evt.GetEventObject();
     par_mod["k_var"]=win.IsChecked();
     if data is not None :
         gui.btn_remod.Enable();
 def OnCheckHcl(evt):
     "a checkbox of heatmap classif was checked/unchecked"
+    global prev_par_saved;
+    prev_par_saved=False;
     win=evt.GetEventObject();
     par_plot[win.GetName()]=win.IsChecked();
 def OnTabChange(evt):
@@ -547,10 +633,11 @@ def OnTabChange(evt):
             nb.SetSelection(i);
 def OnColpick(evt):
     "respond to color picker control"
-    global par_plot;
+    global par_plot, prev_par_saved;
+    prev_par_saved=False;
     #import pdb; pdb.set_trace();
     win=evt.GetEventObject();
-    par_plot[win.GetName()]=evt.GetColour();
+    par_plot[win.GetName()]=evt.GetColour().GetAsString(wx.C2S_HTML_SYNTAX);
 # helpers
 def ToDo(evt):
     """
@@ -565,13 +652,15 @@ def d2grid(nm, df, nb):
     gtab2=wx.Panel(nb);
     nb.AddPage(gtab2, nm);
     #import pdb; pdb.set_trace();
-    gtab2.SetBackgroundColour("WHITE");
+    gtab2.SetBackgroundColour(bg_sys);
     gtab2.Bind(wx.EVT_SIZE, OnSize);
     grid2=df2grid(gtab2, df);
     timeme("sub="+nm);
 def m2plot(nm, dm, nb):
     gtab=wx.Panel(nb);
     nb.AddPage(gtab, nm);
+    if is_dark:
+        plt.style.use('dark_background')
     figure=mpl.figure.Figure(dpi=None, figsize=(2, 2));
     canvas=FigureCanvas(gtab, -1, figure);
     toolbar=NavigationToolbar(canvas);
@@ -601,9 +690,15 @@ def cl2heat(htype, pg, classif, pdf=None):
         cdata={};
         cls=[];
         if htype == "qry":
-            for nmm,nmq in ids[htype][fig]["m,q"]:
-                cdata[nmm+" ("+nmq+")"]=classif[nmm]["qry"][nmq];
-                cls += model[nmm]["par"].columns.to_list();
+            if all(nmq == fig for _,nmq in ids[htype][fig]["m,q"]):
+                # strip nmq if block has the same name
+                for nmm,nmq in ids[htype][fig]["m,q"]:
+                    cdata[nmm]=classif[nmm]["qry"][nmq];
+                    cls += model[nmm]["par"].columns.to_list();
+            else:
+                for nmm,nmq in ids[htype][fig]["m,q"]:
+                    cdata[nmm+" ("+nmq+")"]=classif[nmm]["qry"][nmq];
+                    cls += model[nmm]["par"].columns.to_list();
         else:
             for nm,d in classif.items():
                 cdata[nm]=d[htype];
@@ -644,13 +739,13 @@ def cl2heat(htype, pg, classif, pdf=None):
             if ihcl == 1:
                 # recalculate figure size
                 mh=35; # all horizontal margins/pads
-                lh=max(len(str(v)) for v in pcl.columns)*14;  # nb char * 12 pix = horizontal label length
+                lh=max(len(str(v)) for v in pcl.columns)*14;  # nb char * 14 pix = horizontal label length
                 imh=nr*30; # image width
-                mv=60; # all vertical margins/pads
-                lv=max(len(str(v)) for v in pcl.index)*9;
+                mv=80; # all vertical margins/pads
+                lv=max(len(str(v)) for v in pcl.index)*12;
                 imv=nc*30; # image height
                 wcb=100; # width of colorbar
-                figsize=np.array([mh+lh+imh+wcb, (mv+lv+imv)*nhcl+(16 if pdf or htype == "qry" else 0)]);
+                figsize=np.array([mh+lh+imh+wcb, (mv+lv+imv)*nhcl+(32 if pdf or htype == "qry" else 0)]);
                 figure.set_size_inches(figsize/dpi);
             
             # prepare cmap
@@ -725,7 +820,6 @@ def heatmap(data, ax, collab=True, **kwargs):
     else:
         ax.set_xticklabels("");
     return im;
-
 def err_mes(mes):
     "Show error dialog in GUI mode or raise exception"
     if dogui:
@@ -747,7 +841,41 @@ def vhbin(par_mod):
     v=par_mod["k"]+5*np.linspace(-par_mod["k_hlen"], par_mod["k_hlen"], round(2*par_mod["k_hlen"]+1));
     v=v[v >= 10];
     return(v.astype(int));
+def par2gui(par_mod, par_plot):
+    "Set gui widgets in accordance with 'par' content"
+    # modeling parameters
+    gui.sl_hbin.SetValue(par_mod["k"]);
+    gui.chk_hbin.SetValue(par_mod["k_var"]);
+    gui.chk_hbin.SetLabel("  "+", ".join(vhbin(par_mod).astype(str)));
+    gui.sl_hbin_hlen.SetValue(par_mod["k_hlen"]);
+    gui.sl_thr_di.SetValue(par_mod["thr_di"]);
+    gui.sl_thr_w.SetValue(par_mod["thr_w"]);
+    # heatmap
+    gui.chk_hcl_proba.SetValue(par_plot["hcl_proba"]);
+    gui.chk_hcl_proba.SetValue(par_plot["hcl_cutoff"]);
+    gui.chk_hcl_proba.SetValue(par_plot["hcl_ccutoff"]);
+    # plot
+    gui.cpick_hist.SetColour(par_plot["col_hist"]);
+    gui.cpick_panel.SetColour(par_plot["col_panel"]);
+    gui.cpick_tot.SetColour(par_plot["col_tot"]);
+    gui.cpick_ref.SetColour(par_plot["col_ref"]);
+    gui.cpick_neglow.SetColour(par_plot["col_neglow"]);
+    gui.cpick_neghigh.SetColour(par_plot["col_neghigh"]);
+    gui.cpick_poslow.SetColour(par_plot["col_poslow"]);
+    gui.cpick_poshigh.SetColour(par_plot["col_poshigh"]);
+    gui.sl_alpha.SetValue(par_plot["alpha"]);
+    gui.sl_lw.SetValue(par_plot["lw"]);
 ## working functions
+def file2par(fpar):
+    "Read parameters from fpar file"
+    global par_mod, par_plot;
+    d=tls.kvhd2type(tls.kvh2dict(fpar));
+    #print("read kvh=", d);
+    par_mod.update(d.get("par_mod", {}));
+    par_plot.update(d.get("par_plot", {}));
+    #import pdb; pdb.set_trace();
+    for k in [v for v in par_plot.keys() if v.startswith("col_")]:
+        par_plot[k]=wx.Colour(par_plot[k]).GetAsString(wx.C2S_HTML_SYNTAX);
 def file2data(fn):
     "Read Path 'fn' into data.frame"
     global data, dcols, ids;
@@ -859,7 +987,8 @@ def file2data(fn):
     iparse=set(iparse);
     for i,nm in enumerate(cols):
         if nm and i not in iparse:
-            warn_mes("Column '"+nm+"' is not categorized in any of: ref, test, query or id of one of these");
+            err_mes("Column '"+nm+"' is not recognized as one of: ref, test, query or id of one of these");
+            return;
     if dogui:
         gui.mainframe.SetCursor(wx.Cursor(wx.CURSOR_WAIT));
     # convert to float
@@ -1051,15 +1180,20 @@ def usage():
     print(__doc__);
 def make_gui():
     "create GUI"
-    global gui, bg_grey;
+    global gui, bg_grey, ID_OPEN_KVH, ID_SAVE_KVH, bg_sys, fg_sys, is_dark;
+    ID_OPEN_KVH=wx.Window.NewControlId();
+    ID_SAVE_KVH=wx.Window.NewControlId();
     gui=wx.Object();
     gui.app=wx.App();
     wx.lib.colourdb.updateColourDB();
+    bg_sys=wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND).GetAsString(wx.C2S_HTML_SYNTAX);
+    fg_sys=wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT).GetAsString(wx.C2S_HTML_SYNTAX);
+    is_dark=wx.SystemSettings.GetAppearance().IsDark();
     code=tls.wxlay2py(tls.kvh2tlist(str(diri/"g3mclass"/"g3mclass_lay.kvh")), pref="gui.");
     exec(code);
 ## take arguments
 def main():
-    global fdata, wd, gui, dogui, TIMEME, nproc;
+    global fdata, wd, gui, dogui, TIMEME, nproc, par_mod, par_plot;
     try:
         opts,args=getopt.getopt(sys.argv[1:], "hwvt", ["help", "DEBUG", "np="]);
     except getopt.GetoptError as err:
@@ -1102,11 +1236,20 @@ def main():
         fdata=fdata.parent/(fdata.name+".tsv");
     if fdata and not fdata.exists():
         err_mes(me+": file '"+str(fdata)+"' does not exist.\n");
+    # convert colors to hexa
+    for k in [v for v in par_plot.keys() if v.startswith("col_")]:
+        par_plot[k]=wx.Colour(par_plot[k]).GetAsString(wx.C2S_HTML_SYNTAX);
     if fdata:
         file2data(fdata);
+        if fdata.with_suffix(".kvh").exists():
+            file2par(fdata.with_suffix(".kvh"));
+        else:
+            par_mod=par_def["par_mod"];
+            par_plot=par_def["par_plot"];
         wd=Path(fdata.parent);
         os.chdir(wd);
         if dogui:
+            par2gui(par_mod, par_plot);
             gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
             gui.mainframe.SetStatusText("'%s' is read"%fdata.name)
     else:

@@ -7,7 +7,9 @@ wx.Frame
 			varname	file_menu
 			callmeth
 				Append(wx.ID_OPEN, "&Open and process data file\\tCtrl-O", "data file defines ref, test and optionally query columns")
-				Append(wx.ID_SAVE, "&Save results\\tCtrl-S", "Store classification results in a file")
+				Append(ID_OPEN_KVH, "&Open parameters", "kvh file storing custom parameters values")
+				Append(wx.ID_SAVE, "&Save results\\tCtrl-S", "Store model and classification results in a ZIP archive")
+				Append(ID_SAVE_KVH, "&Save parameters", "Store parameters in KVH file.")
 				AppendSeparator()
 				Append(wx.ID_EXIT, "&Quit\\tCtrl-Q", "Exit the program")
 		wx.Menu
@@ -22,17 +24,16 @@ wx.Frame
 		param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
 		wx.html.HtmlWindow
 			varname	win_welc
-			param	.parent, wx.ID_ANY, size=(400,300)
+			param	.parent, wx.ID_ANY
 			callmeth
-				SetBackgroundColour("WHITE")
-				SetPage(welc_text)
+				SetPage(welc_text.replace("%bg_sys%", str(bg_sys)).replace("%fg_sys%", str(fg_sys)))
 				Bind(wx.html.EVT_HTML_LINK_CLICKED, OnLinkClicked)
 				Bind(wx.EVT_SIZE, OnSize)
 		wx.Panel
 			varname	sw_data
 			param	.parent
 			callmeth
-				SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
+				SetBackgroundColour(bg_null)
 				Bind(wx.EVT_SIZE, OnSize)
 				SetSizer(wx.BoxSizer(wx.VERTICAL))
 		wx.ScrolledWindow
@@ -90,8 +91,8 @@ wx.Frame
 					Bind(wx.EVT_BUTTON, OnRemodel)
 					Disable()
 			wx.StaticText
-				varname	txt_par_plot
-				param	.parent, label="Plot parameters", style=wx.ALIGN_LEFT
+				varname	txt_par_heat
+				param	.parent, label="Heatmap parameters", style=wx.ALIGN_LEFT
 				callmeth
 					SetFont(wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL))
 			wx.StaticText
@@ -115,12 +116,22 @@ wx.Frame
 				callmeth
 					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
 					SetValue(par_plot["hcl_ccutoff"])
+			wx.Button
+				varname	btn_reheat
+				param	.parent, wx.ID_ANY, label="Re-draw heatmaps"
+				callmeth
+					Bind(wx.EVT_BUTTON, OnReheat)
+			wx.StaticText
+				varname	txt_par_plot
+				param	.parent, label="Plot parameters", style=wx.ALIGN_LEFT
+				callmeth
+					SetFont(wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL))
 			wx.StaticText
 				varname	txt_col_hist
 				param	.parent, label="Color for histogram edges", style=wx.ALIGN_LEFT
 			wx.ColourPickerCtrl
 				varname	cpick_hist
-				param	.parent, colour=par_plot["col_hist"], name="col_hist"
+				param	.parent, colour=par_plot["col_hist"], style=wx.CLRP_USE_TEXTCTRL, name="col_hist"
 				callmeth
 					Bind(wx.EVT_COLOURPICKER_CHANGED, OnColpick)
 			wx.StaticText
@@ -128,7 +139,7 @@ wx.Frame
 				param	.parent, label="Color for histogram panels", style=wx.ALIGN_LEFT
 			wx.ColourPickerCtrl
 				varname	cpick_panel
-				param	.parent, colour=par_plot["col_panel"], name="col_panel"
+				param	.parent, colour=par_plot["col_panel"], style=wx.CLRP_USE_TEXTCTRL, name="col_panel"
 				callmeth
 					Bind(wx.EVT_COLOURPICKER_CHANGED, OnColpick)
 			wx.StaticText
@@ -136,7 +147,7 @@ wx.Frame
 				param	.parent, label="Color for total of Gaussian densities", style=wx.ALIGN_LEFT
 			wx.ColourPickerCtrl
 				varname	cpick_tot
-				param	.parent, colour=par_plot["col_tot"], name="col_tot"
+				param	.parent, colour=par_plot["col_tot"], style=wx.CLRP_USE_TEXTCTRL, name="col_tot"
 				callmeth
 					Bind(wx.EVT_COLOURPICKER_CHANGED, OnColpick)
 			wx.StaticText
@@ -144,7 +155,7 @@ wx.Frame
 				param	.parent, label="Color for reference Gaussian class", style=wx.ALIGN_LEFT
 			wx.ColourPickerCtrl
 				varname	cpick_ref
-				param	.parent, colour=par_plot["col_ref"], name="col_ref"
+				param	.parent, colour=par_plot["col_ref"], style=wx.CLRP_USE_TEXTCTRL, name="col_ref"
 				callmeth
 					Bind(wx.EVT_COLOURPICKER_CHANGED, OnColpick)
 			wx.StaticText
@@ -152,7 +163,7 @@ wx.Frame
 				param	.parent, label="Color for low negative class (close to reference class)", style=wx.ALIGN_LEFT
 			wx.ColourPickerCtrl
 				varname	cpick_neglow
-				param	.parent, colour=par_plot["col_neglow"], name="col_neglow"
+				param	.parent, colour=par_plot["col_neglow"], style=wx.CLRP_USE_TEXTCTRL, name="col_neglow"
 				callmeth
 					Bind(wx.EVT_COLOURPICKER_CHANGED, OnColpick)
 			wx.StaticText
@@ -160,7 +171,7 @@ wx.Frame
 				param	.parent, label="Color for high negative class (far from reference class)", style=wx.ALIGN_LEFT
 			wx.ColourPickerCtrl
 				varname	cpick_neghigh
-				param	.parent, colour=par_plot["col_neghigh"], name="col_neghigh"
+				param	.parent, colour=par_plot["col_neghigh"], style=wx.CLRP_USE_TEXTCTRL, name="col_neghigh"
 				callmeth
 					Bind(wx.EVT_COLOURPICKER_CHANGED, OnColpick)
 			wx.StaticText
@@ -168,7 +179,7 @@ wx.Frame
 				param	.parent, label="Color for low positive class (close to reference class)", style=wx.ALIGN_LEFT
 			wx.ColourPickerCtrl
 				varname	cpick_poslow
-				param	.parent, colour=par_plot["col_poslow"], name="col_poslow"
+				param	.parent, colour=par_plot["col_poslow"], style=wx.CLRP_USE_TEXTCTRL, name="col_poslow"
 				callmeth
 					Bind(wx.EVT_COLOURPICKER_CHANGED, OnColpick)
 			wx.StaticText
@@ -176,7 +187,7 @@ wx.Frame
 				param	.parent, label="Color for high positive class (far from reference class)", style=wx.ALIGN_LEFT
 			wx.ColourPickerCtrl
 				varname	cpick_poshigh
-				param	.parent, colour=par_plot["col_poshigh"], name="col_poshigh"
+				param	.parent, colour=par_plot["col_poshigh"], style=wx.CLRP_USE_TEXTCTRL, name="col_poshigh"
 				callmeth
 					Bind(wx.EVT_COLOURPICKER_CHANGED, OnColpick)
 			wx.StaticText
@@ -221,12 +232,14 @@ wx.Frame
 					Add(gui.sl_thr_w.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
 					Add(gui.btn_remod, 0, flag=wx.ALIGN_CENTER)
 					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
-					Add(gui.txt_par_plot, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
+					Add(gui.txt_par_heat, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.txt_hcl, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.chk_hcl_proba, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.chk_hcl_cutoff, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.chk_hcl_ccutoff, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
+					Add(gui.btn_reheat, 0, flag=wx.ALIGN_CENTER)
 					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
+					Add(gui.txt_par_plot, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.txt_col_hist, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.cpick_hist, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
@@ -259,7 +272,6 @@ wx.Frame
 					Add(gui.btn_replot, 0, flag=wx.ALIGN_CENTER)
 			callmeth
 				SetScrollRate(20,20)
-				SetBackgroundColour("WHITE")
 				Bind(wx.EVT_SIZE, OnSize)
 				SetSizer(gui.vbox)
 		wx.Panel
@@ -356,8 +368,10 @@ wx.Frame
 		SetSizer(wx.BoxSizer(wx.VERTICAL))
 		GetSizer().Add(gui.nb, 1, wx.EXPAND|wx.ALL)
 		Bind(wx.EVT_MENU, OnOpen, id=wx.ID_OPEN)
+		Bind(wx.EVT_MENU, OnOpenPar, id=ID_OPEN_KVH)
 		Bind(wx.EVT_MENU, OnExit, id=wx.ID_EXIT)
 		Bind(wx.EVT_MENU, OnSave, id=wx.ID_SAVE)
+		Bind(wx.EVT_MENU, OnSavePar, id=ID_SAVE_KVH)
 		Bind(wx.EVT_MENU, OnAbout, id=wx.ID_ABOUT)
 		Bind(wx.EVT_CLOSE, OnExit)
 		Bind(wx.EVT_SIZE, OnSize)
