@@ -29,6 +29,7 @@ usage: g3mclass.py [-h|--help] [--DEBUG] [-w] [data[.tsv]]
 import sys;
 import os;
 from pathlib import Path;
+import io;
 import getopt;
 import re;
 import itertools as itr;
@@ -36,6 +37,7 @@ import multiprocessing as mp;
 from concurrent.futures import ThreadPoolExecutor as thpool;
 import threading;
 import time;
+import datetime;
 import warnings;
 import tempfile;
 import zipfile;
@@ -227,7 +229,7 @@ class wx_FloatSlider(wx.Slider):
 
 ## config constants
 with (diri/"g3mclass"/"version.txt").open() as fp:
-    version=fp.read()
+    version=fp.read().strip();
 # program name
 me="G3Mclass";
 # message in welcome tab
@@ -238,6 +240,7 @@ with (diri/"g3mclass"/"licence_en.txt").open() as fp:
     licenseText=fp.read();
 
 ## global vars
+LOCAL_TIMEZONE=datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo;
 nan=np.nan;
 Inf=np.inf;
 nproc=os.cpu_count();
@@ -277,8 +280,8 @@ par_plot={
 # default values
 #wx.App(False);
 par_def={
-    "par_mod": par_mod,
-    "par_plot": par_plot
+    "par_mod": par_mod.copy(),
+    "par_plot": par_plot.copy()
 };
 wd=""; # working dir
 bg_grey=None;
@@ -314,26 +317,27 @@ def OnOpen(evt):
     This is executed when the user clicks the 'Open' option
     under the 'File' menu.  We ask the user to choose a TSV file.
     """
-    global fdata, prev_res_saved, par_mod, par_plot;
+    global fdata, wd, prev_res_saved, par_mod, par_plot;
     win=evt.GetEventObject();
     win=win.GetWindow();
     if not prev_res_saved:
         if wx.MessageBox("Current results have not been saved! Proceed?", "Please confirm",
                          wx.ICON_QUESTION | wx.YES_NO, win) == wx.NO:
             return;
-    with wx.FileDialog(None, defaultDir=str(wd), wildcard="Data files (*.tsv)|*.tsv|Data files (*.csv)|*.csv",
+    with wx.FileDialog(None, defaultDir=str(wd), wildcard="Data files (*.tsv;*.txt;*.csv)|*.tsv;*.txt;*.csv",
         style=wx.FD_OPEN) as dlg:
         wait=wx.BusyCursor();
         if dlg.ShowModal() == wx.ID_OK:
-            #print "selected file="+dlg.GetPath();
             # proceed the data file
             fdata=Path(dlg.GetPath());
             file2data(fdata);
+            gui.mainframe.SetTitle(me+" "+fdata.name);
+            wd=fdata.parent;
             if fdata.with_suffix(".kvh").exists():
                 file2par(fdata.with_suffix(".kvh"));
             else:
-                par_mod=par_def["par_mod"];
-                par_plot=par_def["par_plot"];
+                par_mod=par_def["par_mod"].copy();
+                par_plot=par_def["par_plot"].copy();
             par2gui(par_mod, par_plot);
             gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
             gui.mainframe.SetStatusText("'%s' is read"%fdata.name);
@@ -414,16 +418,29 @@ def OnSave(evt):
                     histgmm(data.iloc[:,dc["itest"]].values, dm["par"], ax, dm["par_mod"], par_plot) # hist of test
                     ax.set_title(nm);
                     pdf.savefig(figure);
+                d=pdf.infodict();
+                d["Creator"]=me+" "+version;
+                d["CreationDate"]=datetime.datetime.now(LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S %Z %z');
             # save heatmaps
-            fnm=fbase/"heatmaps.pdf";
-            with mpdf(fnm) as pdf:
-                for htype in ("ref", "test", "qry"):
-                    cl2heat(htype, None, classif, pdf);
-            if dogui:
-                gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
+            if ids is not None and len(ids) > 0:
+                #import pdb; pdb.set_trace();
+                fnm=fbase/"heatmaps.pdf";
+                with mpdf(fnm) as pdf:
+                    for htype in ("ref", "test", "qry"):
+                        cl2heat(htype, None, classif, pdf);
+                    d=pdf.infodict();
+                    d["Creator"]=me+" "+version;
+                    d["CreationDate"]=datetime.datetime.now(LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S %Z %z');
+                if dogui:
+                    gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
             # prepare zip
             with zipfile.ZipFile(fzip, "w") as zf:
                 zf.write(fdata, fdata.name);
+                with zf.open(fdata.with_suffix(".kvh").name, "w") as f:
+                    fs=io.StringIO();
+                    tls.dict2kvh({"par_mod": par_mod, "par_plot": par_plot}, fs);
+                    f.write(fs.getvalue().encode());
+                    fs.close();
                 for f in fbase.glob("**/*"):
                     zf.write(f, fzip.with_suffix("").name+"/"+f.name);
             prev_res_saved=True;
@@ -445,7 +462,7 @@ def OnSavePar(evt):
     global fdata, resdf, prev_res_saved, prev_par_saved;
     if dogui:
         win=evt.GetEventObject().GetWindow();
-        with wx.FileDialog(win, "Save parameters in a KVH file", defaultFile=fdata.with_suffix(".kvh").name if fdata else "parameters.kvh", defaultDir=str(wd), wildcard="KVH files (*.kvh)|*.kvh", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
+        with wx.FileDialog(win, "Save parameters in a KVH file", defaultFile=fdata.with_suffix(".kvh").name if fdata != Path() else "parameters.kvh", defaultDir=str(wd), wildcard="KVH files (*.kvh)|*.kvh", style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return # the user changed their mind
 
@@ -523,7 +540,7 @@ def OnRemodel(evt):
                         vnm=nm+" ("+nmq+")";
                         resdf[dtype][vnm]=tls.tcol2df(class2tcol(dq, ucl, ids["m,q2id"].get(nm+"\t"+nmq)));
                 else:
-                    idh=ids.get(dtype);
+                    idh=None if ids is None else ids.get(dtype);
                     if idh is not None and len(idh) == 0:
                         idh=None;
                     resdf[dtype][nm]=tls.tcol2df(class2tcol(d[dtype], ucl, idh));
@@ -577,8 +594,6 @@ def OnReplot(evt):
         wx.CallAfter(OnReheat, None);
 def OnReheat(evt):
     # Heatmaps
-    if ids is None:
-        return;
     if dogui:
         wait=wx.BusyCursor();
     for htype in ("ref", "test", "qry"):
@@ -586,9 +601,12 @@ def OnReheat(evt):
         cl2heat(htype, tab, classif);
     #import pdb; pdb.set_trace();
     #pass;
-    if evt is not None:
-        gui.nb.SetSelection(lab2ip(gui.nb, "Heatmaps")[0]);
     if dogui:
+        w,h=gui.mainframe.GetSize();
+        gui.mainframe.SetSize(w+1,h);
+        wx.CallAfter(gui.mainframe.SetSize, w,h);
+        if evt is not None:
+            gui.nb.SetSelection(lab2ip(gui.nb, "Heatmaps")[0]);
         del(wait);
 def OnSlider(evt):
     "Slider for modeling parameters was moved"
@@ -674,12 +692,13 @@ def m2plot(nm, dm, nb):
     sizer.Add(toolbar, 0, wx.LEFT | wx.EXPAND);
     gtab.SetSizer(sizer);
 def cl2heat(htype, pg, classif, pdf=None):
-    if len(ids[htype]) == 0:
-        return;
     # clear previous plots
     if pdf is None:
         for ch in pg.GetChildren():
             ch.Destroy();
+    if ids is None or len(ids.get(htype, {})) == 0:
+        return;
+    if pdf is None:
         sizer=wx.BoxSizer(wx.VERTICAL);
         pg.figs=[];
     dpi=100;
@@ -852,8 +871,8 @@ def par2gui(par_mod, par_plot):
     gui.sl_thr_w.SetValue(par_mod["thr_w"]);
     # heatmap
     gui.chk_hcl_proba.SetValue(par_plot["hcl_proba"]);
-    gui.chk_hcl_proba.SetValue(par_plot["hcl_cutoff"]);
-    gui.chk_hcl_proba.SetValue(par_plot["hcl_ccutoff"]);
+    gui.chk_hcl_cutoff.SetValue(par_plot["hcl_cutoff"]);
+    gui.chk_hcl_ccutoff.SetValue(par_plot["hcl_ccutoff"]);
     # plot
     gui.cpick_hist.SetColour(par_plot["col_hist"]);
     gui.cpick_panel.SetColour(par_plot["col_panel"]);
@@ -982,6 +1001,11 @@ def file2data(fn):
         #import pdb; pdb.set_trace();
         ids["qry"][nmb]={"id": idh, "m,q": nmqs};
         ids["m,q2id"].update(dict((m+"\t"+q, idh) for m,q in nmqs));
+    for k in list(ids.keys()):
+        if len(ids[k]) == 0:
+            del(ids[k]);
+    if len(ids) == 0:
+        ids=None;
     #print("ids=", ids);
     # check that all columns are used
     iparse=set(iparse);
@@ -1044,6 +1068,8 @@ def data2model(data, dcols):
             else:
                 res[nm]=tls.rt2model(ref, test, par_mod);
             timeme("model "+nm);
+    for k,v in res.items():
+        v["creator"]={"name": me, "version": version, "date": datetime.datetime.now(LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S %Z %z')};
     return(res);
 def dclass(data, dcols, model):
     "Classify each var in 'data' described in 'dcols' using corresponding 'model'. Return a dict with classification pointed by varname/{ref,test}"
@@ -1101,11 +1127,11 @@ def class2tcol(d, ucl, idh=None):
     return(tcol);
 def res2file(res, fpath=None, objname=None):
     if fpath == None:
-        if fdata:
-            fpath=wd/(re.sub("\.tsv", "", fdata.name)+"_res.tsv");
+        if fdata != Path():
+            fpath=wd/(fdata.stem+"_res.tsv");
         else:
             err_mes("'fpath' variable is not set for writing");
-    tls.obj2kvh(res, objname, str(fpath));
+    tls.obj2kvh(res, objname, fpath);
 def s2ftime(s=0.):
     """s2ftime(s=0) -> String
     Format second number as hh:mm:ss.cc
@@ -1186,7 +1212,7 @@ def make_gui():
     gui=wx.Object();
     gui.app=wx.App();
     wx.lib.colourdb.updateColourDB();
-    bg_sys=wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND).GetAsString(wx.C2S_HTML_SYNTAX);
+    bg_sys=wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW).GetAsString(wx.C2S_HTML_SYNTAX);
     fg_sys=wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT).GetAsString(wx.C2S_HTML_SYNTAX);
     is_dark=wx.SystemSettings.GetAppearance().IsDark();
     code=tls.wxlay2py(tls.kvh2tlist(str(diri/"g3mclass"/"g3mclass_lay.kvh")), pref="gui.");
@@ -1231,33 +1257,35 @@ def main():
         make_gui();
     else:
         gui.app=wx.App(False); # for wx.Colour converters in pdf
-    fdata=Path(args[0]).resolve() if len(args) else "";
-    if fdata and fdata.name.lower()[-4:] != ".tsv":
-        fdata=fdata.parent/(fdata.name+".tsv");
-    if fdata and not fdata.exists():
+    fdata=Path(args[0]).resolve() if len(args) else Path();
+    if fdata != Path() and (not fdata.is_file() and fdata.suffix != ".tsv"):
+        fdata=fdata.with_suffix(".tsv");
+    if fdata != Path() and not fdata.is_file():
         err_mes(me+": file '"+str(fdata)+"' does not exist.\n");
     # convert colors to hexa
     for k in [v for v in par_plot.keys() if v.startswith("col_")]:
         par_plot[k]=wx.Colour(par_plot[k]).GetAsString(wx.C2S_HTML_SYNTAX);
-    if fdata:
+    if fdata != Path():
         file2data(fdata);
+        if dogui:
+            gui.mainframe.SetTitle(me+" "+fdata.name);
         if fdata.with_suffix(".kvh").exists():
             file2par(fdata.with_suffix(".kvh"));
         else:
-            par_mod=par_def["par_mod"];
-            par_plot=par_def["par_plot"];
-        wd=Path(fdata.parent);
+            par_mod=par_def["par_mod"].copy();
+            par_plot=par_def["par_plot"].copy();
+        wd=fdata.parent;
         os.chdir(wd);
         if dogui:
             par2gui(par_mod, par_plot);
             gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
-            gui.mainframe.SetStatusText("'%s' is read"%fdata.name)
+            gui.mainframe.SetStatusText("'%s' is read"%fdata.name);
+        if write_res:
+            OnRemodel(None);
+            OnSave(None);
     else:
         wd=Path(os.getcwd()).resolve();
-    if fdata and write_res:
-        #print("todo: write all results");
-        OnRemodel(None);
-        OnSave(None);
+        
     if dogui:
         gui.app.MainLoop();
 if __name__ == "__main__":

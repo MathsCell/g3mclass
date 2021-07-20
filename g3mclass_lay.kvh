@@ -7,9 +7,9 @@ wx.Frame
 			varname	file_menu
 			callmeth
 				Append(wx.ID_OPEN, "&Open and process data file\\tCtrl-O", "data file defines ref, test and optionally query columns")
-				Append(ID_OPEN_KVH, "&Open parameters", "kvh file storing custom parameters values")
-				Append(wx.ID_SAVE, "&Save results\\tCtrl-S", "Store model and classification results in a ZIP archive")
-				Append(ID_SAVE_KVH, "&Save parameters", "Store parameters in KVH file.")
+				Append(ID_OPEN_KVH, "&Open parameter file", "kvh file storing custom parameters values")
+				Append(wx.ID_SAVE, "&Save results in zip archive\\tCtrl-S", "Store model and classification results in a ZIP archive")
+				Append(ID_SAVE_KVH, "&Save parameter to file", "Store parameters in KVH file.")
 				AppendSeparator()
 				Append(wx.ID_EXIT, "&Quit\\tCtrl-Q", "Exit the program")
 		wx.Menu
@@ -54,7 +54,7 @@ wx.Frame
 					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.StaticText
 				varname	txt_hbin_var
-				param	.parent, label="Choose the best model (based on BIC) for the following number of bins:", style=wx.ALIGN_LEFT
+				param	.parent, label="Select model based on the lowest BIC for the following k:", style=wx.ALIGN_LEFT
 			wx.CheckBox
 				varname	chk_hbin
 				param	.parent, label="  "+", ".join(vhbin(par_mod).astype(str))
@@ -97,7 +97,7 @@ wx.Frame
 					SetFont(wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL))
 			wx.StaticText
 				varname	txt_hcl
-				param	.parent, label="Which classifications should be present on heatmaps?", style=wx.ALIGN_LEFT
+				param	.parent, label="Which classification heatmap to present?", style=wx.ALIGN_LEFT
 			wx.CheckBox
 				varname	chk_hcl_proba
 				param	.parent, label="probabilistic", name="hcl_proba"
@@ -365,6 +365,7 @@ wx.Frame
 		SetMenuBar(gui.menubar)
 		CreateStatusBar()
 		SetStatusText("Welcome to "+me)
+		SetTitle(me)
 		SetSizer(wx.BoxSizer(wx.VERTICAL))
 		GetSizer().Add(gui.nb, 1, wx.EXPAND|wx.ALL)
 		Bind(wx.EVT_MENU, OnOpen, id=wx.ID_OPEN)
