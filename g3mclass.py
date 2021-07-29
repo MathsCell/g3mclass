@@ -404,7 +404,7 @@ def OnSave(evt):
                         gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
                 else:
                     for nm,d in resdf[dtype].items():
-                        fnm=fbase/(dtype+"_"+nm+".tsv");
+                        fnm=fbase/(dtype+"_"+nm.replace("/", ".")+".tsv");
                         res2file(d, fnm);
                         if dogui:
                             gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
