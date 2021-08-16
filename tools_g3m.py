@@ -1025,7 +1025,7 @@ def rt2model(ref, test, par_mod):
     neglige=(ng > 1) and any(cpar["par"].loc["a",1:] <= athr)
     while neglige:
         # strip too rare classes
-        iz=which.min(cpar["par"].loc["a",-1])
+        iz=np.argmin(cpar["par"].loc["a",1:])
         pari=cpar["par"].drop(columns=iz+1);
         pari.columns=np.arange(ncol(pari));
         cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-ncol(imp), restart=1, maxit=200, classify=True)["win"];

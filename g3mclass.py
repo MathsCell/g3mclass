@@ -317,7 +317,7 @@ def OnOpen(evt):
     This is executed when the user clicks the 'Open' option
     under the 'File' menu.  We ask the user to choose a TSV file.
     """
-    global fdata, wd, prev_res_saved, par_mod, par_plot;
+    global fdata, wd, prev_res_saved, par_mod, par_plot, prev_par_saved;
     win=evt.GetEventObject();
     win=win.GetWindow();
     if not prev_res_saved:
@@ -338,10 +338,11 @@ def OnOpen(evt):
             else:
                 par_mod=par_def["par_mod"].copy();
                 par_plot=par_def["par_plot"].copy();
+                prev_par_saved=True;
             par2gui(par_mod, par_plot);
             gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
             gui.mainframe.SetStatusText("'%s' is read"%fdata.name);
-            pre_res_saved=False;
+            prev_res_saved=False;
         del(wait);
 def OnOpenPar(evt):
     """
@@ -365,6 +366,7 @@ def OnOpenPar(evt):
             par2gui(par_mod, par_plot);
             gui.nb.SetSelection(lab2ip(gui.nb, "Parameters")[0]);
             gui.mainframe.SetStatusText("'%s' is read"%fpar.name);
+            gui.btn_remod.Enable();
             prev_par_saved=True;
 def OnSave(evt):
     """
@@ -538,7 +540,7 @@ def OnRemodel(evt):
                 if dtype == "qry":
                     for nmq,dq in d[dtype].items():
                         vnm=nm+" ("+nmq+")";
-                        resdf[dtype][vnm]=tls.tcol2df(class2tcol(dq, ucl, ids["m,q2id"].get(nm+"\t"+nmq)));
+                        resdf[dtype][vnm]=tls.tcol2df(class2tcol(dq, ucl, ids["m,q2id"].get(nm+"\t"+nmq) if ids is not None else None));
                 else:
                     idh=None if ids is None else ids.get(dtype);
                     if idh is not None and len(idh) == 0:
@@ -972,14 +974,14 @@ def file2data(fn):
             if len(idh) == 0:
                 ids[suff]=None;
                 continue;
-            iu,ic=np.unique(idh[idh == idh], return_counts=True);
-            if np.max(ic) > 1:
-                err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+fn.name+"' has non unique entries. Each ID must be unique.");
-                return;
+            #iu,ic=np.unique(idh[idh == idh], return_counts=True);
+            #if np.max(ic) > 1:
+            #    err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+fn.name+"' has non unique entries. Each ID must be unique.");
+            #    return;
             ids[suff]=idh;
             
-    # each id_qry (name) is relative to next qrys till next id_qry is found
-    ids["qry"]=dict((v[6:].strip("( )"), i) for i,v in enumerate(cols) if v.startswith("id_qry"));
+    # each id (name) is relative to next qrys till next 'id (smth)' is found
+    ids["qry"]=dict((v[6:].strip("( )"), i) for i,v in enumerate(cols) if v.startswith("id ") and not (v.endswith("(ref)") or v.endswith("(test)")));
     ids["m,q2id"]=dict();
     # collect qry icols for each block
     ib=list(ids["qry"].values());
@@ -992,10 +994,10 @@ def file2data(fn):
         if len(idh) == 0:
             del(ids["qry"][nmb])
             continue;
-        iu,ic=np.unique(idh[idh == idh], return_counts=True);
-        if np.max(ic) > 1:
-            err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+fn.name+"' has non unique entries. Each ID must be unique.");
-            return;
+        #iu,ic=np.unique(idh[idh == idh], return_counts=True);
+        #if np.max(ic) > 1:
+        #    err_mes("ID column '"+cols[icol]+"' ("+str(icol+1)+") in '"+fn.name+"' has non unique entries. Each ID must be unique.");
+        #    return;
         iend=ib[i+1] if i < nb-1 else len(cols);
         nmqs=[(nmm, nmq) for nmm,d in dcols.items() for nmq,dq in d["qry"].items() if dq["i"] > icol and dq["i"] <= iend]; # collection of tuples (marker_name; qry_name)
         #import pdb; pdb.set_trace();

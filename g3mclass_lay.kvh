@@ -6,10 +6,11 @@ wx.Frame
 		wx.Menu
 			varname	file_menu
 			callmeth
-				Append(wx.ID_OPEN, "&Open and process data file\\tCtrl-O", "data file defines ref, test and optionally query columns")
-				Append(ID_OPEN_KVH, "&Open parameter file", "kvh file storing custom parameters values")
-				Append(wx.ID_SAVE, "&Save results in zip archive\\tCtrl-S", "Store model and classification results in a ZIP archive")
-				Append(ID_SAVE_KVH, "&Save parameter to file", "Store parameters in KVH file.")
+				Append(wx.ID_OPEN, "&Open and process data\\tCtrl-O", "TSV data file defining ref, test and optionally query columns")
+				Append(wx.ID_SAVE, "&Save\\tCtrl-S", "Store model and classification results in a ZIP archive")
+				AppendSeparator()
+				Append(ID_OPEN_KVH, "&Open parameters", "KVH file storing custom parameters values")
+				Append(ID_SAVE_KVH, "&Save parameters", "Store parameters in KVH file.")
 				AppendSeparator()
 				Append(wx.ID_EXIT, "&Quit\\tCtrl-Q", "Exit the program")
 		wx.Menu
@@ -41,7 +42,7 @@ wx.Frame
 			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
 			wx.StaticText
 				varname	txt_par_mod
-				param	.parent, label="Modeling parameters", style=wx.ALIGN_LEFT
+				param	.parent, label="Models", style=wx.ALIGN_LEFT
 				callmeth
 					SetFont(wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL))
 			wx.StaticText
@@ -70,7 +71,7 @@ wx.Frame
 					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.StaticText
 				varname	txt_thr_di
-				param	.parent, label="Threshold for fusing too close Gaussian groups", style=wx.ALIGN_LEFT
+				param	.parent, label="Threshold for fusing too close Gaussians", style=wx.ALIGN_LEFT
 			wx_FloatSlider
 				varname	sl_thr_di
 				param	.parent, value=par_mod["thr_di"], minValue=0, maxValue=1,  scale=100, name="thr_di"
@@ -91,39 +92,8 @@ wx.Frame
 					Bind(wx.EVT_BUTTON, OnRemodel)
 					Disable()
 			wx.StaticText
-				varname	txt_par_heat
-				param	.parent, label="Heatmap parameters", style=wx.ALIGN_LEFT
-				callmeth
-					SetFont(wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL))
-			wx.StaticText
-				varname	txt_hcl
-				param	.parent, label="Which classification heatmap to present?", style=wx.ALIGN_LEFT
-			wx.CheckBox
-				varname	chk_hcl_proba
-				param	.parent, label="probabilistic", name="hcl_proba"
-				callmeth
-					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
-					SetValue(par_plot["hcl_proba"])
-			wx.CheckBox
-				varname	chk_hcl_cutoff
-				param	.parent, label="cutoff", name="hcl_cutoff"
-				callmeth
-					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
-					SetValue(par_plot["hcl_cutoff"])
-			wx.CheckBox
-				varname	chk_hcl_ccutoff
-				param	.parent, label="cutoff with confidence", name="hcl_ccutoff"
-				callmeth
-					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
-					SetValue(par_plot["hcl_ccutoff"])
-			wx.Button
-				varname	btn_reheat
-				param	.parent, wx.ID_ANY, label="Re-draw heatmaps"
-				callmeth
-					Bind(wx.EVT_BUTTON, OnReheat)
-			wx.StaticText
 				varname	txt_par_plot
-				param	.parent, label="Plot parameters", style=wx.ALIGN_LEFT
+				param	.parent, label="Plots", style=wx.ALIGN_LEFT
 				callmeth
 					SetFont(wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL))
 			wx.StaticText
@@ -211,6 +181,34 @@ wx.Frame
 				param	.parent, wx.ID_ANY, label="Re-draw plots"
 				callmeth
 					Bind(wx.EVT_BUTTON, OnReplot)
+			wx.StaticText
+				varname	txt_par_heat
+				param	.parent, label="Heatmaps", style=wx.ALIGN_LEFT
+				callmeth
+					SetFont(wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL))
+			wx.CheckBox
+				varname	chk_hcl_proba
+				param	.parent, label="probabilistic", name="hcl_proba"
+				callmeth
+					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
+					SetValue(par_plot["hcl_proba"])
+			wx.CheckBox
+				varname	chk_hcl_cutoff
+				param	.parent, label="cutoff", name="hcl_cutoff"
+				callmeth
+					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
+					SetValue(par_plot["hcl_cutoff"])
+			wx.CheckBox
+				varname	chk_hcl_ccutoff
+				param	.parent, label="cutoff with confidence", name="hcl_ccutoff"
+				callmeth
+					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
+					SetValue(par_plot["hcl_ccutoff"])
+			wx.Button
+				varname	btn_reheat
+				param	.parent, wx.ID_ANY, label="Re-draw heatmaps"
+				callmeth
+					Bind(wx.EVT_BUTTON, OnReheat)
 			wx.BoxSizer
 				varname	vbox
 				param	wx.VERTICAL
@@ -231,13 +229,6 @@ wx.Frame
 					Add(gui.txt_thr_w, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.sl_thr_w.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
 					Add(gui.btn_remod, 0, flag=wx.ALIGN_CENTER)
-					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
-					Add(gui.txt_par_heat, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
-					Add(gui.txt_hcl, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
-					Add(gui.chk_hcl_proba, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
-					Add(gui.chk_hcl_cutoff, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
-					Add(gui.chk_hcl_ccutoff, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
-					Add(gui.btn_reheat, 0, flag=wx.ALIGN_CENTER)
 					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
 					Add(gui.txt_par_plot, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.txt_col_hist, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
@@ -270,6 +261,12 @@ wx.Frame
 					Add(gui.txt_lw, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
 					Add(gui.sl_lw.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
 					Add(gui.btn_replot, 0, flag=wx.ALIGN_CENTER)
+					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
+					Add(gui.txt_par_heat, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
+					Add(gui.chk_hcl_proba, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
+					Add(gui.chk_hcl_cutoff, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
+					Add(gui.chk_hcl_ccutoff, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
+					Add(gui.btn_reheat, 0, flag=wx.ALIGN_CENTER)
 			callmeth
 				SetScrollRate(20,20)
 				Bind(wx.EVT_SIZE, OnSize)
