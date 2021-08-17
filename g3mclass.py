@@ -704,6 +704,7 @@ def cl2heat(htype, pg, classif, pdf=None):
         sizer=wx.BoxSizer(wx.VERTICAL);
         pg.figs=[];
     dpi=100;
+    #import pdb; pdb.set_trace();
     for fig in [htype] if htype != "qry" else list(ids[htype].keys()):
         idh=ids[htype][fig]["id"] if htype == "qry" else ids[htype];
         nid=len(idh);
@@ -981,7 +982,7 @@ def file2data(fn):
             ids[suff]=idh;
             
     # each id (name) is relative to next qrys till next 'id (smth)' is found
-    ids["qry"]=dict((v[6:].strip("( )"), i) for i,v in enumerate(cols) if v.startswith("id ") and not (v.endswith("(ref)") or v.endswith("(test)")));
+    ids["qry"]=dict((v[3:].strip("( )"), i) for i,v in enumerate(cols) if v.startswith("id ") and not (v.endswith("(ref)") or v.endswith("(test)")));
     ids["m,q2id"]=dict();
     # collect qry icols for each block
     ib=list(ids["qry"].values());
