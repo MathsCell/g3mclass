@@ -10,6 +10,9 @@ import wx;
 import matplotlib as mpl;
 from math import erf, fabs, nan;
 from distutils.util import strtobool;
+from openpyxl.utils.dataframe import dataframe_to_rows as df2rows;
+import openpyxl as ox;
+
 DEBUG=False;
 nan=np.nan;
 Inf=np.inf;
@@ -324,6 +327,21 @@ def tcol2df(tcol):
     res.index=np.arange(1, nrow+1);
     res.columns=[k for k,v in tcol];
     return res;
+def ddf2xlsx(ddf, fnm):
+    "write dictionary of DataFrames 'ddf' to tabs of xlsx file 'fnm', one dict entry per tab"
+    wb=ox.Workbook()
+    i=0
+    for nm, df in ddf.items():
+        if i:
+            ws=wb.create_sheet(nm);
+        else:
+            ws=wb.active
+            ws.title=nm
+        for r in df2rows(df, index=True, header=True):
+            ws.append(r);
+        i += 1;
+    wb.save(fnm)
+    
 def wxlay2py(kvt, parent=[None], pref=""):
     """wxlay2py(kvt)
     return a string with python code generating wxWindow
@@ -357,10 +375,11 @@ def wxlay2py(kvt, parent=[None], pref=""):
             if varname and cl:
                 for (kc,vc) in cl:
                     if vc:
+                        #import pdb; pdb.set_trace()
                         # if key and value store the result in key
                         vc=vc.replace(".parent", str(parent[-1]));
                         vc=vc.replace(".self", varname);
-                        kc=kc.replace(".self", varname);
+                        kc=pref+kc.replace(".self", varname);
                         if len(parent) > 1:
                             vc=vc.replace(".top", str(parent[1]));
                         res+=kc+"="+(varname+"."
@@ -898,7 +917,12 @@ def roothalf(i1, i2, par, fromleft=True):
         raise Exception("par must be a DataFrame");
     if par.shape[1] < 2:
         raise Exception("par must have at least two columns");
-    mid=zeroin(lambda x: np.diff(dgmmn(x, par.loc[:, [i1,i2]]), axis=1), par.loc["mean", i1]-0.25*par.loc["sd", i1], par.loc["mean", i2]+0.25*par.loc["sd", i2]);
+    try:
+        mid=zeroin(lambda x: np.diff(dgmmn(x, par.loc[:, [i1,i2]]), axis=1), par.loc["mean", i1]-0.25*par.loc["sd", i1], par.loc["mean", i2]+0.25*par.loc["sd", i2]);
+    except Exception as e:
+        print("par=", par, "\ni1=", i1, "; i2=", i2)
+        import pdb; pdb.set_trace()
+        raise e;
     # find "grey-zone" limits as peak half-height
     # first find peack's tip
     #fw_d2=grad(fw_d1);
@@ -1007,21 +1031,6 @@ def rt2model(ref, test, par_mod):
     cpar=em1(tv, par=pari, imposed=imp, G=(pari.shape[1]-1), restart=1, maxit=200, classify=True)["win"];
     # re-detect classes too close to each other, eliminate one of them and re-estimate GMM
     ng=ncol(cpar["par"]);
-    fuse=ng > 1;
-    while fuse:
-        ing=np.arange(ng);
-        di=outer(ing, ing, lambda i1,i2: (np.abs(cpar["par"].loc["mean",i1]-cpar["par"].loc["mean",i2])/(cpar["par"].loc["sd",i1]+cpar["par"].loc["sd",i2])*2) <= 0.5);
-        i12=np.where(outer(ing, ing, lambda i,j: i > j) * di); # candidates to fuse with class=10 will be first
-        if len(i12[0]) > 0:
-            irm=i12[1][0];
-            pari=cpar["par"].drop(columns=irm);
-            pari.loc["sd", 1:]=pari.loc["sd", 1:]/4.;
-            pari.columns=np.arange(ncol(pari));
-            cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-1, restart=1, maxit=200, classify=True)["win"];
-            ng=ncol(cpar["par"]);
-        else:
-            break
-    ng=ncol(cpar["par"]);
     neglige=(ng > 1) and any(cpar["par"].loc["a",1:] <= athr)
     while neglige:
         # strip too rare classes
@@ -1031,6 +1040,21 @@ def rt2model(ref, test, par_mod):
         cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-ncol(imp), restart=1, maxit=200, classify=True)["win"];
         ng=ncol(cpar["par"]);
         neglige=(ng > 1) and any(cpar["par"].loc["a",1:] <= athr);
+    fuse=ng > 1;
+    while fuse:
+        ing=np.arange(ng);
+        di=outer(ing, ing, lambda i1,i2: (np.abs(cpar["par"].loc["mean",i1]-cpar["par"].loc["mean",i2])/(cpar["par"].loc["sd",i1]+cpar["par"].loc["sd",i2])*2) <= 0.5);
+        i12=np.where(outer(ing, ing, lambda i,j: i > j) * di); # candidates to fuse with class=0 will be first
+        if len(i12[0]) > 0:
+            irm=i12[0][0];
+            pari=cpar["par"].drop(columns=irm);
+            pari.loc["sd", 1:]=pari.loc["sd", 1:]/4.;
+            pari.columns=np.arange(ncol(pari));
+            cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-1, restart=1, maxit=200, classify=True)["win"];
+            ng=ncol(cpar["par"]);
+        else:
+            break
+    ng=ncol(cpar["par"]);
     #cpar.update({"par_hist": par_hist});
     # find cutoffs
     iom=np.argsort(cpar["par"].loc["mean",:]); # indexes of ordered means

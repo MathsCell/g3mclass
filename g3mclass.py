@@ -226,7 +226,15 @@ class wx_FloatSlider(wx.Slider):
         if self._scale <= 1:
             self._value=int(self._value);
         self.txt.SetLabel(self.frmt%self._value);
-
+class wx_ColourPickerCtrl(wx.ColourPickerCtrl):
+    def __init__(self, *args, label="", label_size=wx.DefaultSize, **kwargs):
+        wx.ColourPickerCtrl.__init__(self, *args, **kwargs);
+        self.hbox=wx.BoxSizer(wx.HORIZONTAL);
+        self.label=wx.StaticText(args[0], label=label, style=wx.ALIGN_LEFT, size=label_size);
+        if label_size != wx.DefaultSize:
+            self.label.Wrap(label_size[0]);
+        self.hbox.Add(self.label, 0, wx.ALL | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, border = 5);
+        self.hbox.Add(self, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=5);
 ## config constants
 with (diri/"g3mclass"/"version.txt").open() as fp:
     version=fp.read().strip();
@@ -271,9 +279,9 @@ par_plot={
     "col_tot": "grey",
     "col_ref": "seagreen",
     "col_neglow": "lightskyblue",
-    "col_neghigh": "dodgerblue",
-    "col_poslow": "lightcoral",
-    "col_poshigh": "maroon",
+    "col_neghigh": "#0061ff",
+    "col_poslow": "#e7c4d3",
+    "col_poshigh": "#b3001a",
     "alpha": 0.5,
     "lw": 2,
 };
@@ -302,7 +310,7 @@ def OnExit(evt):
     want to exit, then close everything down if he does.
     """
     global fdata;
-    if not fdata:
+    if fdata == Path():
         gui.mainframe.Destroy();
         return
     dlg = wx.MessageDialog(None, 'Exit %(me)s?'%{"me": me}, 'Choose Yes or No!',
@@ -320,7 +328,7 @@ def OnOpen(evt):
     global fdata, wd, prev_res_saved, par_mod, par_plot, prev_par_saved;
     win=evt.GetEventObject();
     win=win.GetWindow();
-    if not prev_res_saved:
+    if not prev_res_saved and fdata != Path():
         if wx.MessageBox("Current results have not been saved! Proceed?", "Please confirm",
                          wx.ICON_QUESTION | wx.YES_NO, win) == wx.NO:
             return;
@@ -374,9 +382,9 @@ def OnSave(evt):
     under the 'File' menu. Results are stored in a zip archive.
     """
     global fdata, resdf, prev_res_saved;
-    if not fdata:
+    if model is None or len(model) == 0:
         # data are not yet chosen
-        err_mes("no data yet chosen.\nRead a data file first.");
+        err_mes("No learned model.\nRead data file and learn model first.");
         return;
     if dogui:
         win=evt.GetEventObject();
@@ -396,20 +404,22 @@ def OnSave(evt):
         #import pdb; pdb.set_trace();
         fbase=Path(tmpd);
         try:
-            # save *.tsv
-            for dtype in ("model", "test", "ref", "qry"):
-                if dtype == "model":
-                    fnm=fbase/"model.tsv";
-                    df=resdf["model"];
-                    res2file(df, fnm);
-                    if dogui:
-                        gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
-                else:
-                    for nm,d in resdf[dtype].items():
-                        fnm=fbase/(dtype+"_"+nm.replace("/", ".")+".tsv");
-                        res2file(d, fnm);
-                        if dogui:
-                            gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
+            # save *.zip one file per gene with tabs: model, ref etc.
+            for nm in resdf["model"].keys():
+                fnm=fbase/(nm.replace("/", ".")+".xlsx");
+                ddf={};
+                for dtype in ("model", "test", "ref", "qry"):
+                    if dtype == "qry":
+                        #import pdb; pdb.set_trace()
+                        for nmq,dq in resdf[dtype].items():
+                            if nmq.startswith(nm+" ("):
+                                nmq=nmq[len(nm):].strip("( )")
+                                ddf[nmq.replace("/", ".")]=dq;
+                    else:
+                        ddf[dtype]=resdf[dtype][nm];
+                tls.ddf2xlsx(ddf, fnm);
+                if dogui:
+                    gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
             # save .pdf
             fnm=fbase/"plots.pdf";
             with mpdf(fnm) as pdf:
@@ -548,27 +558,24 @@ def OnRemodel(evt):
                     resdf[dtype][nm]=tls.tcol2df(class2tcol(d[dtype], ucl, idh));
     timeme("resdf");
     if dogui:
-        for tab in ("sw_data", "sw_model", "sw_test", "sw_ref", "sw_qry", "sw_plot"):
+        for tab in ("sw_model", "sw_test", "sw_ref", "sw_qry", "sw_plot"):
             gtab=getattr(gui, tab);
-            if tab == "sw_data":
-                grid=df2grid(gtab, data);
+            dtype=tab[3:];
+            # remove previous sub-pages and create one page per marker
+            nb=getattr(gui, "nb_"+dtype);
+            #print("tab=", tab, "; nb=", nb);
+            for i in range(nb.GetPageCount()-1, -1, -1):
+                nb.DeletePage(i);
+            nb.SetSize(400, 300); # fixes warning "gtk_box_gadget_distribute: assertion 'size >= 0' failed"
+            if tab == "sw_plot":
+                OnReplot(None);
             else:
-                dtype=tab[3:];
-                # remove previous sub-pages and create one page per marker
-                nb=getattr(gui, "nb_"+dtype);
-                #print("tab=", tab, "; nb=", nb);
-                for i in range(nb.GetPageCount()-1, -1, -1):
-                    nb.DeletePage(i);
-                nb.SetSize(400, 300); # fixes warning "gtk_box_gadget_distribute: assertion 'size >= 0' failed"
-                if tab == "sw_plot":
-                    OnReplot(None);
-                else:
-                    #with thpool(min(4, len(resdf[dtype]), os.cpu_count())) as pool:
-                    #    list(pool.map(tls.starfun, ((wx.CallAfter, d2grid, nm, df, nb, lock) for nm,df in resdf[dtype].items())));
+                #with thpool(min(4, len(resdf[dtype]), os.cpu_count())) as pool:
+                #    list(pool.map(tls.starfun, ((wx.CallAfter, d2grid, nm, df, nb, lock) for nm,df in resdf[dtype].items())));
 
-                    for nm,df in resdf[dtype].items():
-                    #    wx.CallLater(10, d2grid, nm, df, nb);
-                        d2grid(nm, df, nb);
+                for nm,df in resdf[dtype].items():
+                #    wx.CallLater(10, d2grid, nm, df, nb);
+                    d2grid(nm, df, nb);
             timeme("tab="+tab)
         gui.nb.SetSelection(lab2ip(gui.nb, "Model")[0]);
         w,h=gui.mainframe.GetSize();
@@ -619,7 +626,7 @@ def OnSlider(evt):
     if data is not None :
         gui.btn_remod.Enable();
     par_mod[win.GetName()]=win.GetValue();
-    gui.chk_hbin.SetLabel("  "+", ".join(vhbin(par_mod).astype(str)));
+    gui.txt_hbin_hlen.SetLabel("Shorter/longer vector of k: "+", ".join(vhbin(par_mod).astype(str)));
     win._OnSlider(evt);
 def OnSliderPlot(evt):
     "Slider for plot parameters was moved"
@@ -633,7 +640,15 @@ def OnCheck(evt):
     global prev_par_saved;
     prev_par_saved=False;
     win=evt.GetEventObject();
-    par_mod["k_var"]=win.IsChecked();
+    val=win.IsChecked();
+    par_mod["k_var"]=val;
+    # set text labels
+    if val:
+        gui.txt_hbin2.SetLabel("   Fixed k (no)");
+        gui.txt_hbin4.SetLabel("   Varying k (yes)");
+    else:
+        gui.txt_hbin2.SetLabel("   Fixed k (yes)");
+        gui.txt_hbin4.SetLabel("   Varying k (no)");
     if data is not None :
         gui.btn_remod.Enable();
 def OnCheckHcl(evt):
@@ -658,6 +673,28 @@ def OnColpick(evt):
     #import pdb; pdb.set_trace();
     win=evt.GetEventObject();
     par_plot[win.GetName()]=evt.GetColour().GetAsString(wx.C2S_HTML_SYNTAX);
+def OnDefault(evt):
+    "Change parameters to default values"
+    global par_plot, par_mod, prev_par_saved;
+    prev_par_saved=False;
+    win=evt.GetEventObject();
+    if win.GetName() == "def_mod":
+        for k,v in par_mod.items():
+            val=par_def["par_mod"][k]
+            par_mod[k]=val.copy() if "copy" in dir(val) else val
+    if win.GetName() == "def_plot":
+        for k,v in par_plot.items():
+            if k.startswith("hcl_"):
+                continue;
+            val=par_def["par_plot"][k]
+            par_plot[k]=val.copy() if "copy" in dir(val) else val
+    if win.GetName() == "def_heat":
+        for k,v in par_plot.items():
+            if not k.startswith("hcl_"):
+                continue;
+            val=par_def["par_plot"][k]
+            par_plot[k]=val.copy() if "copy" in dir(val) else val
+    par2gui(par_mod, par_plot)
 # helpers
 def ToDo(evt):
     """
@@ -868,7 +905,6 @@ def par2gui(par_mod, par_plot):
     # modeling parameters
     gui.sl_hbin.SetValue(par_mod["k"]);
     gui.chk_hbin.SetValue(par_mod["k_var"]);
-    gui.chk_hbin.SetLabel("  "+", ".join(vhbin(par_mod).astype(str)));
     gui.sl_hbin_hlen.SetValue(par_mod["k_hlen"]);
     gui.sl_thr_di.SetValue(par_mod["thr_di"]);
     gui.sl_thr_w.SetValue(par_mod["thr_w"]);
@@ -887,6 +923,15 @@ def par2gui(par_mod, par_plot):
     gui.cpick_poshigh.SetColour(par_plot["col_poshigh"]);
     gui.sl_alpha.SetValue(par_plot["alpha"]);
     gui.sl_lw.SetValue(par_plot["lw"]);
+    # set text labels
+    val=par_mod["k_var"];
+    if val:
+        gui.txt_hbin2.SetLabel("   Fixed k (no)");
+        gui.txt_hbin4.SetLabel("   Varying k (yes)");
+    else:
+        gui.txt_hbin2.SetLabel("   Fixed k (yes)");
+        gui.txt_hbin4.SetLabel("   Varying k (no)");
+    gui.txt_hbin_hlen.SetLabel("Shorter/longer vector of k: "+", ".join(vhbin(par_mod).astype(str)));
 ## working functions
 def file2par(fpar):
     "Read parameters from fpar file"
@@ -1022,9 +1067,16 @@ def file2data(fn):
     for nm,dc in dcols.items():
         for i in [dc["iref"], dc["itest"], *[dq["i"] for nmq,dq in dc["qry"].items()]]:
             data.iloc[:,i]=data.iloc[:,i].to_numpy(float);
-    OnRemodel(None);
     if dogui:
-        gui.mainframe.SetCursor(wx.Cursor(wx.CURSOR_ARROW))
+        gtab=getattr(gui, "sw_data");
+        grid=df2grid(gtab, data);
+        gui.btn_remod.Enable();
+        w,h=gui.mainframe.GetSize();
+        gui.mainframe.SetSize(w+1,h);
+        wx.CallAfter(gui.mainframe.SetSize, w,h);
+        gui.mainframe.SetCursor(wx.Cursor(wx.CURSOR_ARROW));
+    else:
+        OnRemodel(None) # automatically do analysis in non gui mod
 def data2model(data, dcols):
     "Learn models for each var in 'data' described in 'dcols'. Return a dict with models pointed by varname"
     if len(dcols) > 1 and not par_mod["k_var"]:
@@ -1072,7 +1124,7 @@ def data2model(data, dcols):
                 res[nm]=tls.rt2model(ref, test, par_mod);
             timeme("model "+nm);
     for k,v in res.items():
-        v["creator"]={"name": me, "version": version, "date": datetime.datetime.now(LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S %Z %z')};
+        v["creator"]={"name": me, "version": version, "data": str(fdata), "date": datetime.datetime.now(LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S %Z %z')};
     return(res);
 def dclass(data, dcols, model):
     "Classify each var in 'data' described in 'dcols' using corresponding 'model'. Return a dict with classification pointed by varname/{ref,test}"
@@ -1263,6 +1315,12 @@ def main():
     fdata=Path(args[0]).resolve() if len(args) else Path();
     if fdata != Path() and (not fdata.is_file() and fdata.suffix != ".tsv"):
         fdata=fdata.with_suffix(".tsv");
+        if not fdata.is_file():
+            fdata=fdata.with_suffix(".txt");
+            if not fdata.is_file():
+                fdata=fdata.with_suffix(".csv");
+                if not fdata.is_file():
+                    err_mes(me+": file '"+str(fdata.parent/fdata.stem)+".[tsv|txt|csv]' does not exist.\n");
     if fdata != Path() and not fdata.is_file():
         err_mes(me+": file '"+str(fdata)+"' does not exist.\n");
     # convert colors to hexa

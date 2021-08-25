@@ -22,7 +22,7 @@ setup(
    package_data={
         'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'welcome.html', 'docs/*', 'example/*'],
    },
-   install_requires=['wxpython', 'numpy', 'pandas', 'matplotlib'],
+   install_requires=['wxpython', 'numpy', 'pandas', 'matplotlib', 'openpyxl'],
    entry_points={
         'console_scripts': [
         'g3mclass = g3mclass:main',
