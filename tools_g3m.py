@@ -329,18 +329,9 @@ def tcol2df(tcol):
     return res;
 def ddf2xlsx(ddf, fnm):
     "write dictionary of DataFrames 'ddf' to tabs of xlsx file 'fnm', one dict entry per tab"
-    wb=ox.Workbook()
-    i=0
-    for nm, df in ddf.items():
-        if i:
-            ws=wb.create_sheet(nm);
-        else:
-            ws=wb.active
-            ws.title=nm
-        for r in df2rows(df, index=True, header=True):
-            ws.append(r);
-        i += 1;
-    wb.save(fnm)
+    with pa.ExcelWriter(fnm, engine='xlsxwriter', options={'strings_to_numbers': True}) as writer:
+        for nm, df in ddf.items():
+            df.to_excel(writer, sheet_name=nm)
     
 def wxlay2py(kvt, parent=[None], pref=""):
     """wxlay2py(kvt)
