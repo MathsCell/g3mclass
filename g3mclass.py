@@ -266,7 +266,7 @@ resdf=None; # dict for formatted output in .tsv
 par_mod={
     "k": 25,
     "k_hlen": 3,
-    "k_var": False,
+    "k_var": True,
     "thr_di": 0.5,
     "thr_w": 1.,
 };
@@ -414,7 +414,7 @@ def OnSave(evt):
                         for nmq,dq in resdf[dtype].items():
                             if nmq.startswith(nm+" ("):
                                 nmq=nmq[len(nm):].strip("( )")
-                                ddf[nmq.replace("/", ".")]=dq;
+                                ddf[nmq]=dq;
                     else:
                         ddf[dtype]=resdf[dtype][nm];
                 tls.ddf2xlsx(ddf, fnm);
@@ -621,13 +621,20 @@ def OnSlider(evt):
     "Slider for modeling parameters was moved"
     global par_mod, prev_par_saved;
     prev_par_saved=False;
-    win=evt.GetEventObject();
-    #print("evt=", evt);
     if data is not None :
         gui.btn_remod.Enable();
-    par_mod[win.GetName()]=win.GetValue();
-    gui.txt_hbin_hlen.SetLabel("Shorter/longer vector of k: "+", ".join(vhbin(par_mod).astype(str)));
-    win._OnSlider(evt);
+    if evt is not None:
+        win=evt.GetEventObject();
+        #print("evt=", evt);
+        nm=win.GetName();
+        val=win.GetValue();
+        par_mod[nm]=val;
+        win._OnSlider(evt);
+        if nm == "k_hlen":
+            gui.chk_hbin.SetValue(True);
+    s=gui.txt_hbin_hlen.GetLabel().split(":")
+    gui.txt_hbin_hlen.SetLabel(s[0]+": "+", ".join(vhbin(par_mod).astype(str)));
+    OnCheck(None)
 def OnSliderPlot(evt):
     "Slider for plot parameters was moved"
     global par_plot, prev_par_saved;
@@ -639,16 +646,21 @@ def OnCheck(evt):
     "a checkbox was checked/unchecked"
     global prev_par_saved;
     prev_par_saved=False;
-    win=evt.GetEventObject();
-    val=win.IsChecked();
+    if evt is None:
+        val=gui.chk_hbin.GetValue();
+    else:
+        win=evt.GetEventObject();
+        val=win.IsChecked();
     par_mod["k_var"]=val;
     # set text labels
+    s2=gui.txt_hbin2.GetLabel().split("(")
+    s3=gui.txt_hbin3.GetLabel().split("(")
     if val:
-        gui.txt_hbin2.SetLabel("   Fixed k (no)");
-        gui.txt_hbin4.SetLabel("   Varying k (yes)");
+        gui.txt_hbin2.SetLabel(s2[0]+"(no)");
+        gui.txt_hbin3.SetLabel(s3[0]+"(yes)");
     else:
-        gui.txt_hbin2.SetLabel("   Fixed k (yes)");
-        gui.txt_hbin4.SetLabel("   Varying k (no)");
+        gui.txt_hbin2.SetLabel(s2[0]+"(yes)");
+        gui.txt_hbin3.SetLabel(s3[0]+"(no)");
     if data is not None :
         gui.btn_remod.Enable();
 def OnCheckHcl(evt):
@@ -924,14 +936,8 @@ def par2gui(par_mod, par_plot):
     gui.sl_alpha.SetValue(par_plot["alpha"]);
     gui.sl_lw.SetValue(par_plot["lw"]);
     # set text labels
-    val=par_mod["k_var"];
-    if val:
-        gui.txt_hbin2.SetLabel("   Fixed k (no)");
-        gui.txt_hbin4.SetLabel("   Varying k (yes)");
-    else:
-        gui.txt_hbin2.SetLabel("   Fixed k (yes)");
-        gui.txt_hbin4.SetLabel("   Varying k (no)");
-    gui.txt_hbin_hlen.SetLabel("Shorter/longer vector of k: "+", ".join(vhbin(par_mod).astype(str)));
+    OnSlider(None);
+    OnCheck(None);
 ## working functions
 def file2par(fpar):
     "Read parameters from fpar file"

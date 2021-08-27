@@ -57,34 +57,29 @@ wx.Frame
 				param	.parent, label="Histogram with the number of bins (k)", style=wx.ALIGN_LEFT
 			wx.StaticText
 				varname	txt_hbin2
-				param	.parent, label="   Fixed k (yes)", style=wx.ALIGN_LEFT
-			wx.StaticText
-				varname	txt_hbin3
-				param	.parent, label="      Model based on selected k", style=wx.ALIGN_LEFT
+				param	.parent, label="   Model with fixed k (no)", style=wx.ALIGN_LEFT
 			wx_FloatSlider
 				varname	sl_hbin
 				param	.parent, value=par_mod["k"], minValue=10, maxValue=100, scale=1, frmt="%3.0f", style=wx.SL_HORIZONTAL, name="k"
 				callmeth
 					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.StaticText
-				varname	txt_hbin4
-				param	.parent, label="   Varying k (no)", style=wx.ALIGN_LEFT
-			wx.StaticText
-				varname	txt_hbin5
-				param	.parent, label="      Model based on the lowest BIC", style=wx.ALIGN_LEFT
-			wx.CheckBox
-				varname	chk_hbin
-				param	.parent, label="toggle varying/fixed k"
-				callmeth
-					Bind(wx.EVT_CHECKBOX, OnCheck)
-			wx.StaticText
-				varname	txt_hbin_hlen
-				param	.parent, label="Shorter/longer vector of k: "+", ".join(vhbin(par_mod).astype(str)), style=wx.ALIGN_LEFT
+				varname	txt_hbin3
+				param	.parent, label="   Model with varying k and the lowest BIC (yes)", style=wx.ALIGN_LEFT
 			wx_FloatSlider
 				varname	sl_hbin_hlen
 				param	.parent, value=par_mod["k_hlen"], minValue=1, maxValue=10, scale=1, frmt="%2.0f", style=wx.SL_HORIZONTAL, name="k_hlen"
 				callmeth
 					Bind(wx.EVT_SCROLL, OnSlider)
+			wx.CheckBox
+				varname	chk_hbin
+				param	.parent, label="varying k"
+				callmeth
+					Bind(wx.EVT_CHECKBOX, OnCheck)
+					SetValue(par_mod["k_var"])
+			wx.StaticText
+				varname	txt_hbin_hlen
+				param	.parent, label="Vector of k: "+", ".join(vhbin(par_mod).astype(str)), style=wx.ALIGN_LEFT
 			wx.StaticText
 				varname	txt_thr_di
 				param	.parent, label="Threshold for fusing too close Gaussians", style=wx.ALIGN_LEFT
@@ -95,7 +90,7 @@ wx.Frame
 					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.StaticText
 				varname	txt_thr_w
-				param	.parent, label="Threshold for vanishing Gaussian groups", style=wx.ALIGN_LEFT
+				param	.parent, label="Threshold for vanishing Gaussians", style=wx.ALIGN_LEFT
 			wx_FloatSlider
 				varname	sl_thr_w
 				param	.parent, value=par_mod["thr_w"], minValue=0, maxValue=10,  scale=100, name="thr_w"
@@ -108,18 +103,6 @@ wx.Frame
 					Bind(wx.EVT_BUTTON, OnDefault)
 			wx.Button
 				varname	btn_remod
-				param	.parent, wx.ID_ANY, label="Learn model"
-				callmeth
-					Bind(wx.EVT_BUTTON, OnRemodel)
-					Disable()
-			wx.Button
-				varname	btn_remod1
-				param	.parent, wx.ID_ANY, label="Learn model"
-				callmeth
-					Bind(wx.EVT_BUTTON, OnRemodel)
-					Disable()
-			wx.Button
-				varname	btn_remod2
 				param	.parent, wx.ID_ANY, label="Learn model"
 				callmeth
 					Bind(wx.EVT_BUTTON, OnRemodel)
@@ -263,14 +246,12 @@ wx.Frame
 					Add(gui.txt_par_mod, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
 					Add(gui.txt_hbin1, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
 					Add(gui.txt_hbin2, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
-					Add(gui.txt_hbin3, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
 					Add(gui.sl_hbin.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
-					#Add(gui.btn_remod1, 0, flag=wx.ALIGN_CENTER)
+					#Add(gui.btn_remod, 0, flag=wx.ALIGN_CENTER)
 					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
-					Add(gui.txt_hbin4, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
-					Add(gui.txt_hbin5, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
-					Add(gui.txt_hbin_hlen, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
+					Add(gui.txt_hbin3, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
 					Add(gui.sl_hbin_hlen.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.txt_hbin_hlen, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
 					Add(gui.chk_hbin, 0, flag = wx.EXPAND | wx.ALL, border = 5)
 					#Add(gui.btn_remod2, 0, flag=wx.ALIGN_CENTER)
 					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)

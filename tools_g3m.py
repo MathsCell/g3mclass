@@ -10,8 +10,6 @@ import wx;
 import matplotlib as mpl;
 from math import erf, fabs, nan;
 from distutils.util import strtobool;
-from openpyxl.utils.dataframe import dataframe_to_rows as df2rows;
-import openpyxl as ox;
 
 DEBUG=False;
 nan=np.nan;
@@ -329,9 +327,40 @@ def tcol2df(tcol):
     return res;
 def ddf2xlsx(ddf, fnm):
     "write dictionary of DataFrames 'ddf' to tabs of xlsx file 'fnm', one dict entry per tab"
+    tr="".maketrans("[]:*?/\\", "().....")
     with pa.ExcelWriter(fnm, engine='xlsxwriter', options={'strings_to_numbers': True}) as writer:
+        wb=writer.book;
+        pfmt0=wb.add_format({'num_format': '0"%"'});
+        pfmt=wb.add_format({'num_format': '0.00"%"'});
+        hfmt=wb.add_format({
+            'bold': True,
+            'text_wrap': True,
+            'valign': 'top',
+            'fg_color': '#D7E4BC',
+            'border': 0,
+        });
         for nm, df in ddf.items():
-            df.to_excel(writer, sheet_name=nm)
+            if nm == "model":
+                df.to_excel(writer, sheet_name=nm.translate(tr), header=False, index=False);
+            else:
+                nms=nm.translate(tr)
+                df.to_excel(writer, sheet_name=nms)
+                ws=writer.sheets[nms]
+                # header format
+                ws.set_row(0, 24);
+                ws.write(0, 0, "", hfmt);
+                for ir in range(df.shape[0]):
+                    ws.write(ir+1, 0, df.index[ir], hfmt);
+                for ic in range(df.shape[1]):
+                    ws.write(0, ic+1, df.columns[ic], hfmt);
+                # percentage format
+                for ir, ic in zip(*np.where(np.char.endswith(df.to_numpy().astype(str), "%"))):
+                    val=df.iloc[ir, ic][:-1]
+                    if ir == 1:
+                        ws.write(ir+1, ic+1, val, pfmt)
+                    else:
+                        ws.write(ir+1, ic+1, val, pfmt0)
+
     
 def wxlay2py(kvt, parent=[None], pref=""):
     """wxlay2py(kvt)
