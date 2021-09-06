@@ -71,13 +71,15 @@ import tools_g3m as tls;
 # timeit
 from time import strftime, localtime, process_time as tproc
 globals()["_T0"]=tproc()
+globals()["_T0w"]=time.time()
 def timeme(s="", dig=2):
     "if a global variable TIMEME is True and another global variable _T0 is set, print current CPU time relative to _T0. This printing is preceded by a message from 's'"
     if TIMEME:
         if "_T0" in globals():
-            print(s, ":\tCPU=", round(tproc()-_T0, dig), "s", sep="");
+            print(s, ":\tCPU=", s2ftime(tproc()-_T0), "s", "\ttime=%s"%s2ftime(time.time()-_T0w), "s", sep="");
         else:
             globals()["_T0"]=tproc();
+            globals()["_T0w"]=time.time();
 
 TIMEME=False;
 
@@ -176,7 +178,7 @@ class df2grid(wx.grid.Grid):
                     val=vcol[k];
                     val=str(val) if val == val else "";
                     self.SetCellValue(k, j, val);
-        self.AutoSizeColumns();
+        self.AutoSizeColumns(setAsMin=False);
         if not parent.GetSizer():
             parent.SetSizer(wx.BoxSizer(wx.VERTICAL));
         parent.GetSizer().Add(self, 1, wx.EXPAND);
@@ -310,22 +312,22 @@ def OnExit(evt):
     want to exit, then close everything down if he does.
     """
     global fdata;
-    if fdata == Path():
+    if fdata == Path() or model is None:
         gui.mainframe.Destroy();
         return
-    dlg = wx.MessageDialog(None, 'Exit %(me)s?'%{"me": me}, 'Choose Yes or No!',
-                          wx.YES_NO | wx.ICON_QUESTION);
-    if dlg.ShowModal() == wx.ID_YES:
-        dlg.Destroy();
-        gui.mainframe.Destroy();
-    else:
-        dlg.Destroy();
+    if not prev_res_saved:
+        dlg = wx.MessageDialog(None, 'Results were not saved. Exit %s anyway?'%me, 'Choose Yes or No!', wx.YES_NO | wx.ICON_QUESTION | wx.NO_DEFAULT);
+        if dlg.ShowModal() == wx.ID_YES:
+            dlg.Destroy();
+            gui.mainframe.Destroy();
+        else:
+            dlg.Destroy();
 def OnOpen(evt):
     """
     This is executed when the user clicks the 'Open' option
     under the 'File' menu.  We ask the user to choose a TSV file.
     """
-    global fdata, wd, prev_res_saved, par_mod, par_plot, prev_par_saved;
+    global fdata, model, resdf, wd, prev_res_saved, par_mod, par_plot, prev_par_saved;
     win=evt.GetEventObject();
     win=win.GetWindow();
     if not prev_res_saved and fdata != Path():
@@ -351,6 +353,21 @@ def OnOpen(evt):
             gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
             gui.mainframe.SetStatusText("'%s' is read"%fdata.name);
             prev_res_saved=False;
+            # clean tabs in Model, Test etc
+            model=resdf=None;
+            for tab in ("model", "test", "ref", "qry", "plot"):
+                nb=getattr(gui, "nb_"+tab)
+                #print("tab=", tab, "nb=", nb.GetName())
+                nb_rmpg(nb);
+                #for ch in pg.GetChildren():
+                #    print("rm ", ch)
+                #    if tab == "plot":
+                #        import pdb; pdb.set_trace()
+                #    ch.Destroy();
+            for tab in ("ref", "test", "qry"):
+                pg=getattr(gui, "sw_heat_"+tab);
+                for ch in pg.GetChildren():
+                    ch.Destroy();
         del(wait);
 def OnOpenPar(evt):
     """
@@ -386,6 +403,7 @@ def OnSave(evt):
         # data are not yet chosen
         err_mes("No learned model.\nRead data file and learn model first.");
         return;
+    timeme("OnSave")
     if dogui:
         win=evt.GetEventObject();
         win=win.GetWindow();
@@ -405,21 +423,13 @@ def OnSave(evt):
         fbase=Path(tmpd);
         try:
             # save *.zip one file per gene with tabs: model, ref etc.
-            for nm in resdf["model"].keys():
-                fnm=fbase/(nm.replace("/", ".")+".xlsx");
-                ddf={};
-                for dtype in ("model", "test", "ref", "qry"):
-                    if dtype == "qry":
-                        #import pdb; pdb.set_trace()
-                        for nmq,dq in resdf[dtype].items():
-                            if nmq.startswith(nm+" ("):
-                                nmq=nmq[len(nm):].strip("( )")
-                                ddf[nmq]=dq;
-                    else:
-                        ddf[dtype]=resdf[dtype][nm];
-                tls.ddf2xlsx(ddf, fnm);
-                if dogui:
-                    gui.mainframe.SetStatusText("Written '"+fnm.name+"'");
+            nwork=min(len(model.keys()), nproc)
+            if nwork == 1:
+                for nm in model.keys():
+                    nm2xlsx(nm, fbase, resdf);
+            else:
+                with mp.Pool(nwork) as pool:
+                    pool.map(tls.starfun, ((nm2xlsx, nm, fbase, resdf) for nm in model.keys()));
             # save .pdf
             fnm=fbase/"plots.pdf";
             with mpdf(fnm) as pdf:
@@ -462,6 +472,7 @@ def OnSave(evt):
                 del(wait);
             err_mes("Cannot save results in file '%s'." % fpath);
             return;
+    timeme("end save")
     if dogui:
         #wx.EndBusyCursor();
         #print("del wait");
@@ -591,8 +602,7 @@ def OnReplot(evt):
         return;
     # Model plots
     nb=gui.nb_plot;
-    for i in range(nb.GetPageCount()-1, -1, -1):
-        nb.DeletePage(i);
+    nb_rmpg(nb);
     for nm,dm in model.items():
         m2plot(nm, dm, nb);
     if evt is not None:
@@ -718,15 +728,15 @@ def ToDo(evt):
     dlg.ShowModal();
     dlg.Destroy();
 def d2grid(nm, df, nb):
-    gtab2=wx.Panel(nb);
+    gtab2=wx.Panel(nb, name=nm);
     nb.AddPage(gtab2, nm);
     #import pdb; pdb.set_trace();
     gtab2.SetBackgroundColour(bg_sys);
     gtab2.Bind(wx.EVT_SIZE, OnSize);
-    grid2=df2grid(gtab2, df);
-    timeme("sub="+nm);
+    grid2=df2grid(gtab2, df, name=nm);
+    timeme("grid="+nm);
 def m2plot(nm, dm, nb):
-    gtab=wx.Panel(nb);
+    gtab=wx.Panel(nb, name=nm);
     nb.AddPage(gtab, nm);
     if is_dark:
         plt.style.use('dark_background')
@@ -938,6 +948,24 @@ def par2gui(par_mod, par_plot):
     # set text labels
     OnSlider(None);
     OnCheck(None);
+def nm2xlsx(nm, fbase, resdf):
+    "generate xlsx file for marker named by 'nm'"
+    fnm=fbase/(nm.replace("/", ".")+".xlsx");
+    ddf={};
+    for dtype in ("model", "test", "ref", "qry"):
+        if dtype == "qry":
+            #import pdb; pdb.set_trace()
+            for nmq,dq in resdf[dtype].items():
+                if nmq.startswith(nm+" ("):
+                    nmq=nmq[len(nm):].strip("( )")
+                    ddf[nmq]=dq;
+        else:
+            ddf[dtype]=resdf[dtype][nm];
+    tls.ddf2xlsx(ddf, fnm);
+def nb_rmpg(nb):
+    "Remove pages from wx.notebook 'nb'"
+    for i in range(nb.GetPageCount()-1, -1, -1):
+        nb.DeletePage(i);
 ## working functions
 def file2par(fpar):
     "Read parameters from fpar file"
@@ -1205,7 +1233,7 @@ def s2ftime(s=0.):
     mm=s%60;
     s//=60;
     hh=s;
-    return("%02d:%02d:%02d.%02d"%(hh,mm,ss,cc));
+    return("%02d:%02d:%02d.%02d"%(hh,mm,ss,cc) if hh else "%02d:%02d.%02d"%(mm,ss,cc) if mm else "%02d.%02d"%(ss,cc));
 def lab2ip(nb, lab):
     """lab2i(nb, nm) -> (i,Page) or (None,None)
     get page of a notebook nb by its label lab
@@ -1277,6 +1305,7 @@ def make_gui():
     fg_sys=wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT).GetAsString(wx.C2S_HTML_SYNTAX);
     is_dark=wx.SystemSettings.GetAppearance().IsDark();
     code=tls.wxlay2py(tls.kvh2tlist(str(diri/"g3mclass"/"g3mclass_lay.kvh")), pref="gui.");
+    #("code=\n", code)
     exec(code);
 ## take arguments
 def main():
@@ -1354,6 +1383,8 @@ def main():
         wd=Path(os.getcwd()).resolve();
         
     if dogui:
+        #import wx.lib.inspection as wxli
+        #wxli.InspectionTool().Show()
         gui.app.MainLoop();
 if __name__ == "__main__":
     main();

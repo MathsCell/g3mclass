@@ -336,7 +336,6 @@ def ddf2xlsx(ddf, fnm):
             'bold': True,
             'text_wrap': True,
             'valign': 'top',
-            'fg_color': '#D7E4BC',
             'border': 0,
         });
         for nm, df in ddf.items():
@@ -347,7 +346,7 @@ def ddf2xlsx(ddf, fnm):
                 df.to_excel(writer, sheet_name=nms)
                 ws=writer.sheets[nms]
                 # header format
-                ws.set_row(0, 24);
+                ws.set_row(0, 32);
                 ws.write(0, 0, "", hfmt);
                 for ir in range(df.shape[0]):
                     ws.write(ir+1, 0, df.index[ir], hfmt);
@@ -880,15 +879,18 @@ def em1(x, par=None, imposed=pa.DataFrame(index=["a", "mean", "sd"]), G=range(1,
                 if np.isnan(w).any():
                     raise Exception("nan appeared in weights");
                 parnew=m_step1(xv, w, imposed, inaa, inam, inas);
+                #print("it=", it, "\tparnew=\n", parnew);
                 i0=which(parnew.loc["a",:] <= tol);
                 # remove empty non imposed classes
                 i0=i0[i0 > gimp-1];
                 parnew.drop(columns=i0, inplace=True);
                 parnew.columns=np.arange(ncol(parnew));
+                #print("it=", it, "\tparnew drop=\n", parnew);
                 lp=np.log(dgmm(xv, parnew));
                 lp[lp == -np.inf]=-746
                 loglike=sum(lp);
                 BIC=-2*loglike+np.log(nv)*(3*parnew.shape[1]-sum(ninaa)-sum(ninam)-sum(ninas));
+                #print("it=", it, "\tBIC=", BIC)
                 #if BIC < 0:
                 #    print("it=", it, "\tBIC=", BIC, ";\t-2*loglike=", -2*loglike, ";\tpar=", np.log(nv)*(3*parnew.shape[1]-sum(ninaa)-sum(ninam)-sum(ninas)));
                 if BIC > BIC_prec:
@@ -896,7 +898,8 @@ def em1(x, par=None, imposed=pa.DataFrame(index=["a", "mean", "sd"]), G=range(1,
                     if DEBUG:
                         print("BIC increased");
                     break;
-                converged=(BIC_prec-BIC < tol);
+                converged=((BIC_prec-BIC < tol) or (BIC_prec-BIC)/fabs(BIC_prec) < tol);
+                #print("(BIC_prec-BIC)/fabs(BIC_prec)=", (BIC_prec-BIC)/fabs(BIC_prec), "\ttol=", tol)
                 if DEBUG:
                     print("g=", g, "\tit=", it, "\tBIC=", BIC, "\tconv=", converged);
                 par=parnew;
@@ -1029,7 +1032,7 @@ def rt2model(ref, test, par_mod):
     #print("ip=", ip);
     par=pa.DataFrame(np.array([[nan]*len(ip), np.sort(h[1][ip]), [(tmax-tmin)/30/4]*len(ip)]), index=["a", "mean", "sd"]);
     # learn gmm without imposed class
-    pari=em1(tv, par=par, G=par.shape[1], restart=1, maxit=200)["win"]["par"];
+    pari=em1(tv, par=par, G=par.shape[1], restart=1, maxit=200, tol=1.e-5)["win"]["par"];
     #print("pari=", pari);
     # is there any class very close to imp?
     di=(np.abs(pari.loc["mean",:]-imp.loc["mean",0])/(pari.loc["sd",:]+imp.loc["sd",0])*2.).to_frame();
@@ -1048,7 +1051,7 @@ def rt2model(ref, test, par_mod):
         pari=pa.concat((imp, pari), axis=1);
         pari.loc["a",:]=1./pari.shape[1];
     pari.columns=np.arange(ncol(pari));
-    cpar=em1(tv, par=pari, imposed=imp, G=(pari.shape[1]-1), restart=1, maxit=200, classify=True)["win"];
+    cpar=em1(tv, par=pari, imposed=imp, G=(pari.shape[1]-1), restart=1, maxit=200, tol=1.e-5, classify=True)["win"];
     # re-detect classes too close to each other, eliminate one of them and re-estimate GMM
     ng=ncol(cpar["par"]);
     neglige=(ng > 1) and any(cpar["par"].loc["a",1:] <= athr)
@@ -1057,7 +1060,7 @@ def rt2model(ref, test, par_mod):
         iz=np.argmin(cpar["par"].loc["a",1:])
         pari=cpar["par"].drop(columns=iz+1);
         pari.columns=np.arange(ncol(pari));
-        cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-ncol(imp), restart=1, maxit=200, classify=True)["win"];
+        cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-ncol(imp), restart=1, maxit=200, tol=1.e-5, classify=True)["win"];
         ng=ncol(cpar["par"]);
         neglige=(ng > 1) and any(cpar["par"].loc["a",1:] <= athr);
     fuse=ng > 1;
@@ -1070,7 +1073,7 @@ def rt2model(ref, test, par_mod):
             pari=cpar["par"].drop(columns=irm);
             pari.loc["sd", 1:]=pari.loc["sd", 1:]/4.;
             pari.columns=np.arange(ncol(pari));
-            cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-1, restart=1, maxit=200, classify=True)["win"];
+            cpar=em1(tv, par=pari, imposed=imp, G=ncol(pari)-1, restart=1, maxit=200, tol=1.e-5, classify=True)["win"];
             ng=ncol(cpar["par"]);
         else:
             break

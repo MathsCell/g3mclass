@@ -29,24 +29,24 @@ wx.Frame
 			Append(gui.help_menu, '&Help')
 	wx_nb
 		varname	nb
-		param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
+		param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT, name="main"
 		wx.html.HtmlWindow
 			varname	win_welc
-			param	.parent, wx.ID_ANY
+			param	.parent, wx.ID_ANY, name="welcome"
 			callmeth
 				SetPage(welc_text.replace("%bg_sys%", str(bg_sys)).replace("%fg_sys%", str(fg_sys)))
 				Bind(wx.html.EVT_HTML_LINK_CLICKED, OnLinkClicked)
 				Bind(wx.EVT_SIZE, OnSize)
 		wx.Panel
 			varname	sw_data
-			param	.parent
+			param	.parent, name="data"
 			callmeth
 				SetBackgroundColour(bg_null)
 				Bind(wx.EVT_SIZE, OnSize)
 				SetSizer(wx.BoxSizer(wx.VERTICAL))
 		wx.ScrolledWindow
 			varname	sw_param
-			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE
+			param	.parent, wx.ID_ANY, style=wx.SUNKEN_BORDER|wx.NO_FULL_REPAINT_ON_RESIZE, name="param"
 			wx.StaticText
 				varname	txt_par_mod
 				param	.parent, label="Models", style=wx.ALIGN_LEFT
@@ -293,10 +293,10 @@ wx.Frame
 				SetSizer(gui.vbox)
 		wx.Panel
 			varname	sw_model
-			param	.parent
+			param	.parent, name="model"
 			wx.Notebook
 				varname	nb_model
-				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
+				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT, name="nb_model"
 			callmeth
 				Bind(wx.EVT_SIZE, OnSize)
 				Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, OnTabChange)
@@ -304,10 +304,10 @@ wx.Frame
 				GetSizer().Add(gui.nb_model, 1, wx.EXPAND)
 		wx.Panel
 			varname	sw_test
-			param	.parent
+			param	.parent, name="test"
 			wx.Notebook
 				varname	nb_test
-				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
+				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT, name="nb_test"
 			callmeth
 				Bind(wx.EVT_SIZE, OnSize)
 				Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, OnTabChange)
@@ -315,10 +315,10 @@ wx.Frame
 				GetSizer().Add(gui.nb_test, 1, wx.EXPAND)
 		wx.Panel
 			varname	sw_ref
-			param	.parent
+			param	.parent, name="ref"
 			wx.Notebook
 				varname	nb_ref
-				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
+				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT, name="nb_ref"
 			callmeth
 				Bind(wx.EVT_SIZE, OnSize)
 				Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, OnTabChange)
@@ -326,20 +326,20 @@ wx.Frame
 				GetSizer().Add(gui.nb_ref, 1, wx.EXPAND)
 		wx.Panel
 			varname	sw_qry
-			param	.parent
+			param	.parent, name="qry"
 			wx_nbl
 				varname	nb_qry
-				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
+				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT, name="nbl_qry"
 			callmeth
 				Bind(wx.EVT_SIZE, OnSize)
 				SetSizer(wx.BoxSizer(wx.VERTICAL))
 				GetSizer().Add(gui.nb_qry, 1, wx.EXPAND)
 		wx.Panel
 			varname	sw_plot
-			param	.parent
+			param	.parent, name="plot"
 			wx.Notebook
 				varname	nb_plot
-				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT
+				param	.parent, wx.ID_ANY, style=wx.BK_DEFAULT, name="nb_plot"
 			callmeth
 				Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, OnTabChange)
 				Bind(wx.EVT_SIZE, OnSize)
@@ -347,20 +347,20 @@ wx.Frame
 				GetSizer().Add(gui.nb_plot, 1, wx.EXPAND)
 		wx.Notebook
 			varname	nb_heat
-			param	.parent
+			param	.parent, name="heat"
 			wx.ScrolledWindow
 				varname	sw_heat_ref
-				param	.parent
+				param	.parent, name="heat_ref"
 				callmeth
 					SetScrollRate(20,20)
 			wx.ScrolledWindow
 				varname	sw_heat_test
-				param	.parent
+				param	.parent, name="heat_test"
 				callmeth
 					SetScrollRate(20,20)
 			wx.ScrolledWindow
 				varname	sw_heat_qry
-				param	.parent
+				param	.parent, name="heat_qry"
 				callmeth
 					SetScrollRate(20,20)
 			callmeth
