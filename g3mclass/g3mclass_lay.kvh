@@ -22,6 +22,7 @@ wx.Frame
 		wx.Menu
 			varname	help_menu
 			callmeth
+				Append(wx.ID_HELP, "User's manual")
 				Append(wx.ID_ABOUT, "&About")
 		callmeth
 			Append(gui.file_menu, '&File')
@@ -393,6 +394,7 @@ wx.Frame
 		Bind(wx.EVT_MENU, OnRemodel, gui.menu_remod)
 		Bind(wx.EVT_MENU, OnReplot, gui.menu_replot)
 		Bind(wx.EVT_MENU, OnReheat, gui.menu_reheat)
+		Bind(wx.EVT_MENU, OnHelp, id=wx.ID_HELP)
 		Bind(wx.EVT_MENU, OnAbout, id=wx.ID_ABOUT)
 		Bind(wx.EVT_CLOSE, OnExit)
 		Bind(wx.EVT_SIZE, OnSize)

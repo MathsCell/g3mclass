@@ -238,15 +238,15 @@ class wx_ColourPickerCtrl(wx.ColourPickerCtrl):
         self.hbox.Add(self.label, 0, wx.ALL | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, border = 5);
         self.hbox.Add(self, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=5);
 ## config constants
-with (diri/"g3mclass"/"version.txt").open() as fp:
+with (diri/"version.txt").open() as fp:
     version=fp.read().strip();
 # program name
 me="G3Mclass";
 # message in welcome tab
-with (diri/"g3mclass"/"welcome.html").open() as fp:
+with (diri/"welcome.html").open() as fp:
     welc_text=fp.read() % {"me": me};
 welc_text=re.sub("\n\n", "<br>\n", welc_text);
-with (diri/"g3mclass"/"licence_en.txt").open() as fp:
+with (diri/"licence_en.txt").open() as fp:
     licenseText=fp.read();
 
 ## global vars
@@ -717,6 +717,9 @@ def OnDefault(evt):
             val=par_def["par_plot"][k]
             par_plot[k]=val.copy() if "copy" in dir(val) else val
     par2gui(par_mod, par_plot)
+def OnHelp(evt):
+    gui.help.DisplayContents()
+
 # helpers
 def ToDo(evt):
     """
@@ -1304,8 +1307,10 @@ def make_gui():
     bg_sys=wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW).GetAsString(wx.C2S_HTML_SYNTAX);
     fg_sys=wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWTEXT).GetAsString(wx.C2S_HTML_SYNTAX);
     is_dark=wx.SystemSettings.GetAppearance().IsDark();
-    code=tls.wxlay2py(tls.kvh2tlist(str(diri/"g3mclass"/"g3mclass_lay.kvh")), pref="gui.");
+    code=tls.wxlay2py(tls.kvh2tlist(str(diri/"g3mclass_lay.kvh")), pref="gui.");
     #("code=\n", code)
+    gui.help=wx.html.HtmlHelpController();
+    gui.help.AddBook(str(diri/"help"/"g3mclass.hhp"));
     exec(code);
 ## take arguments
 def main():

@@ -1,0 +1,27 @@
+<ul>
+
+    <li><object type="text/sitemap">
+        <param name="Name" value="Preamble">
+        <param name="Local" value="g3mclass.htm">
+    </object></li>
+    <li><object type="text/sitemap">
+        <param name="Name" value="Introduction">
+        <param name="Local" value="g3m_intro.htm">
+    </object></li>
+    <li><object type="text/sitemap">
+        <param name="Name" value="Input data format">
+        <param name="Local" value="g3m_data.htm">
+    </object></li>
+    <li><object type="text/sitemap">
+        <param name="Name" value="Parameters">
+        <param name="Local" value="g3m_param.htm">
+    </object></li>
+    <li><object type="text/sitemap">
+        <param name="Name" value="Tabs' content">
+        <param name="Local" value="g3m_tab.htm">
+    </object></li>
+    <li><object type="text/sitemap">
+        <param name="Name" value="Workflow example">
+        <param name="Local" value="g3m_workflow.htm">
+    </object></li>
+</ul>

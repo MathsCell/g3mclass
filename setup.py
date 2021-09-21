@@ -3,7 +3,7 @@ from setuptools import setup
 
 with open('README.rst', 'r', encoding='utf-8') as f:
     long_description = f.read();
-with open('version.txt', 'r') as f:
+with open('g3mclass/version.txt', 'r') as f:
     version = f.read().rstrip();
 
 setup(
@@ -18,14 +18,14 @@ setup(
    url='https://github.com/sgsokol/g3mclass',
    packages=['g3mclass'],
    py_modules=['g3mclass', 'tools_g3m'],
-   package_dir={'g3mclass': '.'},
+   #package_dir={'g3mclass': '.'},
    package_data={
-        'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'welcome.html', 'docs/*', 'example/*'],
+        'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'welcome.html', 'help/*', 'example/*'],
    },
    install_requires=['wxpython', 'numpy', 'pandas', 'matplotlib', 'xlsxwriter'],
    entry_points={
         'console_scripts': [
-        'g3mclass = g3mclass:main',
+        'g3mclass = g3mclass.g3mclass:main',
         ],
    },
    classifiers=[

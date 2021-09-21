@@ -1,0 +1,34 @@
+<h2>Introduction</h2>
+G3MClass is intended to help with bio-marker classification. The current most common practice is to have a threshold for binary classification to decide for positive or negative test. Often it can be sufficient but sometimes the picture is more complex than this. Our method is inspired from the one published in [Cancer Research] where the authors had a goal to detect more changing classes that just one in a test sample with respect to reference one.
+
+<h3>How classification works in G3MClass?</h3>
+ we learn a Gauss Mixture Model (GMM) on test sample by imposing one special class (labeled '0') which have the same mean and standard deviation (SD) as a coupled reference sample. Other classes detected in the test sample are labeled with negative or positive integers depending on the location of their mean values -- under or above of the mean of 0-class respectively.<br>
+ We initialize the model learning with classes that corresponds to peaks in histogram calculated on test sample (cf. parameters related to histogram).<br/>
+ During model learning, we dismiss classes having too low sample number (cf. parameter 'Threshold for vanishing Gaussinas') and we fuse too close classes (cf. parameter 'Threshold for fusing too close Gaussians')
+
+<p>Once model is learned we build 3 classification methods:
+    <ul>
+        <li>Probability based classification (proba) which is nothing else that classical Bayes GMM based classification.</li>
+        <li>Cutoff base classification where we calculate curoff value in a way similar to these described in [Cancer research]</li>
+        <li>'Cutoff with confidence' is also described in the cited paper</li>
+    </ul>
+    All three methods have their strong and weak points.<br>
+    [strongs are ...]<br>
+    [weak are ...]<br>
+</p>
+
+<p>
+    G3MClass GUI is organized around tabs in the main window. They include data, parameter, model and result tabs and sub-tabs.
+    G3MClass facilitates exploration of classification results in spreadsheet and graphical forms. 
+</p>
+
+<p>
+    In the following manual sections we describe in detail:
+    <ul>
+        <li>Input data format convention</li>
+        <li>Parameter meaning</li>
+        <li>Tabs' content</li>
+        <li>Workflow example</li>
+    </ul>
+</p>
+
