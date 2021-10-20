@@ -34,15 +34,27 @@ import getopt;
 import re;
 import itertools as itr;
 import multiprocessing as mp;
-from concurrent.futures import ThreadPoolExecutor as thpool;
-import threading;
 import time;
 import datetime;
 import warnings;
 import tempfile;
 import zipfile;
 
-import wx;
+try:
+    import wx;
+    import matplotlib as mpl;
+    import numpy as np;
+    import pandas as pa;
+    import xlsxwriter;
+except ModuleNotFoundError:
+    import subprocess
+    res=subprocess.run([sys.executable, "-m", "pip", "install", "--user", 'wxpython', 'numpy', 'pandas', 'matplotlib', 'xlsxwriter'], capture_output=True)
+    print("res=", res)
+    import wx;
+    import matplotlib as mpl;
+    import numpy as np;
+    import pandas as pa;
+
 import wx.grid;
 import wx.adv;
 import wx.html;
@@ -52,7 +64,6 @@ import wx.lib.colourdb;
 #from wx.lib.agw.flatnotebook import FlatNotebook as wx_nb;
 wx_nb=wx.Notebook;
 
-import matplotlib as mpl;
 from matplotlib.backends.backend_wxagg import (
     FigureCanvasWxAgg as FigureCanvas,
     NavigationToolbar2WxAgg as NavigationToolbar);
@@ -718,6 +729,7 @@ def OnDefault(evt):
             par_plot[k]=val.copy() if "copy" in dir(val) else val
     par2gui(par_mod, par_plot)
 def OnHelp(evt):
+    gui.help.AddBook(str(diri/"help"/"g3mclass.hhp"));
     gui.help.DisplayContents()
 
 # helpers
@@ -1309,9 +1321,8 @@ def make_gui():
     is_dark=wx.SystemSettings.GetAppearance().IsDark();
     code=tls.wxlay2py(tls.kvh2tlist(str(diri/"g3mclass_lay.kvh")), pref="gui.");
     #("code=\n", code)
-    gui.help=wx.html.HtmlHelpController();
-    gui.help.AddBook(str(diri/"help"/"g3mclass.hhp"));
     exec(code);
+    gui.help=wx.html.HtmlHelpController();
 ## take arguments
 def main():
     global fdata, wd, gui, dogui, TIMEME, nproc, par_mod, par_plot;
