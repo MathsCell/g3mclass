@@ -18,7 +18,7 @@ Inf=np.inf;
 # translate gmm class to 0-ref class numbers
 #cl0br=np.array([-Inf,-2,-1,0,1,Inf]) # breaks for 0-ref classes
 #cl0lab=np.array(["down-deeper", "down", "ref", "up", "up-higher"]) # labels for these breaks
-# (confident) cutoff class names to numbers -> cl2i
+# (stringent) cutoff class names to numbers -> cl2i
 #cl2i=pa.DataFrame({"ref": 0, "ref-down": 0, "ref-up": 0, "down-deeper": -2, "down": -1, "up": 1, "up-higher": 2, "N/A": nan}, index=[0])
 
 def aff(name, obj, ident=0, f=sys.stdout):
@@ -1151,8 +1151,8 @@ def rt2model(ref, test, par_mod):
     
     cutoff["breaks"]=br;
     cutoff["labels"]=cllab;
-    cutoff["cbreaks"]=cbr;
-    cutoff["clabels"]=ccllab;
+    cutoff["sbreaks"]=cbr;
+    cutoff["slabels"]=ccllab;
     cpar["cutoff"]=cutoff;
     cpar["par_mod"]=par_mod.copy();
     #import pdb; pdb.set_trace();
@@ -1171,15 +1171,15 @@ def xmod2class(x, cpar):
     cl[i0]="ref";
     cl[ipo]="up-"+cl[ipo].astype(int).astype(str);
     classification["class_descr"]=cl;
-    # add classification by cutoff and ccutoff (confident cutoff)
+    # add classification by cutoff and scutoff (stringent cutoff)
     cutoff=cpar["cutoff"];
     
     clcut=cut(x, cutoff["breaks"], cutoff["labels"]);
-    cclcut=cut(x, cutoff["cbreaks"], cutoff["clabels"]);
+    cclcut=cut(x, cutoff["sbreaks"], cutoff["slabels"]);
     cutnum=cut(x, cutoff["breaks"], sorted(cpar["par"].columns)).astype(object).filled(nan);
-    ccutnum=cut(x, cutoff["cbreaks"], sorted(cpar["par"].columns)).astype(object).filled(nan);
+    ccutnum=cut(x, cutoff["sbreaks"], sorted(cpar["par"].columns)).astype(object).filled(nan);
     classification["cutoff"]=clcut;
     classification["cutnum"]=cutnum;
-    classification["confcutoff"]=cclcut;
-    classification["confcutnum"]=ccutnum;
+    classification["stringentcutoff"]=cclcut;
+    classification["stringentcutnum"]=ccutnum;
     return(classification);

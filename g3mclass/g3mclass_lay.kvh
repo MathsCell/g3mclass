@@ -7,6 +7,7 @@ wx.Frame
 			varname	file_menu
 			callmeth
 				Append(wx.ID_OPEN, "&Open\\tCtrl-O", "TSV data file defining ref, test and optionally query columns")
+				oex	Append(wx.ID_ANY, "Open example", "open provided example file")
 				Append(wx.ID_SAVE, "&Save\\tCtrl-S", "Store model and classification results in a ZIP archive")
 				AppendSeparator()
 				Append(ID_OPEN_KVH, "&Open parameters", "KVH file storing custom parameters values")
@@ -219,11 +220,11 @@ wx.Frame
 					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
 					SetValue(par_plot["hcl_cutoff"])
 			wx.CheckBox
-				varname	chk_hcl_ccutoff
-				param	.parent, label="cutoff with confidence", name="hcl_ccutoff"
+				varname	chk_hcl_scutoff
+				param	.parent, label="stringent cutoff", name="hcl_scutoff"
 				callmeth
 					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
-					SetValue(par_plot["hcl_ccutoff"])
+					SetValue(par_plot["hcl_scutoff"])
 			wx.Button
 				varname	btn_defheat
 				param	.parent, wx.ID_ANY, label="Defaults", name="def_heat"
@@ -286,7 +287,7 @@ wx.Frame
 					Add(gui.txt_par_heat, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.chk_hcl_proba, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.chk_hcl_cutoff, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
-					Add(gui.chk_hcl_ccutoff, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
+					Add(gui.chk_hcl_scutoff, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.hbox_defheat, 0, flag=wx.ALIGN_CENTER)
 			callmeth
 				SetScrollRate(20,20)
@@ -387,6 +388,7 @@ wx.Frame
 		SetSizer(wx.BoxSizer(wx.VERTICAL))
 		GetSizer().Add(gui.nb, 1, wx.EXPAND|wx.ALL)
 		Bind(wx.EVT_MENU, OnOpen, id=wx.ID_OPEN)
+		Bind(wx.EVT_MENU, OnOpen, gui.oex)
 		Bind(wx.EVT_MENU, OnOpenPar, id=ID_OPEN_KVH)
 		Bind(wx.EVT_MENU, OnExit, id=wx.ID_EXIT)
 		Bind(wx.EVT_MENU, OnSave, id=wx.ID_SAVE)

@@ -2,43 +2,33 @@
 
 mydir=$(dirname $(realpath $0))
 cd $mydir
+#url="https://drive.google.com/uc?export=download&id=DRIVE_FILE_ID"
+url="https://drive.google.com/uc?export=download&id=14lgZdGH1LGp_aLhpB9VoPRZ9rjx1Y8-9"
 # create macos g3mclass.app
 python3 setup.py sdist
 v=$(cat g3mclass/version.txt)
-rm -rf dmg/ # clean up
-mkdir -p dmg/install.app/Contents/MacOS
-mkdir -p dmg/install.app/Contents/Resources
-cp dist/g3mclass-$v.tar.gz dmg/install.app/Contents/Resources/
+rm -rf dmg/ # clean up before
+mkdir dmg
+#mkdir -p dmg/install.app/Contents/MacOS
+#mkdir -p dmg/install.app/Contents/Resources
+#cp dist/g3mclass-$v.tar.gz dmg/install.app/Contents/Resources/
 
 # create install script
-cat <<EOF >dmg/install.app/Contents/MacOS/install
+cat <<EOF >dmg/install.sh
 #!/bin/sh
-p=\$(dirname \$BASH_SOURCE)
-python3 -m pip install --user -U "\$p"/../Resources/g3mclass-$v.tar.gz
-cp -r "\$p"/../Resources/g3mclass.app \$HOME/Applications/
-ln -sf \$HOME/Applications/g3mclass.app \$HOME/Desktop/
+pexe=\$(python3 -m site --user-base)/bin/g3mclass
+python3 -m pip install --user -U "\$url"
+ln -sf \$pexe \$HOME/Desktop/
 EOF
-chmod 755 dmg/install.app/Contents/MacOS/install
-
-# create execution app to be copied to $HOME/Application
-dgapp=dmg/install.app/Contents/Resources/g3mclass.app/Contents/MacOS/
-mkdir -p $dgapp
-cat >$dgapp/g3mclass <<EOF
-#!/bin/sh
-base=\$(python3 -m site --user-base)
-\$base/bin/g3mclass
-EOF
-chmod 755 $dgapp/g3mclass
+chmod 755 dmg/install.sh
 
 # create uninstall script
-mkdir -p dmg/uninstall.app/Contents/MacOS
-cat >dmg/uninstall.app/Contents/MacOS/uninstall <<EOF
+cat >dmg/uninstall.sh <<EOF
 #!/bin/sh
 python3 -m pip uninstall -y g3mclass
-rm -rf \$HOME/Applications/g3mclass.app
-rm -f \$HOME/Desktop/g3mclass.app
+rm -f \$HOME/Desktop/g3mclass*
 EOF
-chmod 755 dmg/uninstall.app/Contents/MacOS/uninstall
+chmod 755 dmg/uninstall.sh
 
 # create/format a dmg
 rm -f dist/g3mclass-$v.dmg

@@ -1,9 +1,9 @@
 <html>
 <body style="background-color:%%bg_sys%%;" text="%%fg_sys%%"></body>
-<h1>Welcome to <tt>%(me)s</tt>!</h1>
+<h1>Welcome to <tt>g3mclass</tt>!</h1>
 
 <p>
-<b><tt>%(me)s</tt></b> is a software for Gaussian Mixture Model for Marker Classification.
+<b><tt>g3mclass</tt></b> is a software for Gaussian Mixture Model for Marker Classification.
 </p>
 
 <h3>Usage:</h3>
@@ -12,14 +12,14 @@
 
 <tt>data.tsv</tt> must contain duplicate or triplicate columns relative to some biomedical markers. If we have a marker 'geneA'
 then we should have following columns: <tt>geneA (ref)</tt>, <tt>geneA (test)</tt> and optionally <tt>geneB (query)</tt>.
-The first column <tt>geneA (ref)</tt> contains blablabla ... </li>
+The first column <tt>geneA (ref)</tt> contains reference sample. Data can be visualized in the tab <i>Data</i> next to this one.</li>
 
-<li>Data from columns <tt>(test)</tt> are used to learn Gaussian mixtures, one mixture per marker.</li>
+<li>Data from columns <tt>(test)</tt> are used to learn Gaussian mixtures where <tt>(ref)</tt> sample is imposed with its mean and sd values. Adjust model parameters in tab <i>Parameters</i> if needed and hit <i>Lear model</i> button. The learned model content can be viewed in tabs <i>Model</i> and <i>Model plots</i>.</li>
 
-<li>Data from columns <tt>(test)</tt> and <tt>(query)</tt> (if present) are automatically classified with detection of multiple cut-offs.
-The classification results can be examined in tabs <i>Plots</i> and <i>Results</i></li>
+<li>Data from all columns <tt>(ref)</tt>, <tt>(test)</tt> and <tt>(query)</tt> (if present) are automatically classified.
+The classification results can be examined in tabs <i>Test class</i>, <i>Ref class</i>,<i>Query class</i> and <i>Heatmaps</i> (if <tt>id</tt> columns were provided in the input data file).</li>
 
-<li>If results are satisfactory, they can be saved in a TSV file (<i>File > Save results</i>)</li>
+<li>If results are satisfactory, they can be saved in a ZIP archive (<i>File > Save</i>)</li>
 </ol>
 
 <p>

@@ -252,10 +252,10 @@ class wx_ColourPickerCtrl(wx.ColourPickerCtrl):
 with (diri/"version.txt").open() as fp:
     version=fp.read().strip();
 # program name
-me="G3Mclass";
+me="g3mclass";
 # message in welcome tab
 with (diri/"welcome.html").open() as fp:
-    welc_text=fp.read() % {"me": me};
+    welc_text=fp.read();
 welc_text=re.sub("\n\n", "<br>\n", welc_text);
 with (diri/"licence_en.txt").open() as fp:
     licenseText=fp.read();
@@ -286,7 +286,7 @@ par_mod={
 par_plot={
     "hcl_proba": False,
     "hcl_cutoff": False,
-    "hcl_ccutoff": True,
+    "hcl_scutoff": True,
     "col_hist": "black",
     "col_panel": "white",
     "col_tot": "grey",
@@ -311,7 +311,7 @@ bg_null=wx.NullColour;
 hcl2item={
     "hcl_proba": ("proba", "cl"),
     "hcl_cutoff": ("cutoff", "cutnum"),
-    "hcl_ccutoff": ("cutoff with confidence", "confcutnum")
+    "hcl_scutoff": ("stringent cutoff ", "stringentcutnum")
 };
 ID_OPEN_KVH=None;
 ID_SAVE_KVH=None;
@@ -339,46 +339,54 @@ def OnOpen(evt):
     under the 'File' menu.  We ask the user to choose a TSV file.
     """
     global fdata, model, resdf, wd, prev_res_saved, par_mod, par_plot, prev_par_saved;
+    #import pdb; pdb.set_trace();
     win=evt.GetEventObject();
     win=win.GetWindow();
     if not prev_res_saved and fdata != Path():
         if wx.MessageBox("Current results have not been saved! Proceed?", "Please confirm",
                          wx.ICON_QUESTION | wx.YES_NO, win) == wx.NO:
             return;
-    with wx.FileDialog(None, defaultDir=str(wd), wildcard="Data files (*.tsv;*.txt;*.csv)|*.tsv;*.txt;*.csv",
-        style=wx.FD_OPEN) as dlg:
-        wait=wx.BusyCursor();
-        if dlg.ShowModal() == wx.ID_OK:
-            # proceed the data file
-            fdata=Path(dlg.GetPath());
-            file2data(fdata);
-            gui.mainframe.SetTitle(me+" "+fdata.name);
-            wd=fdata.parent;
-            if fdata.with_suffix(".kvh").exists():
-                file2par(fdata.with_suffix(".kvh"));
+    if evt.GetId() != wx.ID_OPEN:
+        fdata=diri/"example"/'gene W ID ref ID test ID query.txt';
+    else:
+        with wx.FileDialog(None, defaultDir=str(wd), wildcard="Data files (*.tsv;*.txt;*.csv)|*.tsv;*.txt;*.csv",
+            style=wx.FD_OPEN) as dlg:
+            if dlg.ShowModal() == wx.ID_OK:
+                # proceed the data file
+                fdata=Path(dlg.GetPath());
             else:
-                par_mod=par_def["par_mod"].copy();
-                par_plot=par_def["par_plot"].copy();
-                prev_par_saved=True;
-            par2gui(par_mod, par_plot);
-            gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
-            gui.mainframe.SetStatusText("'%s' is read"%fdata.name);
-            prev_res_saved=False;
-            # clean tabs in Model, Test etc
-            model=resdf=None;
-            for tab in ("model", "test", "ref", "qry", "plot"):
-                nb=getattr(gui, "nb_"+tab)
-                #print("tab=", tab, "nb=", nb.GetName())
-                nb_rmpg(nb);
-                #for ch in pg.GetChildren():
-                #    print("rm ", ch)
-                #    if tab == "plot":
-                #        import pdb; pdb.set_trace()
-                #    ch.Destroy();
-            for tab in ("ref", "test", "qry"):
-                pg=getattr(gui, "sw_heat_"+tab);
-                for ch in pg.GetChildren():
-                    ch.Destroy();
+                return;
+    wait=wx.BusyCursor();
+    try:
+        file2data(fdata);
+        gui.mainframe.SetTitle(me+" "+fdata.name);
+        wd=fdata.parent;
+        if fdata.with_suffix(".kvh").exists():
+            file2par(fdata.with_suffix(".kvh"));
+        else:
+            par_mod=par_def["par_mod"].copy();
+            par_plot=par_def["par_plot"].copy();
+            prev_par_saved=True;
+        par2gui(par_mod, par_plot);
+        gui.nb.SetSelection(lab2ip(gui.nb, "Data")[0]);
+        gui.mainframe.SetStatusText("'%s' is read"%fdata.name);
+        prev_res_saved=False;
+        # clean tabs in Model, Test etc
+        model=resdf=None;
+        for tab in ("model", "test", "ref", "qry", "plot"):
+            nb=getattr(gui, "nb_"+tab)
+            #print("tab=", tab, "nb=", nb.GetName())
+            nb_rmpg(nb);
+            #for ch in pg.GetChildren():
+            #    print("rm ", ch)
+            #    if tab == "plot":
+            #        import pdb; pdb.set_trace()
+            #    ch.Destroy();
+        for tab in ("ref", "test", "qry"):
+            pg=getattr(gui, "sw_heat_"+tab);
+            for ch in pg.GetChildren():
+                ch.Destroy();
+    finally:
         del(wait);
 def OnOpenPar(evt):
     """
@@ -772,7 +780,7 @@ def cl2heat(htype, pg, classif, pdf=None):
     if pdf is None:
         for ch in pg.GetChildren():
             ch.Destroy();
-    if ids is None or len(ids.get(htype, {})) == 0:
+    if ids is None or len(ids.get(htype, {})) == 0 or classif is None:
         return;
     if pdf is None:
         sizer=wx.BoxSizer(wx.VERTICAL);
@@ -811,9 +819,9 @@ def cl2heat(htype, pg, classif, pdf=None):
             figure.suptitle(htype, fontsize=16);
         ax=[];
         im=[];
-        nhcl=(par_plot["hcl_proba"]+par_plot["hcl_cutoff"]+par_plot["hcl_ccutoff"]);
+        nhcl=(par_plot["hcl_proba"]+par_plot["hcl_cutoff"]+par_plot["hcl_scutoff"]);
         ihcl=0;
-        for hcl in ("hcl_proba", "hcl_cutoff", "hcl_ccutoff"):
+        for hcl in ("hcl_proba", "hcl_cutoff", "hcl_scutoff"):
             if not par_plot[hcl]:
                 continue;
             ihcl += 1;
@@ -857,6 +865,8 @@ def cl2heat(htype, pg, classif, pdf=None):
             ax[-1].set_title(ctype);
             #ax[-1].apply_aspect();
             #print(htype, ctype, "im bbox=", im[-1].get_window_extent());
+        if ihcl == 0:
+            return;
         cbm2=(figsize[0]-wcb+15)/figsize[0]; # colbar width in 0-1 figure coords
         cbm=(figsize[0]-wcb)/figsize[0]; # colbar width in 0-1 figure coords
         #print("cbm=", cbm, "cbm2=", cbm2);
@@ -948,7 +958,7 @@ def par2gui(par_mod, par_plot):
     # heatmap
     gui.chk_hcl_proba.SetValue(par_plot["hcl_proba"]);
     gui.chk_hcl_cutoff.SetValue(par_plot["hcl_cutoff"]);
-    gui.chk_hcl_ccutoff.SetValue(par_plot["hcl_ccutoff"]);
+    gui.chk_hcl_scutoff.SetValue(par_plot["hcl_scutoff"]);
     # plot
     gui.cpick_hist.SetColour(par_plot["col_hist"]);
     gui.cpick_panel.SetColour(par_plot["col_panel"]);
@@ -1198,7 +1208,7 @@ def class2tcol(d, ucl, idh=None):
         tcol.insert(0, ("id", idh));
     # add class & repartition
     #ucl=sorted(set(tls.na_omit(d["cl"])));
-    for cl,clname in (("cl", "proba"), ("cutnum", "cutoff"), ("confcutnum", "with confidence")):
+    for cl,clname in (("cl", "proba"), ("cutnum", "cutoff"), ("stringentcutnum", "s.cutoff")):
         #import pdb; pdb.set_trace();
         tcol.append((clname, []));
         if clname == "proba":
