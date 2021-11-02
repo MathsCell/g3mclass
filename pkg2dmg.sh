@@ -14,21 +14,21 @@ mkdir dmg
 #cp dist/g3mclass-$v.tar.gz dmg/install.app/Contents/Resources/
 
 # create install script
-cat <<EOF >dmg/install.sh
+cat <<EOF >dmg/install
 #!/bin/sh
 pexe=\$(python3 -m site --user-base)/bin/g3mclass
-python3 -m pip install --user -U "\$url"
+python3 -m pip install --user -U "$url"
 ln -sf \$pexe \$HOME/Desktop/
 EOF
-chmod 755 dmg/install.sh
+chmod 755 dmg/install
 
 # create uninstall script
-cat >dmg/uninstall.sh <<EOF
+cat >dmg/uninstall <<EOF
 #!/bin/sh
 python3 -m pip uninstall -y g3mclass
 rm -f \$HOME/Desktop/g3mclass*
 EOF
-chmod 755 dmg/uninstall.sh
+chmod 755 dmg/uninstall
 
 # create/format a dmg
 rm -f dist/g3mclass-$v.dmg

@@ -634,9 +634,15 @@ def OnReheat(evt):
     # Heatmaps
     if dogui:
         wait=wx.BusyCursor();
-    for htype in ("ref", "test", "qry"):
-        tab=getattr(gui, "sw_heat_"+htype);
-        cl2heat(htype, tab, classif);
+    try:
+        for htype in ("ref", "test", "qry"):
+            tab=getattr(gui, "sw_heat_"+htype);
+            cl2heat(htype, tab, classif);
+    except Exception as e:
+        err_mes(format(e));
+        if dogui:
+            del(wait);
+            return;
     #import pdb; pdb.set_trace();
     #pass;
     if dogui:
