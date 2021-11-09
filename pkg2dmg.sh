@@ -3,7 +3,11 @@
 mydir=$(dirname $(realpath $0))
 cd $mydir
 #url="https://drive.google.com/uc?export=download&id=DRIVE_FILE_ID"
-url="https://drive.google.com/uc?export=download&id=14lgZdGH1LGp_aLhpB9VoPRZ9rjx1Y8-9"
+# 0.17.1 url="https://drive.google.com/uc?export=download&id=1l7PFMERfYSU7zAt6sBMEiyehnknH4WMM"
+# 0.17.2 url="https://drive.google.com/uc?export=download&id=1NSD1OjePwkQjaDSb_CcSSnViN9UsJhG5"
+# 0.17.3
+url="https://drive.google.com/uc?export=download&id=16-MD-qVyZrxWTPNbwlXkqprKc0_RthYY"
+
 # create macos g3mclass.app
 python3 setup.py sdist
 v=$(cat g3mclass/version.txt)
