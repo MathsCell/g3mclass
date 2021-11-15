@@ -1,7 +1,6 @@
 <ul>
-
     <li><object type="text/sitemap">
-        <param name="Name" value="Preamble">
+        <param name="Name" value="Quick start">
         <param name="Local" value="g3mclass.htm">
     </object></li>
     <li><object type="text/sitemap">
@@ -25,7 +24,7 @@
         <param name="Local" value="g3m_tab.htm">
     </object></li>
     <li><object type="text/sitemap">
-        <param name="Name" value="Workflow example">
+        <param name="Name" value="Workflow examples">
         <param name="Local" value="g3m_workflow.htm">
     </object></li>
 </ul>
