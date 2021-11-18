@@ -14,73 +14,62 @@
 	<meta name="LinksUpToDate" content="false"/>
 	<meta name="ScaleCrop" content="false"/>
 	<meta name="ShareDoc" content="false"/>
-	<style type="text/css">
-		@page { size: 21.59cm 27.94cm; margin: 2.54cm }
-		p { margin-bottom: 0.25cm; direction: ltr; color: #000000; line-height: 115%; text-align: left; orphans: 2; widows: 2; background: transparent }
-		p.western { font-family: "Calibri", serif; font-size: 12pt; so-language: en-US }
-		p.cjk { font-family: "Calibri"; font-size: 12pt; so-language: en-US }
-		p.ctl { font-family: ; font-size: 12pt; so-language: ar-SA }
-		h2 { margin-top: 0.49cm; margin-bottom: 0.49cm; direction: ltr; color: #000000; text-align: left; orphans: 2; widows: 2; background: transparent }
-		h2.western { font-family: "Times New Roman", serif; font-size: 18pt; so-language: en-US; font-weight: bold }
-		h2.cjk { font-family: "Times New Roman"; font-size: 18pt; so-language: en-US; font-weight: bold }
-		h2.ctl { font-family: "Times New Roman"; font-size: 18pt; so-language: ar-SA; font-weight: bold }
-	</style>
 </head>
-<body lang="en-US" text="#000000" link="#000080" vlink="#800000" dir="ltr"><h2 class="western">
-<font color="#2f5496">Input data format conventions</font></h2>
-<p class="western" style="margin-bottom: 0.49cm; line-height: 100%"><font color="#000000"><font face="-webkit-standard, serif">Input
-data must be submitted in a tab-separated values (TSV) file </font></font><!-- Is  .txt acceptable? --><font color="#000000"><font face="-webkit-standard, serif">which
+<body lang="en-US" text="#000000" link="#000080" vlink="#800000" dir="ltr">
+        
+<h2><font color="#3465a4">Input data format conventions</font></h2>
+<p>Input
+data must be submitted in a tab-separated values (TSV) file which
 is a plain text format for storing data in a tabular structure. It
 can be prepared with a help of a spreadsheet software but must be
 saved as a plain text format with a tabulation as a field separator.
-Although any file’s extension is accepted (</font></font><font face="Times, serif">.
-tsv, .txt, .csv, etc.</font><font color="#000000"><font face="-webkit-standard, serif">),
-only tabulation is accepted  as a field separator.</font></font></p>
-<p class="western" style="margin-top: 0.49cm; margin-bottom: 0.49cm; line-height: 100%">
-<font color="#000000"><font face="-webkit-standard, serif">Each input
+Although any file’s extension is accepted (<font face="Times, serif">.
+tsv, .txt, .csv, etc.</font>),
+only tabulation is accepted  as a field separator.</p>
+<p>
+Each input
 file may include data related to several analytes, but user must keep
 in mind that all analytes in one file will have models learned with
 the same parameters except when the model parameter ‘k’ is not
 fixed, and the model is selected based on the lowest BIC. If the
 nature of the analyte data requires models with essentially different
-parameters they'd be better split into several files.</font></font></p>
-<p class="western" style="margin-top: 0.49cm; margin-bottom: 0.49cm; line-height: 100%">
-<font color="#000000"><font face="-webkit-standard, serif">Each
+parameters they'd be better split into several files.</p>
+<p>
+Each
 column must have a name formatted according to one of the following
-patterns:</font></font></p>
+patterns:</p>
 <ul>
-	<li><p class="western" style="margin-top: 0.49cm; margin-bottom: 0cm; line-height: 100%">
-	<font color="#000000"><font face="-webkit-standard, serif">'</font></font><font color="#000000"><font face="-webkit-standard, serif"><i>NAME</i></font></font><font color="#000000"><font face="-webkit-standard, serif">&nbsp;(test)':
-	contains test samples (real numbers)</font></font></p>
-	<li><p class="western" style="margin-bottom: 0cm; line-height: 100%">
-	<font color="#000000"><font face="-webkit-standard, serif">'</font></font><font color="#000000"><font face="-webkit-standard, serif"><i>NAME</i></font></font><font color="#000000"><font face="-webkit-standard, serif">&nbsp;(ref)':
-	contains reference samples (real numbers)</font></font></p>
-	<li><p class="western" style="margin-bottom: 0cm; line-height: 100%">
-	<font color="#000000"><font face="-webkit-standard, serif">'</font></font><font color="#000000"><font face="-webkit-standard, serif"><i>NAME</i></font></font><font color="#000000"><font face="-webkit-standard, serif">
-	(</font></font><font color="#000000"><font face="-webkit-standard, serif"><i>query-name</i></font></font><font color="#000000"><font face="-webkit-standard, serif">)':
+	<li><p>
+	'<i>NAME</i>&nbsp;(test)':
+	contains test samples (real numbers)</p>
+	<li><p>
+	'<i>NAME</i>&nbsp;(ref)':
+	contains reference samples (real numbers)</p>
+	<li><p>
+	'<i>NAME</i>
+	(<i>query-name</i>)':
 	contains query samples which will be classified with a model learned
-	on test sample (real numbers, optional).</font></font></p>
-	<li><p class="western" style="margin-bottom: 0cm; line-height: 100%">
-	<font color="#000000"><font face="-webkit-standard, serif">'id
+	on test sample (real numbers, optional).</p>
+	<li><p>
+	'id
 	(test)': contains identification for all test samples (characters,
-	optional)</font></font></p>
-	<li><p class="western" style="margin-bottom: 0cm; line-height: 100%">
-	<font color="#000000"><font face="-webkit-standard, serif">'id
+	optional)</p>
+	<li><p>
+	'id
 	(ref)': contains identification for all reference samples
-	(characters, optional)</font></font></p>
-	<li><p class="western" style="margin-bottom: 0.49cm; line-height: 100%">
-	<font color="#000000"><font face="-webkit-standard, serif">'id
-	(</font></font><font color="#000000"><font face="-webkit-standard, serif"><i>query-id</i></font></font><font color="#000000"><font face="-webkit-standard, serif">)'
+	(characters, optional)</p>
+	<li><p>
+	'id
+	(<i>query-id</i>)'
 	contains identification for query samples located at the right of
 	this column till the next 'id-query' column or the end of columns
-	(characters, optional)</font></font></p>
+	(characters, optional)</p>
 </ul>
-<p class="western" style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="-webkit-standard, serif"><font size="4" style="font-size: 13pt">where&nbsp;</font></font></font><font color="#000000"><font face="-webkit-standard, serif"><i>italicized</i></font></font><font color="#000000"><font face="-webkit-standard, serif"><font size="4" style="font-size: 13pt">&nbsp;parts
+<p>where&nbsp;</font><i>italicized</i>&nbsp;parts
 can be customized. 'NAME' represents the analyte name and must be the
 same in all columns related to a given analyte (for more info, see
-‘</font></font></font><font color="#000000"><font face="-webkit-standard, serif"><font size="4" style="font-size: 13pt"><span lang="en-US">Workflow</span></font></font></font><font color="#000000"><font face="-webkit-standard, serif"><font size="4" style="font-size: 13pt">
-examples’)</font></font></font></p>
-<p class="western" style="margin-top: 0.49cm; margin-bottom: 0.49cm; line-height: 100%">
+‘Workflow examples’)</p>
+<p>
 <br/>
 <br/>
 

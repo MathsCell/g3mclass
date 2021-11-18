@@ -15,31 +15,12 @@
 	<meta name="ShareDoc" content="false"/>
 	<meta name="grammarly_documentContext" content="{&quot;goals&quot;:[],&quot;domain&quot;:&quot;general&quot;,&quot;emotions&quot;:[],&quot;dialect&quot;:&quot;american&quot;}"/>
 	<meta name="grammarly_documentId" content="documentId_90"/>
-	<style type="text/css">
-		@page { size: 21.59cm 27.94cm; margin-left: 2.54cm; margin-right: 2.54cm; margin-top: 2.54cm; margin-bottom: 1.27cm }
-		p { margin-bottom: 0.25cm; direction: ltr; color: #000000; line-height: 115%; text-align: left; orphans: 2; widows: 2; background: transparent }
-		p.western { font-family: "Times New Roman", serif; font-size: 12pt; so-language: en-US }
-		p.cjk { font-family: "Noto Serif CJK SC"; font-size: 12pt; so-language: zh-CN }
-		p.ctl { font-family: "Lucida Sans"; font-size: 12pt; so-language: hi-IN }
-		h2 { margin-top: 0.35cm; margin-bottom: 0.21cm; direction: ltr; color: #000000; text-align: left; orphans: 2; widows: 2; background: transparent; page-break-after: avoid }
-		h2.western { font-family: "Liberation Sans", serif; font-size: 16pt; so-language: en-US; font-weight: bold }
-		h2.cjk { font-family: "Noto Sans CJK SC"; font-size: 16pt; so-language: zh-CN; font-weight: bold }
-		h2.ctl { font-family: "Lohit Devanagari"; font-size: 16pt; so-language: hi-IN; font-weight: bold }
-		h3 { margin-top: 0.49cm; margin-bottom: 0.49cm; direction: ltr; color: #000000; text-align: left; orphans: 2; widows: 2; background: transparent }
-		h3.western { font-family: "Times New Roman", serif; font-size: 13pt; so-language: en-US; font-weight: bold }
-		h3.cjk { font-family: "Noto Serif CJK SC"; font-size: 13pt; so-language: zh-CN; font-weight: bold }
-		h3.ctl { font-family: "Lucida Sans"; font-size: 13pt; so-language: hi-IN; font-weight: bold }
-		a:link { color: #0000ff; text-decoration: underline }
-		a:visited { color: #800000; text-decoration: underline }
-	</style>
 </head>
-<body lang="en-US" text="#000000" link="#0000ff" vlink="#800000" dir="ltr">
-<ol><li><h2 class="western"><font color="#3465a4"><span style="font-weight: normal">WORKFLOW
-	EXAMPLES</span></font></h2>
-</ol>
-<h3 class="western" style="line-height: 100%"><span style="font-weight: normal">EXAMPLE
-1: Multiclass classification of the single analyte values.</span></h3>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">Suppose
+<body>
+<h1><font color="#3465a4">WORKFLOW EXAMPLES</font></h1>
+
+<h2><font color="#3465a4">EXAMPLE 1: Multiclass classification of the single analyte values.</font></h2>
+<p>Suppose
 you are interested to know if the analyte values obtained in the
 laboratory assay from test and reference may be assigned to the same
 or different classes. Moreover, you are interested to know to which
@@ -47,940 +28,278 @@ class each of the assayed values belongs.  Additionally, you might be
 curious to know how the analyte values obtained in the same
 laboratory assay, but in the independent set of samples could be
 assigned. Now, let’s see how g3mclass software may help to classify
-the laboratory assay data. </font>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+the laboratory assay data. 
 </p>
 <ol>
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">To
+	<li><p>To
 	classify test and reference data obtained from the same assay,
 	organize a data file in columns with the analyte identification
-	numbers (id) and name/s:</font></font></p>
-</ol>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
+	numbers (id) and name/s:</p>
 
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif"><b>id
-(ref)  </b></font><font face="Times, serif"><i><b>analyte<!-- Do I understand well that you removed italic font here? Why?For me, it’s a customizable item so it should be italicized just as the next “analyte name”. --><!-- Sorry. It was my mistaken touch; have italic font back now. -->
-name</b></i></font><font face="Times, serif"><b> (ref)   id(test)  
-</b></font><font face="Times, serif"><i><b>analyte name</b></i></font><font face="Times, serif"><b>
-(test)</b></font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">If
+<p><b>id
+(ref)  </b><i><b>analyte
+name</b></i><b> (ref)   id(test)  
+</b><i><b>analyte name</b></i><b>
+(test)</b></p>
+<p>If
 the analyte was measured in the same assay but in the independent
-set/s of samples, you may add query/s: </font>
+set/s of samples, you may add query/s: 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<p><b>id
+(query1)   </b><i><b>analyte name</b></i><b>
+(query1)    id (query2)    </b><i><b>analyte
+name</b></i><b> (query2) etc.</b></p>
+<p>A
+data file must be saved <b>in a TSV
+file format</b> to a chosen
+directory. 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif"><b>id
-(query1)   </b></font><font face="Times, serif"><i><b>analyte name</b></i></font><font face="Times, serif"><b>
-(query1)    id (query2)    </b></font><font face="Times, serif"><i><b>analyte
-name</b></i></font><font face="Times, serif"><b> (query2) etc.</b></font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">A
-data file must be saved </font><font face="Times, serif"><b>in a TSV
-file format</b></font><font face="Times, serif"> to a chosen
-directory. </font>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">In
+<p>In
 the example below, we analyze the expression of ERBB2, a gene
 encoding a known tumor marker - human epidermal growth factor
 receptor 2 (HER2). The ERBB2mRNA data were collected from the test
 (disease), reference (no diseased), and query (suspected disease)
 samples. Data file named ‘ERBB2 ID ref, test, qry.txt’ was saved
 as a tab-delimited text (.txt) file using Microsoft Excel (for more
-information, see </font><a href="http://g3m_data.htm/"><font color="#0000ff"><font face="Times, serif"><u>Input
-data format</u></font></font></a><font face="Times, serif"><b>)</b></font><font face="Times, serif">.</font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_e9f27ced6954ab0.png" name="image19.png" align="left" hspace="12" width="560" height="240" border="0"/>
-<br/>
-
+information, see <a href="http://g3m_data.htm/"><font color="#0000ff"><u>Input
+data format</u></a><b>)</b>.</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_e9f27ced6954ab0.png" name="image19.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<dol start="2">
+	<li><p><b>Open
+	g3mclass</b>
+	software. The Welcome page with several tabs will launch:</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_fba3db7d24851330.png" name="image1.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<ol start="2">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif"><b>Open
-	g3mclass</b></font></font><font color="#000000"><font face="Times, serif">
-	software. The Welcome page with several tabs will launch:</font></font></p>
-</ol>
-<p style="margin-left: 0.11cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_fba3db7d24851330.png" name="image1.png" align="left" hspace="12" width="536" height="118" border="0"/>
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<ol start="3">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">Click
-	the </font></font><font color="#000000"><font face="Times, serif"><b>‘Data’
-	tab</b></font></font><font color="#000000"><font face="Times, serif">
-	(next to the ‘Welcome’ tab) to select and </font></font><font face="Times, serif">open
-	the data</font><font color="#000000"><font face="Times, serif"> file
+<dol start="3">
+	<li><p>Click
+	the <b>‘Data’
+	tab</b>
+	(next to the ‘Welcome’ tab) to select and open
+	the data file
 	you intend to analyze. Alternatively, a data file may be opened from
-	the menu tab </font></font><font color="#000000"><font face="Times, serif"><b>File
-	&gt; Open</b></font></font><font color="#000000"><font face="Times, serif">
-	</font></font>
+	the menu tab <b>File
+	&gt; Open</b>
+	
 	</p>
-</ol>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_2e33e3e81a014b5c.png" name="image29.png" align="left"/>
 </p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_2e33e3e81a014b5c.png" name="image29.png" align="left" hspace="12" width="321" height="137" border="0"/>
-<br/>
-
-</p>
-<p style="margin-left: 0.11cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<ol start="4">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000">
-	<font face="Times, serif">To start modeling test data, go to the
-	</font></font><font color="#000000"><font face="Times, serif"><b>‘Parameters’
-	tab.</b></font></font><font color="#000000"><font face="Times, serif">
-	 You may first use ‘</font></font><font color="#000000"><font face="Times, serif"><b>Defaults’
-	</b></font></font><font color="#000000"><font face="Times, serif">modeling
-	settings (</font></font><font color="#000000"><font face="Times, serif"><b>recommended</b></font></font><font color="#000000"><font face="Times, serif">)
-	by clicking </font></font><font face="Times, serif">on the</font><font color="#000000"><font face="Times, serif">
-	</font></font><font color="#000000"><font face="Times, serif"><b>‘Learn
-	model’</b></font></font><font color="#000000"><font face="Times, serif">
+<dol start="4">
+	<li><p>
+	To start modeling test data, go to the
+	<b>‘Parameters’
+	tab.</b>
+	 You may first use ‘<b>Defaults’
+	</b>modeling
+	settings (<b>recommended</b>)
+	by clicking on the
+	<b>‘Learn
+	model’</b>
 	button. The software selects Gaussian Mixture Model (GMM) with the
 	lowest Bayesian information criterion (BIC) value picked among the
 	set of models learned on histograms with a varying number of bins
-	(vector of k: 10, 15, 20, 25, 30, 35, 40). </font></font>
+	(vector of k: 10, 15, 20, 25, 30, 35, 40). 
 	</p>
-</ol>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
+</dol>
+<p>
 <br/>
 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times, serif"><b>Parameters’</b></font></p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_a2be77428e68d7b5.png" name="image31.png" align="left" hspace="12" width="536" height="274" border="0"/>
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<ol start="5">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">The
+<p>‘<b>Parameters’</b></p>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_a2be77428e68d7b5.png" name="image31.png" align="left" width="100%"/>
+<</p>
+<dol start="5">
+	<li><p>The
 	selected model parameters and plots appear automatically in the tab
-	</font></font><font color="#000000"><font face="Times, serif"><b>‘Model’
-	</b></font></font><font color="#000000"><font face="Times, serif">and
-	‘</font></font><font color="#000000"><font face="Times, serif"><b>Model
-	Plots’,</b></font></font><font color="#000000"><font face="Times, serif">
-	respectively.</font></font></p>
-</ol>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
+	<b>‘Model’
+	</b>and
+	‘<b>Model
+	Plots’,</b>
+	respectively.</p>
+</dol>
+<p>
 <br/>
 
 </p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<font color="#000000">‘<font face="Times, serif"><b>Model’</b></font></font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<p>
+<b>‘Model’</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_62c6c48e5b23444a.png" name="image11.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_62c6c48e5b23444a.png" name="image11.png" align="left" hspace="12" width="564" height="227" border="0"/>
-<br/>
-
+<p><b>‘Model plots’</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_61712f2a87fb43d9.png" name="image5.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times, serif"><b>Model
-plots’</b></font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_61712f2a87fb43d9.png" name="image5.png" align="left" hspace="12" width="449" height="338" border="0"/>
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">Based
+<p>Based
 on GMM learned with default parameters, the ERBB2 mRNA test values
-fit into</font><font face="Times, serif"><b> </b></font><font face="Times, serif">4-class
+fit into<b> </b>4-class
 GMM with the following estimated weights per class: 0 (46%), 1 (38%),
 2 (14%), and 3 (2%). Class 0 is like reference (in terms of the mean
 value and standard deviation), classes 1, 2, and 3 have the increased
-mean values of ERBB2 mRNA compared to the reference.</font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<ol start="6">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">To
-	</font></font><font face="Times, serif">modify a test</font><font color="#000000"><font face="Times, serif">
+mean values of ERBB2 mRNA compared to the reference.</p>
+<dol start="6">
+	<li><p>To
+	modify a test
 	model, you may customize modeling parameters using interactive
-	sliders in the ‘</font></font><font color="#000000"><font face="Times, serif"><b>Parameters’
-	tab</b></font></font><font color="#000000"><font face="Times, serif">
-	and then </font></font><font face="Times, serif">clicking the</font><font color="#000000"><font face="Times, serif">
-	</font></font><font color="#000000"><font face="Times, serif"><b>‘Learn
-	model’</b></font></font><font color="#000000"><font face="Times, serif">
+	sliders in the ‘<b>Parameters’
+	tab</b>
+	and then clicking the
+	<b>‘Learn
+	model’</b>
 	button again to learn a new model. You may always return to default
-	settings by </font></font><font face="Times, serif">clicking the</font><font color="#000000"><font face="Times, serif">
-	‘Defaults” button (for more information, see </font></font><font color="#0000ff"><font face="Times, serif"><u><a href="http://g3m_param.htm/">Parameters</a><!-- Hm, it is already a hyperlink. I am afraid I miss your point here. --><!-- Do you want a hyperlink  here ? --></u></font></font><font color="#000000"><font face="Times, serif">).
-	</font></font>
+	settings by clicking the
+	‘Defaults” button (for more information, see <font color="#0000ff"><u><a href="http://g3m_param.htm/">Parameters</a><!-- Hm, it is already a hyperlink. I am afraid I miss your point here. --><!-- Do you want a hyperlink  here ? --></u>).
+	
 	</p>
-</ol>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">For
+</dol>
+<p>For
 example, by choosing a fixed number of bins in a histogram (k=20),
 the software learns a new model with an increased BIC value compared
 to defaults (1660.772 vs. 1650.558). In this new model, the ERBB2
-mRNA test values fit into</font><font face="Times, serif"><b> </b></font><font face="Times, serif">5-class
+mRNA test values fit into<b> </b>5-class
 GMM with the following weights per class: 0 (43%), 1 (36%), 2 (17%),
 3 (2%) and 4 (2%). Class 0 is similar to reference (as above),
 classes 1, 2, 3, and 4 have the mean value of ERBB2 mRNA higher than
 reference. This model allows a more detailed classification of ERBB2
-mRNA’s test values and may be preferred in some cases. </font>
+mRNA’s test values and may be preferred in some cases. 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<p> ‘<b>Parameters’</b></p>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_6f12f6cd728ba26f.png" name="image6.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"> ‘<font face="Times, serif"><b>Parameters’</b></font></p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_6f12f6cd728ba26f.png" name="image6.png" align="left" hspace="12" width="585" height="343" border="0"/>
-<br/>
-
+‘<b>Model’</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_46d680c32966c7ed.png" name="image24.png" align="left" width="100%"/>
 </p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
+<p>‘<b>Model
+plots’</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ef1b44653e149f4d.png" name="image28.png" align="left" width="100%"/>
 </p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<font color="#000000">‘<font face="Times, serif"><b>Model’</b></font></font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_46d680c32966c7ed.png" name="image24.png" align="bottom" width="624" height="263" border="0"/>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times, serif"><b>Model
-plots’</b></font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ef1b44653e149f4d.png" name="image28.png" align="bottom" width="624" height="435" border="0"/>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<ol start="7">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">Once
+<dol start="7">
+	<li><p>Once
 	the satisfactory model is selected, the software utilizes this model
-	for </font></font><font face="Times, serif"><b>auto-classification</b></font><font color="#000000"><font face="Times, serif"><b>
-	of the test, reference, and query</b></font></font><font color="#000000"><font face="Times, serif">
+	for <b>auto-classification</b><b>
+	of the test, reference, and query</b>
 	using three consecutive classifications (proba, cutoff, s.cutoff).
-	The results appear in the ‘</font></font><font color="#000000"><font face="Times, serif"><b>Test
-	class’, ‘Ref class’, and ‘Query class’ tabs.</b></font></font><font color="#000000"><font face="Times, serif">
+	The results appear in the ‘<b>Test
+	class’, ‘Ref class’, and ‘Query class’ tabs.</b>
 	These outputs include information on the class to which individual
 	value (with related id) should belong with the highest probability
 	(‘proba’), based on multi-cutoff (‘cutoff’) and more
-	stringent multi-cutoff (‘s.cutoff’). Summary statistics are
-	<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_c2692433672140e6.png" name="image16.png" align="left" hspace="12" width="624" height="139" border="0"/>
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_4cf6e3ba01054f8a.png" name="image22.png" align="left" hspace="12" width="624" height="128" border="0"/>
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_b92170b5503355a1.png" name="image32.png" align="left" hspace="12" width="624" height="122" border="0"/>
-provided
-	for each classification. </font></font>
+	stringent multi-cutoff (‘s.cutoff’). Summary statistics are provided for each classification. 
+	<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_c2692433672140e6.png" name="image16.png" align="left" width="100%"/>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_4cf6e3ba01054f8a.png" name="image22.png" align="left" width="100%"/>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_b92170b5503355a1.png" name="image32.png" align="left" width="100%"/>
 	</p>
-</ol>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"> <font face="Times, serif">In
-this example, </font><font face="Times, serif"><b>under defaults</b></font><font face="Times, serif">
+</dol>
+<p> In
+this example, <b>under defaults</b>
 modeling the ERBB2 mRNA values are assigned to the following classes
 with the corresponding proportions per class in each type of
-classification:</font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_cd63a11a6f0a7b49.png" name="image33.png" align="left" hspace="12" width="453" height="262" border="0"/>
+classification:</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_cd63a11a6f0a7b49.png" name="image33.png" align="left"/>
 <br/>
 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<ol start="8">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">The
-	heatmaps, illustrating the classification of individual </font></font><font face="Times, serif">values</font><font color="#000000"><font face="Times, serif">
-	(with id), can be found </font></font><font face="Times, serif">in
-	the</font><font color="#000000"><font face="Times, serif">
-	</font></font><font color="#000000"><font face="Times, serif"><b>‘Heatmaps’
-	tab</b></font></font><font color="#000000"><font face="Times, serif">.
+<dol start="8">
+	<li><p>The
+	heatmaps, illustrating the classification of individual values
+	(with id), can be found in
+	the
+	<b>‘Heatmaps’
+	tab</b>.
 	By default, it shows heatmaps for classification with a stringent
 	cutoff. However, you may view heatmaps for all three classifications
-	by checking the corresponding</font></font></p>
-</ol>
-<p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">boxes
-and </font></font><font face="Times, serif">clicking the</font><font color="#000000"><font face="Times, serif">
-‘</font></font><font color="#000000"><font face="Times, serif"><b>Draw
-heatmaps’</b></font></font><font color="#000000"><font face="Times, serif">
-button in the ‘Parameters’ tab (scroll </font></font><font face="Times, serif">all
-the way</font><font color="#000000"><font face="Times, serif"> <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_91417ffb017e687a.png" name="image9.png" align="left" hspace="12" width="624" height="107" border="0"/>
+	by checking the corresponding</p>
+</dol>
+<p>boxes
+and clicking the
+‘<b>Draw
+heatmaps’</b>
+button in the ‘Parameters’ tab (scroll all
+the way <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_91417ffb017e687a.png" name="image9.png" align="left" width="100%"/>
 down
-the page to view them). </font></font>
+the page to view them). 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">The
+<p>The
 following heatmaps show what class the ERBB2 mRNA reference values
 are assigned by each classification. The software also builds a
-heatmap for test and query (not shown here).</font></p>
-<p style="margin-left: 0.74cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
+heatmap for test and query (not shown here).</p>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ebc554a2208515c0.png" name="image18.png" align="left" width="100%"/>
 </p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ebc554a2208515c0.png" name="image18.png" align="left" hspace="12" width="433" height="252" border="0"/>
-<br/>
 
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<ol start="9">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">To
+<dol start="9">
+	<li><p>To
 	customize a color palette in heatmaps and plots, you may use the
-	plot settings controls also to be found in the ‘</font></font><font color="#000000"><font face="Times, serif"><b>Parameters’
-	tab</b></font></font><font color="#000000"><font face="Times, serif">
-	(for more information, see </font></font><!-- Do you want to create  a hyperlink? --><!-- Done --><a href="http://g3m_param.htm/"><font color="#0000ff"><font face="Times, serif"><u><b>Parameters</b></u></font></font></a><font color="#000000"><font face="Times, serif">).
-	</font></font>
+	plot settings controls also to be found in the ‘<b>Parameters’
+	tab</b>
+	(for more information, see <!-- Do you want to create  a hyperlink? --><!-- Done --><a href="http://g3m_param.htm/"><font color="#0000ff"><u><b>Parameters</b></u></a>).
+	
 	</p>
-</ol>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d2cd2789299caf2.png" name="image15.png" align="left" hspace="12" width="624" height="247" border="0"/>
-<br/>
-
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d2cd2789299caf2.png" name="image15.png" align="left" width="100%"/>
 </p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<ol start="10">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">Once
+<dol start="10">
+	<li><p>Once
 	classifications are completed, you may save the original data file
-	and all the results from the menu tab </font></font><font color="#000000"><font face="Times, serif"><b>File
-	&gt; Save.</b></font></font><font color="#000000"><font face="Times, serif">
+	and all the results from the menu tab <b>File
+	&gt; Save.</b>
 	All files are archived in a zipped folder in the directory of the
-	original data file. </font></font>
+	original data file. 
 	</p>
-</ol>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_30d4c37af7df9e2c.png" name="image13.png" align="left"/>
 </p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_30d4c37af7df9e2c.png" name="image13.png" align="left" hspace="12" width="302" height="130" border="0"/>
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<ol start="11">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000">
-	<font face="Times, serif">Note that under </font></font><font color="#000000"><font face="Times, serif"><b>File&gt;Save
-	parameters</b></font></font><font color="#000000"><font face="Times, serif">,
+<dol start="11">
+	<li><p>
+	Note that under <b>File&gt;Save
+	parameters</b>,
 	you may save all the parameters used for the current analysis. In
 	case, you wish to use them again with the new data file, you may
-	restore them automatically. To do so, click </font></font><font color="#000000"><font face="Times, serif"><b>File&gt;Open
-	parameters</b></font></font><font color="#000000"><font face="Times, serif">.
-	</font></font>
+	restore them automatically. To do so, click <b>File&gt;Open
+	parameters</b>.
+	
 	</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_1b3840e5c7b86dbb.png" name="image23.png" align="left"/>
+</p>
 </ol>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_1b3840e5c7b86dbb.png" name="image23.png" align="left" hspace="12" width="312" height="135" border="0"/>
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<h3 class="western" style="line-height: 100%"><span style="font-weight: normal">EXAMPLE
-2: Multiclass classification of the multiple analyte’s values.</span></h3>
-<p style="margin-bottom: 0cm; line-height: 100%"><font color="#222222"><font face="Times, serif">Now,
-s</font></font><font face="Times, serif">uppose you are interested to
-know how values of </font><font color="#222222"><font face="Times, serif">multiple
-analytes </font></font><font face="Times, serif">in test and
+<h2><font color="#3465a4">EXAMPLE 2: Multiclass classification of the multiple analyte’s values.</font></h2>
+<p>Now,
+suppose you are interested to
+know how values of multiple
+analytes in test and
 reference measured in the same assay are classified. You may also be
 interested to know to which class each of the assayed values belongs.
  The software does not limit the number of analytes to be processed;
 however, larger files increase processing time and heatmap
-illustrations may be technically challenging. </font>
+illustrations may be technically challenging. 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">In
-the example below, we consider 3 analyt</font><font color="#000000"><font face="Times, serif">es.
-</font></font><font face="Times, serif">Let’s say one of the
+<p>In
+the example below, we consider 3 analytes.
+Let’s say one of the
 analytes- of- interest is the ERBB2 gene (the same as in EXAMPLE 1)
 and two others are candidate-gene markers: gene A and gene B. The
 mRNA expression levels for all three genes were measured in test
 (disease) and reference (healthy control) samples using a molecular
-assay with multiplexing capabilities</font><font face="Times, serif"><i>.</i></font><font face="Times, serif">
+assay with multiplexing capabilities.
 Let’s see how g3mclass software may help to classify three genes in
-each sample. </font>
+each sample. 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<ol><li><p>In this example, we save a data
+file named ‘ERBB2, gene A, gene B, ID ref, test.txt’ 
+as a tab-delimited text (.txt) file using Microsoft Excel (for more
+information, see <a href="http://g3m_data.htm/"><font color="#0000ff"><u>Input
+data format</u></a>).</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_180e87000398a632.png" name="image25.png" align="left"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif"><b>1.
- </b></font><font face="Times, serif">In this example, we save a data
-file named ‘ERBB2, gene A, gene B, ID ref, test.txt’ </font>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">as
-a tab-delimited text (.txt) file using Microsoft Excel (for more
-information, see </font><a href="http://g3m_data.htm/"><font color="#0000ff"><font face="Times, serif"><u>Input
-data format</u></font></font></a><font face="Times, serif">).</font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_180e87000398a632.png" name="image25.png" align="bottom" width="624" height="186" border="0"/>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif"><b>2.</b></font><font face="Times, serif">
+<li><p>
 After opening this data file, the software learns models for each
 analyte and depicts each model plot (see below). Under default
 settings, the ERBB2 mRNA test values fit into 4-class GMM with the
@@ -988,778 +307,170 @@ following weights per class: 0 (46%), 1 (38%), 2 (14%), and 3 (2%).
 The GMM fitted into the gene A mRNA test values have 4 Gaussian
 components with estimated weights per class: -1 (39%), 0 (27%), 1
 (29%), and 2 (6%). The GMM fitted into the gene B mRNA test values
-has 2 classes: 0 (34%) and 1 (66%). </font>
+has 2 classes: 0 (34%) and 1 (66%). 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<p><b>‘Model’</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_44a7ade2cf36d2fd.png" name="image26.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_1dfaccc1ffe75ad.png" name="image17.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_7af8fbeb34afa9cf.png" name="image10.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<p><font color="#212529">‘<b>Model
+Plots’</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_fe9d72ab67254803.png" name="image21.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_4d9418ac5b8d4501.png" name="image14.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d63fb5e8a92051d1.png" name="image4.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font color="#212529">‘<font face="Times, serif"><b>Model’</b></font></font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_44a7ade2cf36d2fd.png" name="image26.png" align="bottom" width="624" height="190" border="0"/>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_1dfaccc1ffe75ad.png" name="image17.png" align="bottom" width="624" height="209" border="0"/>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_7af8fbeb34afa9cf.png" name="image10.png" align="bottom" width="624" height="181" border="0"/>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font color="#212529">‘<font face="Times, serif"><b>Model
-Plots’</b></font></font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_fe9d72ab67254803.png" name="image21.png" align="left" hspace="12" width="499" height="259" border="0"/>
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_4d9418ac5b8d4501.png" name="image14.png" align="left" hspace="12" width="499" height="253" border="0"/>
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d63fb5e8a92051d1.png" name="image4.png" align="left" hspace="12" width="491" height="248" border="0"/>
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif"><b>2</b></font><font face="Times, serif">.
+<li><p>
 Assuming these models are satisfactory, the software utilizes them
-for</font><font face="Times, serif"><b> auto-classification of
+for<b> auto-classification of
 individual values from test and reference using three classifications
-</b></font><font face="Times, serif">(proba, cutoff, s.cutoff). The
+</b>(proba, cutoff, s.cutoff). The
 classification results for all analytes appear in the ‘Test class’
 (examples shown below) and ‘Ref class’ (examples not shown here).
-</font>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_3b67d678aca4dfdd.png" name="image27.png" align="left" hspace="12" width="630" height="174" border="0"/>
-<br/>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_3b67d678aca4dfdd.png" name="image27.png" align="left" width="100%"/>
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_dd9b0f531bc10c6.png" name="image12.png" align="left" width="100%"/>
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_15f189f0088bf652.png" name="image8.png" align="left" width="100%"/>
+</p>
+<p>Under defaults, class outputs with proportions per class can be summarized
+as the following:</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_b556027c36540279.png" name="image20.png" align="left"/>
+</p>
 
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_dd9b0f531bc10c6.png" name="image12.png" align="bottom" width="630" height="146" border="0"/>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_15f189f0088bf652.png" name="image8.png" align="bottom" width="630" height="151" border="0"/>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">Under
-defaults, class outputs with proportions per class can be summarized
-as the following:</font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_b556027c36540279.png" name="image20.png" align="left" hspace="12" width="572" height="668" border="0"/>
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<ol start="3">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">The
+<dol start="3">
+	<li><p>The
 	heatmaps illustrate all three classifications for the ERBB2, gene A
-	and gene B values in reference (above) and test (below).  </font></font>
+	and gene B values in reference (above) and test (below).  
 	</p>
+</dol>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_90d7eff82161eeeb.png" name="image34.png" align="left" width="100%"/>
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_f0539d7687faa65.png" name="image3.png" align="left" width="100%"/>
+</p>
 </ol>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
 
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_90d7eff82161eeeb.png" name="image34.png" align="left" hspace="12" width="250" height="158" border="0"/>
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_f0539d7687faa65.png" name="image3.png" align="left" hspace="12" width="757" height="230" border="0"/>
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<h3 class="western" style="line-height: 100%"><span style="font-weight: normal">EXAMPLE
-3:  Why g3mclass uses 3 classifications. </span>
-</h3>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">Some
+<h2><font color="#3465a4">EXAMPLE 3: Why g3mclass uses 3 classifications.</font>
+</h2>
+<p>Some
 analyte values may be initially incorrectly assigned by ‘proba’
 classification. This may occur when the component of GMM has a wide
 dispersion with its tails picking up values that otherwise belong to
 a different class.  The software calculates cutoffs to autocorrect
-the classification of individual values.</font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+the classification of individual values.</p>
+<p>Let’s
+see how it works for gene B in EXAMPLE 2.  
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times, serif">Let’s
-see how it works for gene B in EXAMPLE 2.  </font>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<ol start="2">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">As
+<ol>
+<dol start="2">
+	<li><p>As
 	we have seen above, the GMM for gene B has two components including
 	class ‘0’ and class ‘1’, with the latter having a widespread
 	dispersion. As a result, some low values of gene B with a high
-	probability will be assigned to class ‘1’. </font></font>
+	probability will be assigned to class ‘1’. 
 	</p>
-</ol>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d63fb5e8a92051d1.png" name="Image1" align="left" hspace="12" width="406" height="205" border="0"/>
-<br/>
-
+</dol>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d63fb5e8a92051d1.png" name="Image1" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<ol start="3">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">To
+<dol start="3">
+	<li><p>To
 	control for the potential misclassification, the software calculates
-	the cutoff value/s </font></font><font color="#000000">including a
+	the cutoff value/s including a
 	minimal misclassification cutoff with equal weights relative to
 	adjacent classes and tolerable intervals of the misclassification
 	error rate (a tradeoff between misclassification of one type for
-	misclassification of the other type) </font><font color="#000000"><font face="Times, serif">recorded
+	misclassification of the other type) recorded
 	in ‘Model’ tab. In the case of 2-class GMM for gene B, the
 	software calculates one minimal misclassification positive cutoff
 	between class ‘0’ and class’1’(up-1=11.78) as well as left
 	and right interval values for this cutoff (up-left=10.376;
-	up-right=13.757). </font></font>
+	up-right=13.757). 
 	</p>
-</ol>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_7af8fbeb34afa9cf.png" name="Image2" align="left" hspace="12" width="567" height="165" border="0"/>
-<br/>
-
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_7af8fbeb34afa9cf.png" name="Image2" align="left" width="100%"/>
 </p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<ol start="4">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">Following
+<dol start="4">
+	<li><p>Following
 	‘proba’ classification, the software performs ‘cutoff’
-	classification using </font></font><font color="#000000">‘up-1’
+	classification using ‘up-1’
 	cutoff first and then ‘s. cutoff’ using ‘up-right’ cutoff to
 	maximize the specificity of detecting the gene B test values in
-	class ‘1’ dissimilar to that in class ‘0’.</font><font color="#000000"><font face="Times, serif">
+	class ‘1’ dissimilar to that in class ‘0’.
 	The example below shows that a value ‘-95.729’ initially
 	assigned by ‘proba’ to class ‘1’ is subsequently re-assigned
-	by ‘cutoff’ and ‘s. cutoff’ to class ‘0’. </font></font>
+	by ‘cutoff’ and ‘s. cutoff’ to class ‘0’. 
 	</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_f4042447b64455a3.png" name="image30.png" align="left" width="100%"/>
+</p>
 </ol>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_f4042447b64455a3.png" name="image30.png" align="left" hspace="12" width="687" height="196" border="0"/>
-<br/>
 
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<h3 class="western" style="line-height: 100%"><span style="font-weight: normal">EXAMPLE
-4: When g3mclass can provide inaccurate classification.</span></h3>
-<p style="margin-bottom: 0cm; line-height: 100%">The aim of g3mclass
+<h2><font color="#3465a4">EXAMPLE 4: When g3mclass can provide inaccurate classification.</font></h2>
+<p>The aim of g3mclass
 software development is to help to address the uncertainty of
 classification of the test samples that otherwise may be
 misclassified or classified as ‘equivocal’ (a.k.a. ‘grey
-zone’). This software <font color="#000000">expects at least two
-kinds of entries for each analyte: reference (</font><font color="#000000"><i>ref</i></font><font color="#000000">)
-and test (</font><font color="#000000"><i>test</i></font><font color="#000000">).
-</font>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
+zone’). This software expects at least two
+kinds of entries for each analyte: reference (<i>ref</i>)
+and test (<i>test</i>).
 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%">g3mclass<font color="#000000">
-</font>assumes that the probability density function for <i>test</i>:
+<p>g3mclass assumes that the probability density function for <i>test</i>:
 </p>
 <ol type="a">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000">can
-	be represented by a finite number of Gaussian distributions,</font></p>
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000">can
+	<li><p>can be represented by a finite number of Gaussian distributions,</p>
+	<li><p>can
 	integrate the probability density function for reference which in
-	turn is described by one Gaussian distribution.</font></p>
+	turn is described by one Gaussian distribution.</p>
 </ol>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">In
+<p>In
 g3mclass, the test sample is used to learn a semi-constrained
 Gaussian mixture model (GMM). In this model, the position (i.e., the
 mean value) and the spread (SD value) of class numbered ‘0’ are
 constrained to be equal to the reference mean and SD values for a
 given test. However, the weight or proportion of this constrained
 class is an adjustable parameter. If the weight of semi-constrained
-class ‘0’ in the </font></font><font color="#000000"><font face="Times, serif"><i>test</i></font></font><font color="#000000"><font face="Times, serif">
-GMM is close to null, then ‘proba’ classification of </font></font><font color="#000000"><font face="Times, serif"><i>ref<!-- Could ‘probe classification be invalid for the test samples as well ? --><!-- I don’t think so. --></i></font></font><font color="#000000"><font face="Times, serif">
+class ‘0’ in the <i>test</i>
+GMM is close to null, then ‘proba’ classification of <i>ref</i>
 samples will be invalid. However, ‘cutoff’ classification results
-can be valid both for </font></font><font color="#000000"><font face="Times, serif"><i>test</i></font></font><font color="#000000"><font face="Times, serif">
-and </font></font><font color="#000000"><font face="Times, serif"><i>ref</i></font></font><font color="#000000"><font face="Times, serif">
+can be valid both for <i>test</i>
+and <i>ref</i>
 samples depending on the degree of overlap for those samples. The
-lower overlap the </font></font><font face="Times, serif">higher the
-validity</font><font color="#000000"><font face="Times, serif"> of
-classification results will be. </font></font>
+lower overlap the higher the
+validity of
+classification results will be. 
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000"><font face="Times, serif">Let's
-review the following example. </font></font>
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
+<p>Let's
+review the following example. 
 </p>
 <ol>
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000">The
+	<li><p>The
 	model for gene Z has two components: class ‘0’ and class ‘-1’.
 	The weight of class ‘0’ is next to 0%, whereas the weight of
-	class ‘-1’ is near 100%. </font>
+	class ‘-1’ is near 100%. 
 	</p>
-</ol>
-<p style="margin-bottom: 0cm; line-height: 100%"><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_83e107780ed72a29.png" name="image2.png" align="left" hspace="12" width="624" height="233" border="0"/>
-<br/>
 
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_83e107780ed72a29.png" name="image2.png" align="left" width="100%"/>
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<ol start="2">
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font color="#000000">The
-	model plot shows </font>that the test<font color="#000000"> model is
+<dol start="2">
+	<li><p>The
+	model plot shows that the test model is
 	virtually a single Gaussian rather than a mixture of such. Because
 	the weight of class ‘0’is negligible, the g3mclass ‘proba’
-	classifications are expected to be invalid </font>for the <i>ref</i><font color="#000000"><i>
-	</i></font><font color="#000000">sample. </font>
+	classifications are expected to be invalid for the <i>ref</i><i>
+	</i>sample. 
 	</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ca0e1d1249511e34.png" name="image7.png" align="left" width="100%"/>
+</p>
 </ol>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
-<p style="margin-left: 1.27cm; margin-bottom: 0cm; line-height: 100%">
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ca0e1d1249511e34.png" name="image7.png" align="left" hspace="12" width="524" height="321" border="0"/>
-<br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-</p>
-<div title="footer"><p style="margin-top: 1.17cm; margin-bottom: 0cm; line-height: 100%">
-	<span style="background: #c0c0c0"><sdfield type=PAGE subtype=RANDOM format=PAGE>22</sdfield></span></p>
-	<p style="margin-bottom: 0cm; line-height: 100%"><br/>
-
-	</p>
-</div>
 </body>
 </html>

@@ -14,135 +14,115 @@
 	<meta name="LinksUpToDate" content="false"/>
 	<meta name="ScaleCrop" content="false"/>
 	<meta name="ShareDoc" content="false"/>
-	<style type="text/css">
-		@page { size: 21.59cm 27.94cm; margin: 2.54cm }
-		p { margin-bottom: 0.25cm; direction: ltr; line-height: 115%; text-align: left; orphans: 2; widows: 2; background: transparent }
-	</style>
 </head>
-<body lang="en-US" link="#000080" vlink="#800000" dir="ltr"><p style="margin-bottom: 0cm; line-height: 100%">
-<font color="#0070c0"><font face="Times New Roman, serif"><b>PARAMETERS</b></font></font></p>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
+<body>
+<h1><font color="#3465a4">PARAMETERS</font></h1>
 
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif"><b>Models:
-model learning control tools </b></font>
-</p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
+<h2><font color="#3465a4">Models: model learning control tools</font></h2>
 <ul>
 	<ul>
-		<li><p style="margin-bottom: 0cm; line-height: 100%"> ‘<font face="Times New Roman, serif"><i>Model
-		with fixed k (no)‘ </i></font><font face="Times New Roman, serif">is
+		<li><p> ‘<i>Model
+		with fixed k (no)‘ </i></font>is
 		a slider for setting the fixed number of bins (k) in a histogram
 		(range 10-115). The only model is learned based on a histogram with
 		the chosen k.</font></p>
-		<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><i>Model
-		with varying k and the lowest BIC (yes)</i></font><font face="Times New Roman, serif">
+		<li><p>‘<i>Model
+		with varying k and the lowest BIC (yes)</i></font>
 		‘ is a slider for setting varying  binning parameter k. The
 		default is a fixed k= 25 with a half-length of vector k =3
 		(checkbox for varying k is ticked). This setting allows learning of
-		multiple models with a vector of k {10, 15, 20, </font><font face="Times New Roman, serif"><b>25</b></font><font face="Times New Roman, serif">,
+		multiple models with a vector of k {10, 15, 20, </font><b>25</b></font>,
 		30, 35, 40}. Software selects the model with the lowest BIC. </font>
 		</p>
-		<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><i>Threshold
-		for fusing too close Gaussians’</i></font><font face="Times New Roman, serif">
+		<li><p>‘<i>Threshold
+		for fusing too close Gaussians’</i></font>
 		is a slider for tuning a merge of Gaussian distributions that are
 		too close to each other (range 0-1; default 0.5)</font></p>
-		<li><p style="margin-bottom: 0cm; line-height: 100%"> ‘<font face="Times New Roman, serif"><i>Threshold
-		for vanishing Gaussians’</i></font><font face="Times New Roman, serif">
+		<li><p> ‘<i>Threshold
+		for vanishing Gaussians’</i></font>
 		is a slider for tuning a disappearance of Gaussian distributions
 		with too low number of values; (range 0-10; default 1.0)</font></p>
 	</ul>
 </ul>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
 
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif"><b>Plots:
-plots and heatmaps visualization control tools </b></font>
-</p>
+<h2><font color="#3465a4">Plots: plots and heatmaps visualization control tools</font></h2>
 <ul>
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Histogram
-	colors </font>
+	<li><p>Histogram
+	colors 
 	</p>
 	<ul>
-		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Edge
-		</font>
+		<li><p>Edge
+		
 		</p>
-		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Panels
-		</font>
+		<li><p>Panels
+		
 		</p>
 	</ul>
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Gaussian
-	colors </font>
+	<li><p>Gaussian
+	colors 
 	</p>
 	<ul>
-		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Total
-		of Gaussian densities </font>
+		<li><p>Total
+		of Gaussian densities 
 		</p>
-		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Reference
-		class ‘0’</font></p>
-		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Low
-		class ‘-1’</font></p>
-		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Lowest
-		class ‘-N’</font></p>
-		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Up
-		class ‘+1’</font></p>
-		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Highest
-		class ‘+N’</font></p>
+		<li><p>Reference
+		class ‘0’</p>
+		<li><p>Low
+		class ‘-1’</p>
+		<li><p>Lowest
+		class ‘-N’</p>
+		<li><p>Up
+		class ‘+1’</p>
+		<li><p>Highest
+		class ‘+N’</p>
 	</ul>
 </ul>
 <ul>
-	<li><p style="margin-bottom: 0cm; line-height: 100%"> ‘<font face="Times New Roman, serif"><i>Area
-	under Gaussians (0=transparent, 1=opaque)</i></font><font face="Times New Roman, serif">’
-	slider; (range 0-1; defaults 0.5)</font></p>
-	<li><p style="margin-bottom: 0cm; line-height: 100%"> ‘<font face="Times New Roman, serif"><i>Line
-	width for Gaussians’ defaults’</i></font><font face="Times New Roman, serif">
-	slider (range 0-10; default 2.0)</font></p>
+	<li><p> ‘<i>Area
+	under Gaussians (0=transparent, 1=opaque)</i>’
+	slider; (range 0-1; defaults 0.5)</p>
+	<li><p> ‘<i>Line
+	width for Gaussians’ defaults’</i>
+	slider (range 0-10; default 2.0)</p>
 </ul>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
+<p>
  
 </p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif"><b>Heatmaps:
+<h2><font color="#3465a4">Heatmaps:
 checkbox selection tool (the default is heatmap with stringent cutoff
-‘s.cutoff”)</b></font></p>
-<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
-<br/>
-
-</p>
+‘s.cutoff”)</font></h2>
 <ul>
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">probabilistic
-	</font>
+	<li><p>probabilistic
+	
 	</p>
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">cutoff</font></p>
-	<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">s.cutoff</font></p>
+	<li><p>cutoff</p>
+	<li><p>s.cutoff</p>
 </ul>
-<p style="margin-bottom: 0cm; line-height: 100%"><br/>
 
-</p>
-<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif"><b>Buttons</b></font></p>
+<h2><font color="#3465a4">Buttons</font></h2>
 <ul>
-	<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><b>Defaults’
-	</b></font><font face="Times New Roman, serif">resets all the
-	parameters to default settings</font></p>
-	<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><b>Learn
-	model’ </b></font><font face="Times New Roman, serif">fits
+	<li><p>‘<b>Defaults’
+	</b>resets all the
+	parameters to default settings</p>
+	<li><p>‘<b>Learn
+	model’ </b>fits
 	probabilistic model on the test data which are presented as a
 	histogram. Because information about the number of bins and their
 	boundaries is not inherent to the data, but will influence a model,
 	it is advisable to apply varying binning parameters to the test
 	data. Each newly built model is visualized by clicking on “Learn
-	model” button. </font>
+	model” button. 
 	</p>
-	<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><b>Draw
-	plots’</b></font><font face="Times New Roman, serif"> allows to
-	re-draw customized histograms and plots </font>
+	<li><p>‘<b>Draw
+	plots’</b> allows to
+	re-draw customized histograms and plots 
 	</p>
-	<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><b>Draw
-	heatmaps</b></font><font face="Times New Roman, serif">’
-	constructs classification heatmaps other than by default</font></p>
+	<li><p>‘<b>Draw
+	heatmaps</b>’
+	constructs classification heatmaps other than by default</p>
 </ul>
+<br/>
+<br/>
+
 </body>
 </html>
