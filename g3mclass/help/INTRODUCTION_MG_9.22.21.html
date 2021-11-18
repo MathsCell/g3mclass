@@ -1,0 +1,173 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 6.4.7.2 (Linux)"/>
+	<meta name="author" content="Marina Guvakova"/>
+	<meta name="created" content="2021-09-23T00:39:00"/>
+	<meta name="changedby" content="Serguei Sokol"/>
+	<meta name="changed" content="2021-09-23T10:55:02"/>
+	<meta name="AppVersion" content="15.0000"/>
+	<style type="text/css">
+		@page { size: 21.59cm 27.94cm; margin: 2.54cm }
+		p { margin-bottom: 0.25cm; direction: ltr; color: #000000; line-height: 115%; text-align: left; orphans: 2; widows: 2; background: transparent }
+		p.western { font-family: "Times New Roman", serif; font-size: 12pt; so-language: en-US }
+		p.cjk { font-family: "Times New Roman"; font-size: 12pt; so-language: en-US }
+		p.ctl { font-family: "Times New Roman"; font-size: 12pt; so-language: ar-SA }
+		h1 { margin-bottom: 0cm; direction: ltr; color: #2f5496; text-align: left; page-break-inside: avoid; orphans: 2; widows: 2; background: transparent; page-break-after: avoid }
+		h1.western { font-family: "Calibri Light", serif; font-size: 16pt; so-language: en-US }
+		h1.cjk { font-family: ; font-size: 16pt; so-language: en-US }
+		h1.ctl { font-family: ; font-size: 16pt; so-language: ar-SA }
+		h3 { margin-top: 0.49cm; margin-bottom: 0.49cm; direction: ltr; color: #000000; text-align: left; orphans: 2; widows: 2; background: transparent }
+		h3.western { font-family: "Times New Roman", serif; font-size: 13pt; so-language: en-US; font-weight: bold }
+		h3.cjk { font-family: "Times New Roman"; font-size: 13pt; so-language: en-US; font-weight: bold }
+		h3.ctl { font-family: "Times New Roman"; font-size: 13pt; so-language: ar-SA; font-weight: bold }
+	</style>
+</head>
+<body lang="en-US" text="#000000" link="#000080" vlink="#800000" dir="ltr"><h3 class="western" style="margin-top: 0cm">
+INTRODUCTION</h3>
+<h1 class="western" style="margin-left: 1.27cm"><b>What is the</b><span style="font-weight: normal">
+</span><b>motivation for </b><font color="#4472c4"><i>g3mclass</i></font><b>
+development?</b></h1>
+<h1 class="western" align="left" style="margin-left: 1.27cm; font-weight: normal; page-break-inside: avoid; orphans: 2; widows: 2; page-break-after: avoid">
+<br/>
+
+</h1>
+<p style="margin-bottom: 0cm; line-height: 100%">Numerous studies
+show that random variation may occur in the results of biomedical
+tests sampled from the populations diagnosed with the same disease.
+The best-known example of a random variable in oncology <font color="#000000">is
+human epidermal growth factor receptor 2 (HER2) reported </font>to
+have higher than normal levels of expression in the breast (15-30%),
+gastric and gastroesophageal (10-30%), ovarian (20-25%), endometrial
+(14-80%), bladder (23-80%), and lung (up to 20%) cancers.<font color="#0070c0">
+</font><font color="#262626">Statistical models incorporating the
+probability distribution for a random biological variable could be
+useful for understanding the nature of disease progression,
+development of targeted therapies, and </font>improvement of patient
+outcomes.</p>
+<h1 class="western" style="margin-left: 1.27cm"><b>What methodology
+is behind </b><font color="#4472c4"><i>g3mclass</i></font><b>? </b>
+</h1>
+<h1 class="western" align="left" style="margin-left: 1.27cm; page-break-inside: avoid; orphans: 2; widows: 2; page-break-after: avoid">
+<br/>
+
+</h1>
+<p class="western" style="margin-bottom: 0cm; line-height: 100%">The
+real-world readouts of laboratory tests rarely fit into one normal
+(Gaussian) distribution and for many analytes Gaussian distribution
+is not achieved even after data transformation. Furthermore, when
+comparing the results from the test (with disease) and refence
+(without disease) samples, it is rare for two distributions of
+measured values to be completely separated. This creates a
+methodological dilemma for a choice of a diagnostic cutoff value that
+impacts clinical decision. The paper published in <font color="#4472c4"><i>Cancer
+Research,&nbsp;2019; 79 :3492–502</i></font><font color="#000000"><span style="background: #ffffff">
+</span></font>offered the potential solution for unmixing
+quantitative assay data through using Bayesian approach and Gaussian
+Mixture Model (GMM). The performance of the proposed probabilistic
+classifier has been validated over datasets of more than 300 clinical
+samples and has been shown to improve the rule-based binary
+classification of tumor markers.  This inspired the development of
+<font color="#4472c4"><i><font color="#000000">g3mclass</font></i></font>,
+a software that automates this method with add-ons capabilities in a
+graphical user interface (GUI).</p>
+<h1 class="western" style="margin-left: 1.27cm"><b>How </b><font color="#4472c4"><i>g3mclass
+</i></font><b>is unique?</b></h1>
+<p class="western" style="margin-bottom: 0cm; line-height: 100%"><font color="#000000">
+</font><span style="background: #ffffff">Unlike other statistical
+programs aimed at </span><i><span style="background: #ffffff">statistical
+hypothesis testing</span></i><span style="background: #ffffff">,
+</span><font color="#4472c4"><i><font color="#000000">g3mclass</font></i></font>
+<span style="background: #ffffff">helps to perform</span><font face="Bradley Hand, serif"><i><span style="background: #ffffff">
+</span></i></font><i><span style="background: #ffffff">probabilistic
+statistical classification </span></i><span style="background: #ffffff">of
+each of the dataset variables into as many as probable categories. As
+an advanced analytical tool</span>,<span style="background: #ffffff">
+it is more informed than t</span>he rule-based classification <span style="background: #ffffff">and
+thus may </span>improve statistical analysis of the data from
+quantitative molecular assays. <span style="background: #ffffff">Focused
+on Bayesian statistics, </span><font color="#4472c4"><i><font color="#000000">g3mclass</font></i></font><font color="#000000"><font face="Bradley Hand, serif"><i><b>
+</b></i></font></font><font color="#000000">offers three
+classification approaches. </font><span style="background: #ffffff"> </span>
+</p>
+<h1 class="western" style="margin-left: 1.27cm"><b>Who are potential
+users of </b><font color="#4472c4"><i>g3mclass</i></font><b>?</b></h1>
+<p class="western" style="margin-bottom: 0cm; line-height: 100%"><font color="#4472c4"><i><font color="#000000">g3mclass
+</font></i></font>aims to ease adoption of the probabilistic
+classifier <span style="background: #ffffff">in research, biomedical
+pharma, companion diagnostics, and ultimately in healthcare.</span>
+Currently, it is intended for basic and translational biomedical
+research to help scientists accelerate candidate biomarkers and
+therapeutic targets evaluation workflow. 
+</p>
+<h1 class="western" style="margin-left: 1.27cm"><b>What does</b><font face="Bradley Hand, serif"><b>
+</b></font><font color="#4472c4"><i>g3mclass</i></font><font face="Bradley Hand, serif"><i><b>
+</b></i></font><b>do?</b><font face="Bradley Hand, serif"><b> </b></font>
+</h1>
+<p class="western" style="margin-bottom: 0cm; line-height: 100%"><font color="#4472c4"><i><font color="#000000">g3mclass</font></i></font>
+is a classification and visualization software purpose-built for
+modeling the molecular assay data sampled from <font color="#000000"><span style="background: #ffffff">healthy
+(reference) and diseased (test) populations</span></font>. Additional
+query samples (e.g. suspected disease) obtained by the same assays
+may be classified.  
+</p>
+<h1 class="western" style="margin-left: 1.27cm"><b>How does</b><font face="Bradley Hand, serif"><b>
+</b></font><font color="#4472c4"><i>g3mclass</i></font><font face="Bradley Hand, serif"><i><b>
+</b></i></font><b>work?</b><font face="Bradley Hand, serif"><b> </b></font>
+</h1>
+<p class="western" style="margin-bottom: 0cm; line-height: 100%"><br/>
+
+</p>
+<p class="western" style="margin-bottom: 0cm; line-height: 100%">After
+uploading a file with the reference, test and optional queries
+datasets, User may set up the model parameters (defaults or
+User-choice), and immediately learn the test GMM depicted in a plot.
+The model learning is initialized by the expectation-maximization
+(EM) algorithm with classes that correspond to peaks in the histogram
+calculated on the test sample. The class labeled ‘0’ is one that
+has the same mean value and standard deviation as the coupled
+reference sample. It is imposed into the test GMM; however, its
+weight in the model is not fixed. If the mean values of other modeled
+classes are lower or higher than that of class ‘0’, than they are
+labeled with either negative (e.g. -1, -2, etc) or positive (e.g. 1,
+2, etc) integers, respectively. The bigger the integer the further
+the class is positioned relative to class ‘0’. The <font color="#4472c4"><i><font color="#000000"><font face="Calibri, serif">g3mclass</font></font></i></font>
+GUI allows to setup parameters for model learning - choose either the
+fixed or variable number of bins in a histogram, dismiss classes
+having too low number of samples and fuse too close classes. The
+preferred model is selected automatically based on the lowest
+Bayesian information criterion (BIC). Upon model selection, the
+classification results are presented in spreadsheets and heatmaps for
+test, reference, and query (if present). The classification of
+refence and all queries is based upon the corresponding test model. 
+</p>
+<p class="western" style="margin-bottom: 0cm; line-height: 100%"><br/>
+
+</p>
+<p class="western" style="margin-bottom: 0cm; line-height: 100%"><font color="#4472c4"><i><font color="#000000"><font face="Calibri, serif">g3mclass</font></font></i></font>
+performs <font color="#000000">classification in 3 consecutive steps:
+ </font>
+</p>
+<p class="western" style="margin-bottom: 0cm; line-height: 100%"><br/>
+
+</p>
+<ul>
+	<li><p style="margin-bottom: 0cm; line-height: 100%">Step1:
+	Probability-based classification (proba) which is Bayesian
+	classification of GMM.</p>
+	<li><p style="margin-bottom: 0cm; line-height: 100%">Step 2:
+	Cutoff-based classification (cutoff) where <font color="#4472c4"><i><font color="#000000"><font face="Calibri, serif">g3mclass</font></font></i></font>
+	calculates the cutoff values between classes as a minimal
+	misclassification with equal weights relative to adjacent classes</p>
+	<li><p style="margin-bottom: 0cm; line-height: 100%"><a name="_GoBack"></a>
+	Step 3: More stringent cutoff-based classification (s. cutoff) which
+	increases specificity 
+	</p>
+</ul>
+<p class="western" style="margin-bottom: 0cm; line-height: 100%"><br/>
+
+</p>
+</body>
+</html>

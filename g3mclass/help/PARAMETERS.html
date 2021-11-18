@@ -1,0 +1,148 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 6.4.7.2 (Linux)"/>
+	<meta name="author" content="Marina Guvakova"/>
+	<meta name="created" content="2021-10-21T21:38:00"/>
+	<meta name="changedby" content="Marina Guvakova"/>
+	<meta name="changed" content="2021-10-23T18:55:00"/>
+	<meta name="AppVersion" content="16.0000"/>
+	<meta name="DocSecurity" content="0"/>
+	<meta name="HyperlinksChanged" content="false"/>
+	<meta name="LinksUpToDate" content="false"/>
+	<meta name="ScaleCrop" content="false"/>
+	<meta name="ShareDoc" content="false"/>
+	<style type="text/css">
+		@page { size: 21.59cm 27.94cm; margin: 2.54cm }
+		p { margin-bottom: 0.25cm; direction: ltr; line-height: 115%; text-align: left; orphans: 2; widows: 2; background: transparent }
+	</style>
+</head>
+<body lang="en-US" link="#000080" vlink="#800000" dir="ltr"><p style="margin-bottom: 0cm; line-height: 100%">
+<font color="#0070c0"><font face="Times New Roman, serif"><b>PARAMETERS</b></font></font></p>
+<p style="margin-bottom: 0cm; line-height: 100%"><br/>
+
+</p>
+<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif"><b>Models:
+model learning control tools </b></font>
+</p>
+<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
+<br/>
+
+</p>
+<ul>
+	<ul>
+		<li><p style="margin-bottom: 0cm; line-height: 100%"> ‘<font face="Times New Roman, serif"><i>Model
+		with fixed k (no)‘ </i></font><font face="Times New Roman, serif">is
+		a slider for setting the fixed number of bins (k) in a histogram
+		(range 10-115). The only model is learned based on a histogram with
+		the chosen k.</font></p>
+		<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><i>Model
+		with varying k and the lowest BIC (yes)</i></font><font face="Times New Roman, serif">
+		‘ is a slider for setting varying  binning parameter k. The
+		default is a fixed k= 25 with a half-length of vector k =3
+		(checkbox for varying k is ticked). This setting allows learning of
+		multiple models with a vector of k {10, 15, 20, </font><font face="Times New Roman, serif"><b>25</b></font><font face="Times New Roman, serif">,
+		30, 35, 40}. Software selects the model with the lowest BIC. </font>
+		</p>
+		<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><i>Threshold
+		for fusing too close Gaussians’</i></font><font face="Times New Roman, serif">
+		is a slider for tuning a merge of Gaussian distributions that are
+		too close to each other (range 0-1; default 0.5)</font></p>
+		<li><p style="margin-bottom: 0cm; line-height: 100%"> ‘<font face="Times New Roman, serif"><i>Threshold
+		for vanishing Gaussians’</i></font><font face="Times New Roman, serif">
+		is a slider for tuning a disappearance of Gaussian distributions
+		with too low number of values; (range 0-10; default 1.0)</font></p>
+	</ul>
+</ul>
+<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
+<br/>
+
+</p>
+<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif"><b>Plots:
+plots and heatmaps visualization control tools </b></font>
+</p>
+<ul>
+	<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Histogram
+	colors </font>
+	</p>
+	<ul>
+		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Edge
+		</font>
+		</p>
+		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Panels
+		</font>
+		</p>
+	</ul>
+	<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Gaussian
+	colors </font>
+	</p>
+	<ul>
+		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Total
+		of Gaussian densities </font>
+		</p>
+		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Reference
+		class ‘0’</font></p>
+		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Low
+		class ‘-1’</font></p>
+		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Lowest
+		class ‘-N’</font></p>
+		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Up
+		class ‘+1’</font></p>
+		<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">Highest
+		class ‘+N’</font></p>
+	</ul>
+</ul>
+<ul>
+	<li><p style="margin-bottom: 0cm; line-height: 100%"> ‘<font face="Times New Roman, serif"><i>Area
+	under Gaussians (0=transparent, 1=opaque)</i></font><font face="Times New Roman, serif">’
+	slider; (range 0-1; defaults 0.5)</font></p>
+	<li><p style="margin-bottom: 0cm; line-height: 100%"> ‘<font face="Times New Roman, serif"><i>Line
+	width for Gaussians’ defaults’</i></font><font face="Times New Roman, serif">
+	slider (range 0-10; default 2.0)</font></p>
+</ul>
+<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
+ 
+</p>
+<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif"><b>Heatmaps:
+checkbox selection tool (the default is heatmap with stringent cutoff
+‘s.cutoff”)</b></font></p>
+<p style="margin-left: 0.64cm; margin-bottom: 0cm; line-height: 100%">
+<br/>
+
+</p>
+<ul>
+	<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">probabilistic
+	</font>
+	</p>
+	<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">cutoff</font></p>
+	<li><p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif">s.cutoff</font></p>
+</ul>
+<p style="margin-bottom: 0cm; line-height: 100%"><br/>
+
+</p>
+<p style="margin-bottom: 0cm; line-height: 100%"><font face="Times New Roman, serif"><b>Buttons</b></font></p>
+<ul>
+	<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><b>Defaults’
+	</b></font><font face="Times New Roman, serif">resets all the
+	parameters to default settings</font></p>
+	<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><b>Learn
+	model’ </b></font><font face="Times New Roman, serif">fits
+	probabilistic model on the test data which are presented as a
+	histogram. Because information about the number of bins and their
+	boundaries is not inherent to the data, but will influence a model,
+	it is advisable to apply varying binning parameters to the test
+	data. Each newly built model is visualized by clicking on “Learn
+	model” button. </font>
+	</p>
+	<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><b>Draw
+	plots’</b></font><font face="Times New Roman, serif"> allows to
+	re-draw customized histograms and plots </font>
+	</p>
+	<li><p style="margin-bottom: 0cm; line-height: 100%">‘<font face="Times New Roman, serif"><b>Draw
+	heatmaps</b></font><font face="Times New Roman, serif">’
+	constructs classification heatmaps other than by default</font></p>
+</ul>
+</body>
+</html>
