@@ -29,6 +29,8 @@ curious to know how the analyte values obtained in the same
 laboratory assay, but in the independent set of samples could be
 assigned. Now, let’s see how g3mclass software may help to classify
 the laboratory assay data. 
+<br/>
+<br/>
 </p>
 <ol>
 	<li><p>To
@@ -61,21 +63,25 @@ receptor 2 (HER2). The ERBB2mRNA data were collected from the test
 (disease), reference (no diseased), and query (suspected disease)
 samples. Data file named ‘ERBB2 ID ref, test, qry.txt’ was saved
 as a tab-delimited text (.txt) file using Microsoft Excel (for more
-information, see <a href="http://g3m_data.htm/"><font color="#0000ff"><u>Input
-data format</u></a><b>)</b>.</p>
+information, see <a href="g3m_data.htm"><font color="#0000ff"><u>Input
+data format</u></font></a><b>)</b>.</p>
 <p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_e9f27ced6954ab0.png" name="image19.png" align="left" width="100%"/>
 </p>
+<br/>
+<br/>
+
 <dol start="2">
-	<li><p><b>Open
-	g3mclass</b>
+	<li><p><b>Open g3mclass</b>
 	software. The Welcome page with several tabs will launch:</p>
 </dol>
 <p>
 <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_fba3db7d24851330.png" name="image1.png" align="left" width="100%"/>
 </p>
+<br/>
+<br/>
+
 <dol start="3">
-	<li><p>Click
-	the <b>‘Data’
+	<li><p>Click the <b>‘Data’
 	tab</b>
 	(next to the ‘Welcome’ tab) to select and open
 	the data file
@@ -88,6 +94,9 @@ data format</u></a><b>)</b>.</p>
 <p>
 <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_2e33e3e81a014b5c.png" name="image29.png" align="left"/>
 </p>
+<br/>
+<br/>
+
 <dol start="4">
 	<li><p>
 	To start modeling test data, go to the
@@ -109,23 +118,22 @@ data format</u></a><b>)</b>.</p>
 <br/>
 
 </p>
-<p>‘<b>Parameters’</b></p>
+<p><b>‘Parameters’</b></p>
 <p>
 <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_a2be77428e68d7b5.png" name="image31.png" align="left" width="100%"/>
-<</p>
+</p>
+<br/>
+<br/>
+
 <dol start="5">
 	<li><p>The
 	selected model parameters and plots appear automatically in the tab
 	<b>‘Model’
 	</b>and
-	‘<b>Model
+	<b>‘Model
 	Plots’,</b>
 	respectively.</p>
 </dol>
-<p>
-<br/>
-
-</p>
 <p>
 <b>‘Model’</b></p>
 <p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_62c6c48e5b23444a.png" name="image11.png" align="left" width="100%"/>
@@ -140,6 +148,9 @@ GMM with the following estimated weights per class: 0 (46%), 1 (38%),
 2 (14%), and 3 (2%). Class 0 is like reference (in terms of the mean
 value and standard deviation), classes 1, 2, and 3 have the increased
 mean values of ERBB2 mRNA compared to the reference.</p>
+<br/>
+<br/>
+
 <dol start="6">
 	<li><p>To
 	modify a test
@@ -151,7 +162,7 @@ mean values of ERBB2 mRNA compared to the reference.</p>
 	model’</b>
 	button again to learn a new model. You may always return to default
 	settings by clicking the
-	‘Defaults” button (for more information, see <font color="#0000ff"><u><a href="http://g3m_param.htm/">Parameters</a><!-- Hm, it is already a hyperlink. I am afraid I miss your point here. --><!-- Do you want a hyperlink  here ? --></u>).
+	‘Defaults” button (for more information, see <font color="#0000ff"><u><a href="g3m_param.htm">Parameters</a></u></font>).
 	
 	</p>
 </dol>
@@ -166,17 +177,20 @@ classes 1, 2, 3, and 4 have the mean value of ERBB2 mRNA higher than
 reference. This model allows a more detailed classification of ERBB2
 mRNA’s test values and may be preferred in some cases. 
 </p>
-<p> ‘<b>Parameters’</b></p>
+<p> <b>‘Parameters’</b></p>
 <p>
 <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_6f12f6cd728ba26f.png" name="image6.png" align="left" width="100%"/>
 </p>
-‘<b>Model’</b></p>
+<p><b>‘Model’</b></p>
 <p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_46d680c32966c7ed.png" name="image24.png" align="left" width="100%"/>
 </p>
 <p>‘<b>Model
 plots’</b></p>
 <p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ef1b44653e149f4d.png" name="image28.png" align="left" width="100%"/>
 </p>
+<br/>
+<br/>
+
 <dol start="7">
 	<li><p>Once
 	the satisfactory model is selected, the software utilizes this model
@@ -189,10 +203,10 @@ plots’</b></p>
 	value (with related id) should belong with the highest probability
 	(‘proba’), based on multi-cutoff (‘cutoff’) and more
 	stringent multi-cutoff (‘s.cutoff’). Summary statistics are provided for each classification. 
-	<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_c2692433672140e6.png" name="image16.png" align="left" width="100%"/>
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_4cf6e3ba01054f8a.png" name="image22.png" align="left" width="100%"/>
-<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_b92170b5503355a1.png" name="image32.png" align="left" width="100%"/>
 	</p>
+	<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_c2692433672140e6.png" name="image16.png" align="left" width="100%"/></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_4cf6e3ba01054f8a.png" name="image22.png" align="left" width="100%"/></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_b92170b5503355a1.png" name="image32.png" align="left" width="100%"/></p>
 </dol>
 <p> In
 this example, <b>under defaults</b>
@@ -200,9 +214,10 @@ modeling the ERBB2 mRNA values are assigned to the following classes
 with the corresponding proportions per class in each type of
 classification:</p>
 <p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_cd63a11a6f0a7b49.png" name="image33.png" align="left"/>
+</p>
+<br/>
 <br/>
 
-</p>
 <dol start="8">
 	<li><p>The
 	heatmaps, illustrating the classification of individual values
@@ -212,17 +227,13 @@ classification:</p>
 	tab</b>.
 	By default, it shows heatmaps for classification with a stringent
 	cutoff. However, you may view heatmaps for all three classifications
-	by checking the corresponding</p>
+	by checking the corresponding boxes and clicking the
+	‘<b>Draw heatmaps’</b>
+	button in the ‘Parameters’ tab (scroll all
+	the way down the page to view them).
+	<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_91417ffb017e687a.png" name="image9.png" align="left" width="100%"/></p>
+	</p>
 </dol>
-<p>boxes
-and clicking the
-‘<b>Draw
-heatmaps’</b>
-button in the ‘Parameters’ tab (scroll all
-the way <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_91417ffb017e687a.png" name="image9.png" align="left" width="100%"/>
-down
-the page to view them). 
-</p>
 <p>The
 following heatmaps show what class the ERBB2 mRNA reference values
 are assigned by each classification. The software also builds a
@@ -230,19 +241,24 @@ heatmap for test and query (not shown here).</p>
 <p>
 <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ebc554a2208515c0.png" name="image18.png" align="left" width="100%"/>
 </p>
+<br/>
+<br/>
 
 <dol start="9">
 	<li><p>To
 	customize a color palette in heatmaps and plots, you may use the
 	plot settings controls also to be found in the ‘<b>Parameters’
 	tab</b>
-	(for more information, see <!-- Do you want to create  a hyperlink? --><!-- Done --><a href="http://g3m_param.htm/"><font color="#0000ff"><u><b>Parameters</b></u></a>).
+	(for more information, see <a href="g3m_param.htm"><font color="#0000ff"><u><b>Parameters</b></u></font></a>).
 	
 	</p>
 </dol>
 <p>
 <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d2cd2789299caf2.png" name="image15.png" align="left" width="100%"/>
 </p>
+<br/>
+<br/>
+
 <dol start="10">
 	<li><p>Once
 	classifications are completed, you may save the original data file
@@ -255,6 +271,9 @@ heatmap for test and query (not shown here).</p>
 <p>
 <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_30d4c37af7df9e2c.png" name="image13.png" align="left"/>
 </p>
+<br/>
+<br/>
+
 <dol start="11">
 	<li><p>
 	Note that under <b>File&gt;Save
@@ -270,6 +289,9 @@ heatmap for test and query (not shown here).</p>
 <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_1b3840e5c7b86dbb.png" name="image23.png" align="left"/>
 </p>
 </ol>
+<br/>
+<br/>
+
 <h2><font color="#3465a4">EXAMPLE 2: Multiclass classification of the multiple analyte’s values.</font></h2>
 <p>Now,
 suppose you are interested to
@@ -292,13 +314,19 @@ assay with multiplexing capabilities.
 Let’s see how g3mclass software may help to classify three genes in
 each sample. 
 </p>
+<br/>
+<br/>
+
 <ol><li><p>In this example, we save a data
 file named ‘ERBB2, gene A, gene B, ID ref, test.txt’ 
 as a tab-delimited text (.txt) file using Microsoft Excel (for more
-information, see <a href="http://g3m_data.htm/"><font color="#0000ff"><u>Input
-data format</u></a>).</p>
+information, see <a href="g3m_data.htm"><font color="#0000ff"><u>Input
+data format</u></font></a>).</p>
 <p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_180e87000398a632.png" name="image25.png" align="left"/>
 </p>
+<br/>
+<br/>
+
 <li><p>
 After opening this data file, the software learns models for each
 analyte and depicts each model plot (see below). Under default
@@ -324,6 +352,9 @@ Plots’</b></p>
 </p>
 <p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d63fb5e8a92051d1.png" name="image4.png" align="left" width="100%"/>
 </p>
+<br/>
+<br/>
+
 <li><p>
 Assuming these models are satisfactory, the software utilizes them
 for<b> auto-classification of
@@ -342,6 +373,8 @@ classification results for all analytes appear in the ‘Test class’
 as the following:</p>
 <p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_b556027c36540279.png" name="image20.png" align="left"/>
 </p>
+<br/>
+<br/>
 
 <dol start="3">
 	<li><p>The
@@ -366,6 +399,9 @@ the classification of individual values.</p>
 <p>Let’s
 see how it works for gene B in EXAMPLE 2.  
 </p>
+<br/>
+<br/>
+
 <ol>
 <dol start="2">
 	<li><p>As
@@ -377,6 +413,9 @@ see how it works for gene B in EXAMPLE 2.
 </dol>
 <p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d63fb5e8a92051d1.png" name="Image1" align="left" width="100%"/>
 </p>
+<br/>
+<br/>
+
 <dol start="3">
 	<li><p>To
 	control for the potential misclassification, the software calculates
@@ -395,6 +434,9 @@ see how it works for gene B in EXAMPLE 2.
 <p>
 <img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_7af8fbeb34afa9cf.png" name="Image2" align="left" width="100%"/>
 </p>
+<br/>
+<br/>
+
 <dol start="4">
 	<li><p>Following
 	‘proba’ classification, the software performs ‘cutoff’
@@ -450,6 +492,9 @@ classification results will be.
 <p>Let's
 review the following example. 
 </p>
+<br/>
+<br/>
+
 <ol>
 	<li><p>The
 	model for gene Z has two components: class ‘0’ and class ‘-1’.
@@ -459,6 +504,9 @@ review the following example.
 
 <p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_83e107780ed72a29.png" name="image2.png" align="left" width="100%"/>
 </p>
+<br/>
+<br/>
+
 <dol start="2">
 	<li><p>The
 	model plot shows that the test model is

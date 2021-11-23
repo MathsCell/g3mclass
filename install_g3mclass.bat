@@ -2,14 +2,21 @@ rem Install g3mclass via pip in userspace and
 rem create a launching script on user's Desktop
 
 rem author: Serguei Sokol
-
 @echo on
+set url="https://drive.google.com/uc?export=download&id=15lZG3W8OQccUk0RFyGBs6Drb3IVhM98s"
+
 for /F "tokens=*" %%g in ('where python') do set pexe=%%g
-if "%pexe%"=="" (@echo x=mx=msgbox("Python3 was not found on this system!", vbOKOnly+vbCritical, "g3mclass installer")>%tmp%\tmp.vbs & cscript //nologo %tmp%\tmp.vbs)
-rem for /F "tokens=*" %%g in ('%pexe% -m site --user-site') do set psite=%%g
+if "%pexe%"=="" (@echo Python3 was not found on this system. && pause && exit)
+for /F "tokens=*" %%g in ('%pexe% -m site --user-base') do set pbase=%%g
+if not x%pexe:conda=%==x%pexe% (for %%F in ("%pexe%") do set pconda=%%~dpF)
 
-%pexe% -m pip install --user -U "https://drive.google.com/uc?export=download&id=1Zju4J6OcEvmD5E54CmD-V1ZdfSvYPX6l" && echo import g3mclass.g3mclass; g3mclass.g3mclass.main() > %userprofile%\desktop\run_g3mclass.pyw || echo pip did not work
+%pexe% -m pip install --user -U %url%
 
-
-@echo x=msgbox("g3mclass was successfully installed!" ^& vbCrLf ^& "To run it, use a newly created run_g3mclass.pyw on your desktop.",vbOKOnly,"g3mclass installer")> %tmp%\tmp.vbs & cscript //nologo %tmp%\tmp.vbs
-del %tmp%\tmp.vbs
+rem create .vbs on desktop
+echo Set WshShell = CreateObject^("WScript.Shell"^) > %userprofile%\desktop\g3mclass.vbs
+echo | set /p="WshShell.Run " >> %userprofile%\desktop\g3mclass.vbs
+if not "%pconda%"=="" (
+    echo | set /p=""%pconda%Scripts\conda run -n %CONDA_DEFAULT_ENV% " & " >> %userprofile%\desktop\g3mclass.vbs
+)
+echo "python -c " ^& Chr^(34^) ^& "import g3mclass.g3mclass; g3mclass.g3mclass.main()" ^& Chr^(34^), 0 >> %userprofile%\desktop\g3mclass.vbs
+echo Set WshShell = Nothing  >>  %userprofile%\desktop\g3mclass.vbs

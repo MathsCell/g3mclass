@@ -541,7 +541,11 @@ def OnAbout(evt):
     # Then we call wx.AboutBox giving it that info object
     wx.adv.AboutBox(info);
 def OnLinkClicked(evt):
-    webbrowser.open_new_tab(evt.GetLinkInfo().Href);
+    url=evt.GetLinkInfo().Href
+    if url.startswith("http"):
+        webbrowser.open_new_tab(evt.GetLinkInfo().Href);
+    else:
+        evt.Skip()
 def OnSize(evt):
     "main window is resized"
     win=evt.GetEventObject();
@@ -745,6 +749,8 @@ def OnDefault(evt):
 def OnHelp(evt):
     gui.help.AddBook(str(diri/"help"/"g3mclass.hhp"));
     gui.help.DisplayContents()
+    gui.helpwin=gui.help.GetHelpWindow()
+    gui.helpwin.Bind(wx.html.EVT_HTML_LINK_CLICKED, OnLinkClicked)
 
 # helpers
 def ToDo(evt):
