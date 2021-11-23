@@ -3,7 +3,8 @@ rem create a launching script on user's Desktop
 
 rem author: Serguei Sokol
 @echo on
-set url="https://drive.google.com/uc?export=download&id=15lZG3W8OQccUk0RFyGBs6Drb3IVhM98s"
+rem v0.17.7
+set url="https://drive.google.com/uc?export=download&id=1c29CXniyLcpH5XN05jrebl6gtsFLpBfB"
 
 for /F "tokens=*" %%g in ('where python') do set pexe=%%g
 if "%pexe%"=="" (@echo Python3 was not found on this system. && pause && exit)
