@@ -1,1 +1,524 @@
-WORKFLOW EXAMPLES-2021-11-17_Grammarly.html
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 7.0.4.2 (Linux)"/>
+	<meta name="author" content="Marina Guvakova"/>
+	<meta name="created" content="2021-11-17T17:13:00"/>
+	<meta name="changedby" content="Serguei Sokol"/>
+	<meta name="changed" content="2021-11-18T10:35:49"/>
+	<meta name="AppVersion" content="15.0000"/>
+	<meta name="HyperlinksChanged" content="false"/>
+	<meta name="LinksUpToDate" content="false"/>
+	<meta name="ScaleCrop" content="false"/>
+	<meta name="ShareDoc" content="false"/>
+	<meta name="grammarly_documentContext" content="{&quot;goals&quot;:[],&quot;domain&quot;:&quot;general&quot;,&quot;emotions&quot;:[],&quot;dialect&quot;:&quot;american&quot;}"/>
+	<meta name="grammarly_documentId" content="documentId_90"/>
+</head>
+<body>
+<h1><font color="#3465a4">WORKFLOW EXAMPLES</font></h1>
+
+<h2><font color="#3465a4">EXAMPLE 1: Multiclass classification of the single analyte values.</font></h2>
+<p>Suppose
+you are interested to know if the analyte values obtained in the
+laboratory assay from test and reference may be assigned to the same
+or different classes. Moreover, you are interested to know to which
+class each of the assayed values belongs.  Additionally, you might be
+curious to know how the analyte values obtained in the same
+laboratory assay, but in the independent set of samples could be
+assigned. Now, let's see how g3mclass software may help to classify
+the laboratory assay data. 
+<br/>
+<br/>
+</p>
+<ol>
+	<li><p>To
+	classify test and reference data obtained from the same assay,
+	organize a data file in columns with the analyte identification
+	numbers (id) and name/s:</p>
+
+<p><b>id
+(ref)  </b><i><b>analyte
+name</b></i><b> (ref)   id(test)  
+</b><i><b>analyte name</b></i><b>
+(test)</b></p>
+<p>If
+the analyte was measured in the same assay but in the independent
+set/s of samples, you may add query/s: 
+</p>
+<p><b>id
+(query1)   </b><i><b>analyte name</b></i><b>
+(query1)    id (query2)    </b><i><b>analyte
+name</b></i><b> (query2) etc.</b></p>
+<p>A
+data file must be saved <b>in a TSV
+file format</b> to a chosen
+directory. 
+</p>
+<p>In
+the example below, we analyze the expression of ERBB2, a gene
+encoding a known tumor marker - human epidermal growth factor
+receptor 2 (HER2). The ERBB2mRNA data were collected from the test
+(disease), reference (no diseased), and query (suspected disease)
+samples. Data file named ‘ERBB2 ID ref, test, qry.txt' was saved
+as a tab-delimited text (.txt) file using Microsoft Excel (for more
+information, see <a href="g3m_data.htm"><font color="#0000ff"><u>Input
+data format</u></font></a><b>)</b>.</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_e9f27ced6954ab0.png" name="image19.png" align="left" width="100%"/>
+</p>
+<br/>
+<br/>
+
+<dol start="2">
+	<li><p><b>Open g3mclass</b>
+	software. The Welcome page with several tabs will launch:</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_fba3db7d24851330.png" name="image1.png" align="left" width="100%"/>
+</p>
+<br/>
+<br/>
+
+<dol start="3">
+	<li><p>Click the <b>‘Data'
+	tab</b>
+	(next to the ‘Welcome' tab) to select and open
+	the data file
+	you intend to analyze. Alternatively, a data file may be opened from
+	the menu tab <b>File
+	&gt; Open</b>
+	
+	</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_2e33e3e81a014b5c.png" name="image29.png" align="left"/>
+</p>
+<br/>
+<br/>
+
+<dol start="4">
+	<li><p>
+	To start modeling test data, go to the
+	<b>‘Parameters'
+	tab.</b>
+	 You may first use ‘<b>Defaults'
+	</b>modeling
+	settings (<b>recommended</b>)
+	by clicking on the
+	<b>‘Learn
+	model'</b>
+	button. The software selects Gaussian Mixture Model (GMM) with the
+	lowest Bayesian information criterion (BIC) value picked among the
+	set of models learned on histograms with a varying number of bins
+	(vector of k: 10, 15, 20, 25, 30, 35, 40). 
+	</p>
+</dol>
+<p>
+<br/>
+
+</p>
+<p><b>‘Parameters'</b></p>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_a2be77428e68d7b5.png" name="image31.png" align="left" width="100%"/>
+</p>
+<br/>
+<br/>
+
+<dol start="5">
+	<li><p>The
+	selected model parameters and plots appear automatically in the tab
+	<b>‘Model'
+	</b>and
+	<b>‘Model
+	Plots',</b>
+	respectively.</p>
+</dol>
+<p>
+<b>‘Model'</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_62c6c48e5b23444a.png" name="image11.png" align="left" width="100%"/>
+</p>
+<p><b>‘Model plots'</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_61712f2a87fb43d9.png" name="image5.png" align="left" width="100%"/>
+</p>
+<p>Based
+on GMM learned with default parameters, the ERBB2 mRNA test values
+fit into<b> </b>4-class
+GMM with the following estimated weights per class: 0 (46%), 1 (38%),
+2 (14%), and 3 (2%). Class 0 is like reference (in terms of the mean
+value and standard deviation), classes 1, 2, and 3 have the increased
+mean values of ERBB2 mRNA compared to the reference.</p>
+<br/>
+<br/>
+
+<dol start="6">
+	<li><p>To
+	modify a test
+	model, you may customize modeling parameters using interactive
+	sliders in the ‘<b>Parameters'
+	tab</b>
+	and then clicking the
+	<b>‘Learn
+	model'</b>
+	button again to learn a new model. You may always return to default
+	settings by clicking the
+	‘Defaults” button (for more information, see <font color="#0000ff"><u><a href="g3m_param.htm">Parameters</a></u></font>).
+	
+	</p>
+</dol>
+<p>For
+example, by choosing a fixed number of bins in a histogram (k=20),
+the software learns a new model with an increased BIC value compared
+to defaults (1660.772 vs. 1650.558). In this new model, the ERBB2
+mRNA test values fit into<b> </b>5-class
+GMM with the following weights per class: 0 (43%), 1 (36%), 2 (17%),
+3 (2%) and 4 (2%). Class 0 is similar to reference (as above),
+classes 1, 2, 3, and 4 have the mean value of ERBB2 mRNA higher than
+reference. This model allows a more detailed classification of ERBB2
+mRNA's test values and may be preferred in some cases. 
+</p>
+<p> <b>‘Parameters'</b></p>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_6f12f6cd728ba26f.png" name="image6.png" align="left" width="100%"/>
+</p>
+<p><b>‘Model'</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_46d680c32966c7ed.png" name="image24.png" align="left" width="100%"/>
+</p>
+<p>‘<b>Model
+plots'</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ef1b44653e149f4d.png" name="image28.png" align="left" width="100%"/>
+</p>
+<br/>
+<br/>
+
+<dol start="7">
+	<li><p>Once
+	the satisfactory model is selected, the software utilizes this model
+	for <b>auto-classification</b><b>
+	of the test, reference, and query</b>
+	using three consecutive classifications (proba, cutoff, s.cutoff).
+	The results appear in the ‘<b>Test
+	class', ‘Ref class’, and ‘Query class’ tabs.</b>
+	These outputs include information on the class to which individual
+	value (with related id) should belong with the highest probability
+	(‘proba'), based on multi-cutoff (‘cutoff’) and more
+	stringent multi-cutoff (‘s.cutoff'). Summary statistics are provided for each classification. 
+	</p>
+	<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_c2692433672140e6.png" name="image16.png" align="left" width="100%"/></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_4cf6e3ba01054f8a.png" name="image22.png" align="left" width="100%"/></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_b92170b5503355a1.png" name="image32.png" align="left" width="100%"/></p>
+</dol>
+<p> In
+this example, <b>under defaults</b>
+modeling the ERBB2 mRNA values are assigned to the following classes
+with the corresponding proportions per class in each type of
+classification:</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_cd63a11a6f0a7b49.png" name="image33.png" align="left"/>
+</p>
+<br/>
+<br/>
+
+<dol start="8">
+	<li><p>The
+	heatmaps, illustrating the classification of individual values
+	(with id), can be found in
+	the
+	<b>‘Heatmaps'
+	tab</b>.
+	By default, it shows heatmaps for classification with a stringent
+	cutoff. However, you may view heatmaps for all three classifications
+	by checking the corresponding boxes and clicking the
+	‘<b>Draw heatmaps'</b>
+	button in the ‘Parameters' tab (scroll all
+	the way down the page to view them).
+	<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_91417ffb017e687a.png" name="image9.png" align="left" width="100%"/></p>
+	</p>
+</dol>
+<p>The
+following heatmaps show what class the ERBB2 mRNA reference values
+are assigned by each classification. The software also builds a
+heatmap for test and query (not shown here).</p>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ebc554a2208515c0.png" name="image18.png" align="left" width="100%"/>
+</p>
+<br/>
+<br/>
+
+<dol start="9">
+	<li><p>To
+	customize a color palette in heatmaps and plots, you may use the
+	plot settings controls also to be found in the ‘<b>Parameters'
+	tab</b>
+	(for more information, see <a href="g3m_param.htm"><font color="#0000ff"><u><b>Parameters</b></u></font></a>).
+	
+	</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d2cd2789299caf2.png" name="image15.png" align="left" width="100%"/>
+</p>
+<br/>
+<br/>
+
+<dol start="10">
+	<li><p>Once
+	classifications are completed, you may save the original data file
+	and all the results from the menu tab <b>File
+	&gt; Save.</b>
+	All files are archived in a zipped folder in the directory of the
+	original data file. 
+	</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_30d4c37af7df9e2c.png" name="image13.png" align="left"/>
+</p>
+<br/>
+<br/>
+
+<dol start="11">
+	<li><p>
+	Note that under <b>File&gt;Save
+	parameters</b>,
+	you may save all the parameters used for the current analysis. In
+	case, you wish to use them again with the new data file, you may
+	restore them automatically. To do so, click <b>File&gt;Open
+	parameters</b>.
+	
+	</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_1b3840e5c7b86dbb.png" name="image23.png" align="left"/>
+</p>
+</ol>
+<br/>
+<br/>
+
+<h2><font color="#3465a4">EXAMPLE 2: Multiclass classification of the multiple analyte's values.</font></h2>
+<p>Now,
+suppose you are interested to
+know how values of multiple
+analytes in test and
+reference measured in the same assay are classified. You may also be
+interested to know to which class each of the assayed values belongs.
+ The software does not limit the number of analytes to be processed;
+however, larger files increase processing time and heatmap
+illustrations may be technically challenging. 
+</p>
+<p>In
+the example below, we consider 3 analytes.
+Let's say one of the
+analytes- of- interest is the ERBB2 gene (the same as in EXAMPLE 1)
+and two others are candidate-gene markers: gene A and gene B. The
+mRNA expression levels for all three genes were measured in test
+(disease) and reference (healthy control) samples using a molecular
+assay with multiplexing capabilities.
+Let's see how g3mclass software may help to classify three genes in
+each sample. 
+</p>
+<br/>
+<br/>
+
+<ol><li><p>In this example, we save a data
+file named ‘ERBB2, gene A, gene B, ID ref, test.txt' 
+as a tab-delimited text (.txt) file using Microsoft Excel (for more
+information, see <a href="g3m_data.htm"><font color="#0000ff"><u>Input
+data format</u></font></a>).</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_180e87000398a632.png" name="image25.png" align="left"/>
+</p>
+<br/>
+<br/>
+
+<li><p>
+After opening this data file, the software learns models for each
+analyte and depicts each model plot (see below). Under default
+settings, the ERBB2 mRNA test values fit into 4-class GMM with the
+following weights per class: 0 (46%), 1 (38%), 2 (14%), and 3 (2%).
+The GMM fitted into the gene A mRNA test values have 4 Gaussian
+components with estimated weights per class: -1 (39%), 0 (27%), 1
+(29%), and 2 (6%). The GMM fitted into the gene B mRNA test values
+has 2 classes: 0 (34%) and 1 (66%). 
+</p>
+<p><b>‘Model'</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_44a7ade2cf36d2fd.png" name="image26.png" align="left" width="100%"/>
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_1dfaccc1ffe75ad.png" name="image17.png" align="left" width="100%"/>
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_7af8fbeb34afa9cf.png" name="image10.png" align="left" width="100%"/>
+</p>
+<p><font color="#212529">‘<b>Model
+Plots'</b></p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_fe9d72ab67254803.png" name="image21.png" align="left" width="100%"/>
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_4d9418ac5b8d4501.png" name="image14.png" align="left" width="100%"/>
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d63fb5e8a92051d1.png" name="image4.png" align="left" width="100%"/>
+</p>
+<br/>
+<br/>
+
+<li><p>
+Assuming these models are satisfactory, the software utilizes them
+for<b> auto-classification of
+individual values from test and reference using three classifications
+</b>(proba, cutoff, s.cutoff). The
+classification results for all analytes appear in the ‘Test class'
+(examples shown below) and ‘Ref class' (examples not shown here).
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_3b67d678aca4dfdd.png" name="image27.png" align="left" width="100%"/>
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_dd9b0f531bc10c6.png" name="image12.png" align="left" width="100%"/>
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_15f189f0088bf652.png" name="image8.png" align="left" width="100%"/>
+</p>
+<p>Under defaults, class outputs with proportions per class can be summarized
+as the following:</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_b556027c36540279.png" name="image20.png" align="left"/>
+</p>
+<br/>
+<br/>
+
+<dol start="3">
+	<li><p>The
+	heatmaps illustrate all three classifications for the ERBB2, gene A
+	and gene B values in reference (above) and test (below).  
+	</p>
+</dol>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_90d7eff82161eeeb.png" name="image34.png" align="left" width="100%"/>
+</p>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_f0539d7687faa65.png" name="image3.png" align="left" width="100%"/>
+</p>
+</ol>
+
+<h2><font color="#3465a4">EXAMPLE 3: Why g3mclass uses 3 classifications.</font>
+</h2>
+<p>Some
+analyte values may be initially incorrectly assigned by ‘proba'
+classification. This may occur when the component of GMM has a wide
+dispersion with its tails picking up values that otherwise belong to
+a different class.  The software calculates cutoffs to autocorrect
+the classification of individual values.</p>
+<p>Let's
+see how it works for gene B in EXAMPLE 2.  
+</p>
+<br/>
+<br/>
+
+<ol>
+<dol start="2">
+	<li><p>As
+	we have seen above, the GMM for gene B has two components including
+	class ‘0' and class ‘1’, with the latter having a widespread
+	dispersion. As a result, some low values of gene B with a high
+	probability will be assigned to class ‘1'. 
+	</p>
+</dol>
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_d63fb5e8a92051d1.png" name="Image1" align="left" width="100%"/>
+</p>
+<br/>
+<br/>
+
+<dol start="3">
+	<li><p>To
+	control for the potential misclassification, the software calculates
+	the cutoff value/s including a
+	minimal misclassification cutoff with equal weights relative to
+	adjacent classes and tolerable intervals of the misclassification
+	error rate (a tradeoff between misclassification of one type for
+	misclassification of the other type) recorded
+	in ‘Model' tab. In the case of 2-class GMM for gene B, the
+	software calculates one minimal misclassification positive cutoff
+	between class ‘0' and class’1’(up-1=11.78) as well as left
+	and right interval values for this cutoff (up-left=10.376;
+	up-right=13.757). 
+	</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_7af8fbeb34afa9cf.png" name="Image2" align="left" width="100%"/>
+</p>
+<br/>
+<br/>
+
+<dol start="4">
+	<li><p>Following
+	‘proba' classification, the software performs ‘cutoff’
+	classification using ‘up-1'
+	cutoff first and then ‘s. cutoff' using ‘up-right’ cutoff to
+	maximize the specificity of detecting the gene B test values in
+	class ‘1' dissimilar to that in class ‘0’.
+	The example below shows that a value ‘-95.729' initially
+	assigned by ‘proba' to class ‘1’ is subsequently re-assigned
+	by ‘cutoff' and ‘s. cutoff’ to class ‘0’. 
+	</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_f4042447b64455a3.png" name="image30.png" align="left" width="100%"/>
+</p>
+</ol>
+
+<h2><font color="#3465a4">EXAMPLE 4: When g3mclass can provide inaccurate classification.</font></h2>
+<p>The aim of g3mclass
+software development is to help to address the uncertainty of
+classification of the test samples that otherwise may be
+misclassified or classified as ‘equivocal' (a.k.a. ‘grey
+zone'). This software expects at least two
+kinds of entries for each analyte: reference (<i>ref</i>)
+and test (<i>test</i>).
+
+</p>
+<p>g3mclass assumes that the probability density function for <i>test</i>:
+</p>
+<ol type="a">
+	<li><p>can be represented by a finite number of Gaussian distributions,</p>
+	<li><p>can
+	integrate the probability density function for reference which in
+	turn is described by one Gaussian distribution.</p>
+</ol>
+<p>In
+g3mclass, the test sample is used to learn a semi-constrained
+Gaussian mixture model (GMM). In this model, the position (i.e., the
+mean value) and the spread (SD value) of class numbered ‘0' are
+constrained to be equal to the reference mean and SD values for a
+given test. However, the weight or proportion of this constrained
+class is an adjustable parameter. If the weight of semi-constrained
+class ‘0' in the <i>test</i>
+GMM is close to null, then ‘proba' classification of <i>ref</i>
+samples will be invalid. However, ‘cutoff' classification results
+can be valid both for <i>test</i>
+and <i>ref</i>
+samples depending on the degree of overlap for those samples. The
+lower overlap the higher the
+validity of
+classification results will be. 
+</p>
+<p>Let's
+review the following example. 
+</p>
+<br/>
+<br/>
+
+<ol>
+	<li><p>The
+	model for gene Z has two components: class ‘0' and class ‘-1’.
+	The weight of class ‘0' is next to 0%, whereas the weight of
+	class ‘-1' is near 100%. 
+	</p>
+
+<p><img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_83e107780ed72a29.png" name="image2.png" align="left" width="100%"/>
+</p>
+<br/>
+<br/>
+
+<dol start="2">
+	<li><p>The
+	model plot shows that the test model is
+	virtually a single Gaussian rather than a mixture of such. Because
+	the weight of class ‘0'is negligible, the g3mclass ‘proba’
+	classifications are expected to be invalid for the <i>ref</i><i>
+	</i>sample. 
+	</p>
+</dol>
+<p>
+<img src="WORKFLOW%20EXAMPLES-2021-11-17_Grammarly_html_ca0e1d1249511e34.png" name="image7.png" align="left" width="100%"/>
+</p>
+</ol>
+</body>
+</html>

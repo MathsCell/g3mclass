@@ -867,10 +867,11 @@ def cl2heat(htype, pg, classif, pdf=None):
             # prepare cmap
             clist, cmap=cl2cmap(cls, par_plot);
             # normalizer
-            norm_bins=cls+0.5;
-            norm_bins=np.insert(norm_bins, 0, np.min(norm_bins)-1.0);
+            #norm_bins=cls+0.5;
+            #norm_bins=np.insert(norm_bins, 0, np.min(norm_bins)-1.0);
             ## Make normalizer
-            norm=mpl.colors.BoundaryNorm(norm_bins, len(cls), clip=True);
+            #norm=mpl.colors.BoundaryNorm(norm_bins, len(cls), clip=True);
+            norm=mpl.colors.Normalize(cls.min(), cls.max())
             ax.append(figure.add_subplot(nhcl*100+10+ihcl)); # nx1 grid ipl-th plot
             #figure.subplots_adjust(hspace = 0.5);
             im.append(heatmap(pcl, ax[-1], collab=True, cmap=cmap, norm=norm));
@@ -886,6 +887,8 @@ def cl2heat(htype, pg, classif, pdf=None):
         figure.colorbar(im[-1], ticks=cls, cax=position);
         #figure.colorbar(im, ax=ax, ticks=cls, shrink=0.5);
         warnings.filterwarnings("ignore");(figsize[0]-wcb)/figsize[0]
+        #print(figsize)
+        #import pdb; pdb.set_trace()
         figure.tight_layout(rect=[10/figsize[0], 0, cbm, 1]); #0.9
         #print("plot w=", (figsize[0]-wcb)/figsize[0]);
         #import pdb; pdb.set_trace();

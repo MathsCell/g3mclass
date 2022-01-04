@@ -1,1 +1,295 @@
-TABS.html
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+	<title></title>
+	<meta name="generator" content="LibreOffice 6.4.7.2 (Linux)"/>
+	<meta name="author" content="Marina Guvakova"/>
+	<meta name="created" content="2021-10-21T21:41:00"/>
+	<meta name="changedby" content="Marina Guvakova"/>
+	<meta name="changed" content="2021-10-23T17:20:00"/>
+	<meta name="AppVersion" content="16.0000"/>
+	<meta name="DocSecurity" content="0"/>
+	<meta name="HyperlinksChanged" content="false"/>
+	<meta name="LinksUpToDate" content="false"/>
+	<meta name="ScaleCrop" content="false"/>
+	<meta name="ShareDoc" content="false"/>
+</head>
+<body>
+<h2><font color="#3465a4">TOP-LEVEL MENUBAR</font></h2>
+<p>NB. Here we present menu entries according to their layout on MacOS. On other platforms the layout can slightly differ.</p>
+
+<p><b>Python</b></p>
+<p><br/>
+
+</p>
+<p>
+ <b>About </b>
+</p>
+<ul>
+	<li><p>g3mclass
+	version 
+	</p>
+	<li><p>license
+	
+	</p>
+	<li><p>developers
+	
+	</p>
+</ul>
+<p>
+<b>Services </b>
+</p>
+<ul>
+	<li><p>services
+	preferences 
+	</p>
+</ul>
+<p>
+<b>Hide g3mclass</b></p>
+<p>
+<b>Hide others </b>
+</p>
+<p>
+<b>Show all </b>
+</p>
+<p>
+<b>Quit g3mclass</b></p>
+<p><b>File</b></p>
+<ul>
+	<li><p>Open:
+	open a data file 
+	</p>
+	<li><p>Open example :
+	open an example data file distributed with the software
+	</p>
+	<li><p>Save:
+	save output</p>
+	<li><p>Open
+	parameters: open saved modeling parameters 
+	</p>
+	<li><p>Save
+	parameters: save current modeling parameters</p>
+</ul>
+<p><br/>
+
+</p>
+<p><b>Action
+</b>
+</p>
+<ul>
+	<li><p>learn
+	model 
+	</p>
+	<li><p>draw
+	plots 
+	</p>
+	<li><p>draw
+	heatmaps</p>
+</ul>
+<p><br/>
+
+</p>
+<p><b>Help</b></p>
+<p><br/>
+
+</p>
+<p><b>Window</b></p>
+<p> 
+</p>
+<p><br/>
+
+</p>
+<h2><font color="#3465a4">MAIN TABS AND SUBTABS</font></h2>
+<p><br/>
+
+</p>
+<p>
+<b>Welcome </b>
+</p>
+<ul>
+	<li><p>general
+	description of g3mclass appears first-time software is opened.</p>
+</ul>
+<p>
+<b>Data </b>
+</p>
+<ul>
+	<li><p>input
+	data appear here once the data file is opened 
+	</p>
+</ul>
+<p>
+<b>Parameters </b>
+</p>
+<ul>
+	<li><p>adjustable
+	set of controls for the models, plots and heatmaps parameters (for
+	more info, see ‘<i>Parameters</i>')</p>
+</ul>
+<p>
+<br/>
+
+</p>
+<p>
+<b>Model</b></p>
+<ul>
+	<li><p>subtabs
+	with the analyte names appear under main tab. 
+	</p>
+	<li><p>each
+	subtab contains information on model parameters (‘par'), saved
+	and organized in rows and columns (‘row_col'). This includes the
+	configuration variables learned with ‘proba' classification</p>
+</ul>
+<ul>
+	<ul>
+		<li><p>‘row',
+		class number for each Gaussian 
+		</p>
+		<li><p>‘mean',
+		the mean value for each Gaussian 
+		</p>
+		<li><p>‘sd',
+		standard deviation for each Gaussian</p>
+		<li><p>‘a',
+		weight for each Gaussian; the sum of all Gaussians is 1.0</p>
+		<li><p>Bayesian
+		information criterion (BIC)</p>
+		<li><p> the
+		log likelihood function (loglike)</p>
+		<li><p>number
+		of iterations (it)</p>
+		<li><p>whether
+		the maximum number of iterations has been reached (false/true). 
+		</p>
+	</ul>
+</ul>
+<ul>
+	<li><p>software
+	calculated multi-cutoffs with the cutoff intervals for classes
+	adjacent to class ‘0', i.e., class ‘-1’ and class’1’. 
+	</p>
+</ul>
+<p><br/>
+
+</p>
+<ul>
+	<ul>
+		<li><p>‘breaks',
+		breaks between classes using ‘cutoff classification' 
+		</p>
+		<li><p>‘labels',
+		class description using ‘cutoff classification'</p>
+		<li><p>‘s.
+		breaks', breaks between classes using ‘stringent cutoff
+		classification'</p>
+		<li><p>‘s.
+		labels', class description using ‘stringent cutoff
+		classification'</p>
+	</ul>
+</ul>
+<ul>
+	<li><p>software
+	records ‘par_mod ‘, model setting parameters (for more info, see
+	‘<i>Parameters</i>')</p>
+	<ul>
+		<li><p>‘k',
+		number of bins in a histogram 
+		</p>
+		<li><p>‘khlen',
+		length of vector of k</p>
+		<li><p>‘k_var',
+		variable or fixed k were used (false/true)</p>
+		<li><p>‘thr_di',
+		threshold for fusing too close Gaussians 
+		</p>
+		<li><p>‘thr_w',
+		threshold for vanishing Gaussians 
+		</p>
+	</ul>
+	<li><p>software
+	records ‘creator ‘, information 
+	</p>
+	<ul>
+		<li><p>‘name',
+		software name 
+		</p>
+		<li><p>‘version',
+		software version</p>
+		<li><p>‘data',
+		saved data directory</p>
+		<li><p>‘date',
+		file creation date/time 
+		</p>
+	</ul>
+</ul>
+
+<p>
+<b>Model Plots </b>
+</p>
+<ul>
+	<li><p>a
+	total mixture model and GMM's components appear here once the data
+	file is processed</p>
+</ul>
+<p>
+<br/>
+
+</p>
+<p>
+<b>Test class </b>
+</p>
+<ul>
+	<li><p>‘proba'&gt;’cutoff’&gt;’s.cutoff’
+	output and summary statistics for test classification</p>
+	<li><p>subtabs
+	with the analyte names appear under the main tab. 
+	</p>
+</ul>
+<p>
+<br/>
+
+</p>
+<p>
+<b>Ref class </b>
+</p>
+<ul>
+	<li><p>‘proba'&gt;’cutoff’&gt;’s.cutoff’
+	output and summary statistics for reference classification</p>
+	<li><p>subtabs
+	with the analyte names appear under the main tab. 
+	</p>
+</ul>
+<p>
+<br/>
+
+</p>
+<p>
+<b>Query class</b></p>
+<ul>
+	<li><p>‘proba'&gt;’cutoff’&gt;’s.cutoff’
+	output and summary statistics for query classification</p>
+	<li><p>pulldown
+	menu with the analyte and optional query names appears under the
+	main tab. 
+	</p>
+</ul>
+<p>
+<b>Heatmaps</b></p>
+<ul>
+	<li><p>a
+	graphical representation of ‘proba'&gt;’cutoff’&gt;’s.cutoff’
+	classifications</p>
+	<li><p>heatmap
+	color codes: class'0’ in shade of green, classes labeled with
+	negative (e.g., -1, -2, etc.) and positive (e.g., 1, 2, etc.)
+	integers in shades of blue and red, respectively. The bigger the
+	absolute integer value the more intense the corresponding color
+	shade is. 
+	</p>
+</ul>
+<br/>
+<br/>
+</body>
+</html>
