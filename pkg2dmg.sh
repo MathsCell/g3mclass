@@ -9,8 +9,9 @@ cd $mydir
 # 0.17.4 url="https://drive.google.com/uc?export=download&id=15aWd055dCaZIxlzNNcLfqyvCak97zWT8"
 # 0.17.6 url="https://drive.google.com/uc?export=download&id=15lZG3W8OQccUk0RFyGBs6Drb3IVhM98s"
 # 0.17.7 url="https://drive.google.com/uc?export=download&id=1c29CXniyLcpH5XN05jrebl6gtsFLpBfB"
-# 0.17.8
-url="https://drive.google.com/uc?export=download&id=1hgp9wNoo34XLP1SZYJv8WGwbmH5E1Oor"
+# 0.17.8 url="https://drive.google.com/uc?export=download&id=1hgp9wNoo34XLP1SZYJv8WGwbmH5E1Oor"
+# 0.17.9
+url="https://drive.google.com/uc?export=download&id=1xjZTyAxVc5MnAXco5oTzO20ZQ_zQ9MWp"
 # create macos g3mclass.app
 python3 setup.py sdist
 v=$(cat g3mclass/version.txt)

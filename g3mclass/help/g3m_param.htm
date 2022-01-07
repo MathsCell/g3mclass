@@ -21,24 +21,24 @@
 <h2><font color="#3465a4">Models: model learning control tools</font></h2>
 <ul>
 	<ul>
-		<li><p> ‘<i>Model
-		with fixed k (no)‘ </i></font>is
+		<li><p> '<i>Model
+		with fixed k (no)' </i></font>is
 		a slider for setting the fixed number of bins (k) in a histogram
 		(range 10-115). The only model is learned based on a histogram with
 		the chosen k.</font></p>
-		<li><p>‘<i>Model
+		<li><p>'<i>Model
 		with varying k and the lowest BIC (yes)</i></font>
-		‘ is a slider for setting varying  binning parameter k. The
+		' is a slider for setting varying  binning parameter k. The
 		default is a fixed k= 25 with a half-length of vector k =3
 		(checkbox for varying k is ticked). This setting allows learning of
 		multiple models with a vector of k {10, 15, 20, </font><b>25</b></font>,
 		30, 35, 40}. Software selects the model with the lowest BIC. </font>
 		</p>
-		<li><p>‘<i>Threshold
+		<li><p>'<i>Threshold
 		for fusing too close Gaussians'</i></font>
 		is a slider for tuning a merge of Gaussian distributions that are
 		too close to each other (range 0-1; default 0.5)</font></p>
-		<li><p> ‘<i>Threshold
+		<li><p> '<i>Threshold
 		for vanishing Gaussians'</i></font>
 		is a slider for tuning a disappearance of Gaussian distributions
 		with too low number of values; (range 0-10; default 1.0)</font></p>
@@ -66,23 +66,23 @@
 		of Gaussian densities 
 		</p>
 		<li><p>Reference
-		class ‘0'</p>
+		class '0'</p>
 		<li><p>Low
-		class ‘-1'</p>
+		class '-1'</p>
 		<li><p>Lowest
-		class ‘-N'</p>
+		class '-N'</p>
 		<li><p>Up
-		class ‘+1'</p>
+		class '+1'</p>
 		<li><p>Highest
-		class ‘+N'</p>
+		class '+N'</p>
 	</ul>
 </ul>
 <ul>
-	<li><p> ‘<i>Area
+	<li><p> '<i>Area
 	under Gaussians (0=transparent, 1=opaque)</i>'
 	slider; (range 0-1; defaults 0.5)</p>
-	<li><p> ‘<i>Line
-	width for Gaussians' defaults’</i>
+	<li><p> '<i>Line
+	width for Gaussians' defaults'</i>
 	slider (range 0-10; default 2.0)</p>
 </ul>
 <p>
@@ -90,7 +90,7 @@
 </p>
 <h2><font color="#3465a4">Heatmaps:
 checkbox selection tool (the default is heatmap with stringent cutoff
-‘s.cutoff”)</font></h2>
+'s.cutoff')</font></h2>
 <ul>
 	<li><p>probabilistic
 	
@@ -101,23 +101,23 @@ checkbox selection tool (the default is heatmap with stringent cutoff
 
 <h2><font color="#3465a4">Buttons</font></h2>
 <ul>
-	<li><p>‘<b>Defaults'
+	<li><p>'<b>Defaults'
 	</b>resets all the
 	parameters to default settings</p>
-	<li><p>‘<b>Learn
+	<li><p>'<b>Learn
 	model' </b>fits
 	probabilistic model on the test data which are presented as a
 	histogram. Because information about the number of bins and their
 	boundaries is not inherent to the data, but will influence a model,
 	it is advisable to apply varying binning parameters to the test
-	data. Each newly built model is visualized by clicking on “Learn
-	model” button. 
+	data. Each newly built model is visualized by clicking on "Learn
+	model" button. 
 	</p>
-	<li><p>‘<b>Draw
-	plots'</b> allows to
+	<li><p>'<b>Draw
+	plots</b>' allows to
 	re-draw customized histograms and plots 
 	</p>
-	<li><p>‘<b>Draw
+	<li><p>'<b>Draw
 	heatmaps</b>'
 	constructs classification heatmaps other than by default</p>
 </ul>

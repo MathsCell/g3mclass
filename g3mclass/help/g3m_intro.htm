@@ -40,7 +40,7 @@ comparing the results from the test (with disease) and refence
 measured values to be completely separated. This creates a
 methodological dilemma for a choice of a diagnostic cutoff value that
 impacts clinical decision. The paper published in <font color="#4472c4"><i>Cancer
-Research,&nbsp;2019; 79 :3492–502</i></font> offered the potential solution for unmixing
+Research,&nbsp;2019; 79 :3492-502</i></font> offered the potential solution for unmixing
 quantitative assay data through using Bayesian approach and Gaussian
 Mixture Model (GMM). The performance of the proposed probabilistic
 classifier has been validated over datasets of more than 300 clinical
@@ -98,14 +98,14 @@ datasets, User may set up the model parameters (defaults or
 User-choice), and immediately learn the test GMM depicted in a plot.
 The model learning is initialized by the expectation-maximization
 (EM) algorithm with classes that correspond to peaks in the histogram
-calculated on the test sample. The class labeled ‘0' is one that
+calculated on the test sample. The class labeled '0' is one that
 has the same mean value and standard deviation as the coupled
 reference sample. It is imposed into the test GMM; however, its
 weight in the model is not fixed. If the mean values of other modeled
-classes are lower or higher than that of class ‘0', than they are
+classes are lower or higher than that of class '0', than they are
 labeled with either negative (e.g. -1, -2, etc) or positive (e.g. 1,
 2, etc) integers, respectively. The bigger the integer the further
-the class is positioned relative to class ‘0'. The <code>g3mclass</code>
+the class is positioned relative to class '0'. The <code>g3mclass</code>
 GUI allows to setup parameters for model learning - choose either the
 fixed or variable number of bins in a histogram, dismiss classes
 having too low number of samples and fuse too close classes. The
