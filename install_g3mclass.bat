@@ -5,8 +5,9 @@ rem author: Serguei Sokol
 @echo on
 rem v0.17.7 set url="https://drive.google.com/uc?export=download&id=1c29CXniyLcpH5XN05jrebl6gtsFLpBfB"
 rem v0.17.8 set url="https://drive.google.com/uc?export=download&id=1hgp9wNoo34XLP1SZYJv8WGwbmH5E1Oor"
-rem v0.17.9
-set url="https://drive.google.com/uc?export=download&id=1xjZTyAxVc5MnAXco5oTzO20ZQ_zQ9MWp"
+rem v0.17.9 set url="https://drive.google.com/uc?export=download&id=1xjZTyAxVc5MnAXco5oTzO20ZQ_zQ9MWp"
+set url="https://drive.google.com/uc?export=download&id=13c0MUGEoeIVaGaL_y8Jwifjx6uGR2FBA"
+
 for /F "tokens=*" %%g in ('where python') do set pexe=%%g
 if "%pexe%"=="" (@echo Python3 was not found on this system. && pause && exit)
 for /F "tokens=*" %%g in ('%pexe% -m site --user-base') do set pbase=%%g
@@ -20,5 +21,5 @@ echo | set /p="WshShell.Run " >> %userprofile%\desktop\g3mclass.vbs
 if not "%pconda%"=="" (
     echo | set /p=""%pconda%Scripts\conda run -n %CONDA_DEFAULT_ENV% " & " >> %userprofile%\desktop\g3mclass.vbs
 )
-echo "python -c " ^& Chr^(34^) ^& "import g3mclass.g3mclass; g3mclass.g3mclass.main()" ^& Chr^(34^), 2 >> %userprofile%\desktop\g3mclass.vbs
+echo "python -c " ^& Chr^(34^) ^& "import g3mclass.g3mclass; g3mclass.g3mclass.main()" ^& Chr^(34^), 1 >> %userprofile%\desktop\g3mclass.vbs
 echo Set WshShell = Nothing  >>  %userprofile%\desktop\g3mclass.vbs

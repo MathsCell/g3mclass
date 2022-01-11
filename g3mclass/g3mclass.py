@@ -562,6 +562,7 @@ def OnRemodel(evt):
     if dogui:
         gui.btn_remod.Disable();
         wait=wx.BusyCursor();
+        gui.mainframe.SetStatusText("Calculating models ...")
     # learn model
     #import pdb; pdb.set_trace();
     model=data2model(data, dcols);
@@ -618,6 +619,7 @@ def OnRemodel(evt):
         wx.CallAfter(OnReheat, None);
         del(wait);
         prev_res_saved=False;
+        gui.mainframe.SetStatusText("Calculating models ... done.")
     timeme("dogui");
 def OnReplot(evt):
     "replot in tab Plots"
@@ -855,13 +857,14 @@ def cl2heat(htype, pg, classif, pdf=None):
             if ihcl == 1:
                 # recalculate figure size
                 mh=35; # all horizontal margins/pads
-                lh=max(len(str(v)) for v in pcl.columns)*14;  # nb char * 14 pix = horizontal label length
-                imh=nr*30; # image width
-                mv=80; # all vertical margins/pads
-                lv=max(len(str(v)) for v in pcl.index)*12;
-                imv=nc*30; # image height
-                wcb=100; # width of colorbar
-                figsize=np.array([mh+lh+imh+wcb, (mv+lv+imv)*nhcl+(32 if pdf or htype == "qry" else 0)]);
+                lh=max(len(str(v)) for v in pcl.columns)*28;  # nb char * 28 pix = horizontal label length
+                imh=nr*25; # image width
+                mv=175; # all vertical margins/pads
+                lv=max(len(str(v)) for v in pcl.index)*18;
+                imv=nc*25; # image height
+                wcb=20; # width of colorbar
+                mtit=(42 if pdf or htype == "qry" else 0); # margin for title
+                figsize=np.array([mh+lh+imh+wcb, (mv+lv+imv)*nhcl+mtit]);
                 figure.set_size_inches(figsize/dpi);
             
             # prepare cmap
@@ -871,7 +874,7 @@ def cl2heat(htype, pg, classif, pdf=None):
             #norm_bins=np.insert(norm_bins, 0, np.min(norm_bins)-1.0);
             ## Make normalizer
             #norm=mpl.colors.BoundaryNorm(norm_bins, len(cls), clip=True);
-            norm=mpl.colors.Normalize(cls.min(), cls.max())
+            norm=mpl.colors.Normalize(cls.min()-0.5, cls.max()+0.5)
             ax.append(figure.add_subplot(nhcl*100+10+ihcl)); # nx1 grid ipl-th plot
             #figure.subplots_adjust(hspace = 0.5);
             im.append(heatmap(pcl, ax[-1], collab=True, cmap=cmap, norm=norm));
@@ -880,7 +883,7 @@ def cl2heat(htype, pg, classif, pdf=None):
             #print(htype, ctype, "im bbox=", im[-1].get_window_extent());
         if ihcl == 0:
             return;
-        cbm2=(figsize[0]-wcb+15)/figsize[0]; # colbar width in 0-1 figure coords
+        cbm2=(figsize[0]-wcb-45)/figsize[0]; # colbar width in 0-1 figure coords
         cbm=(figsize[0]-wcb)/figsize[0]; # colbar width in 0-1 figure coords
         #print("cbm=", cbm, "cbm2=", cbm2);
         position=figure.add_axes([cbm2, 0.3, (1-cbm2)*0.5, 0.35]); #0.93, 0.02
@@ -889,7 +892,8 @@ def cl2heat(htype, pg, classif, pdf=None):
         warnings.filterwarnings("ignore");(figsize[0]-wcb)/figsize[0]
         #print(figsize)
         #import pdb; pdb.set_trace()
-        figure.tight_layout(rect=[10/figsize[0], 0, cbm, 1]); #0.9
+        #figure.tight_layout(rect=[10/figsize[0], 0, cbm, 1]); #0.9
+        figure.tight_layout(rect=[45./figsize[0], 0, cbm2*0.95, 1-mtit/figsize[1]], pad=0.4, w_pad=0.5, h_pad=1.0)
         #print("plot w=", (figsize[0]-wcb)/figsize[0]);
         #import pdb; pdb.set_trace();
         warnings.filterwarnings("default");
