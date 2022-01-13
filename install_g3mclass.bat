@@ -6,7 +6,9 @@ rem author: Serguei Sokol
 rem v0.17.7 set url="https://drive.google.com/uc?export=download&id=1c29CXniyLcpH5XN05jrebl6gtsFLpBfB"
 rem v0.17.8 set url="https://drive.google.com/uc?export=download&id=1hgp9wNoo34XLP1SZYJv8WGwbmH5E1Oor"
 rem v0.17.9 set url="https://drive.google.com/uc?export=download&id=1xjZTyAxVc5MnAXco5oTzO20ZQ_zQ9MWp"
-set url="https://drive.google.com/uc?export=download&id=13c0MUGEoeIVaGaL_y8Jwifjx6uGR2FBA"
+rem v0.17.10 set url="https://drive.google.com/uc?export=download&id=13c0MUGEoeIVaGaL_y8Jwifjx6uGR2FBA"
+rem v0.17.11
+set url="https://drive.google.com/uc?export=download&id=1tSpcdIFuI3vn9JwxXvFpeVAJC291czl6"
 
 for /F "tokens=*" %%g in ('where python') do set pexe=%%g
 if "%pexe%"=="" (@echo Python3 was not found on this system. && pause && exit)

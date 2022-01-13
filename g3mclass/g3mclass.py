@@ -284,8 +284,8 @@ par_mod={
     "thr_w": 1.,
 };
 par_plot={
-    "hcl_proba": False,
-    "hcl_cutoff": False,
+    "hcl_proba": True,
+    "hcl_cutoff": True,
     "hcl_scutoff": True,
     "col_hist": "black",
     "col_panel": "white",
@@ -1298,9 +1298,15 @@ def cl2cmap(cls, par_plot):
     cls=np.sort(cls);
     # prepare colors
     nneg=sum(cls<0);
-    cneg=[colorFader(par_plot["col_neghigh"], par_plot["col_neglow"], i/nneg) for i in range(nneg)];
+    if nneg == 1:
+        cneg=[par_plot["col_neglow"]];
+    else:
+        cneg=[colorFader(par_plot["col_neghigh"], par_plot["col_neglow"], i/nneg) for i in range(nneg)];
     npos=sum(cls>0);
-    cpos=[colorFader(par_plot["col_poslow"], par_plot["col_poshigh"], i/npos) for i in range(npos)];
+    if npos == 1:
+        cpos=[par_plot["col_poslow"]];
+    else:
+        cpos=[colorFader(par_plot["col_poslow"], par_plot["col_poshigh"], i/npos) for i in range(npos)];
     clist=cneg+[wxc2mplc(par_plot["col_ref"])]+cpos;
     return (clist, mpl.colors.LinearSegmentedColormap.from_list('clist', clist, len(clist)));
 def histgmm(x, par, plt, par_mod, par_plot, **kwargs):
