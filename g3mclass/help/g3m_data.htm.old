@@ -1,0 +1,22 @@
+<h2>Input data format conventions</h2>
+
+<p>Input data must be submitted in a tab separated values (TSV) format which is a plain text format. It can be prepared with a help of a spreadsheet software but must be saved as a plain text format with a tabulation as a field separator.</p>
+
+<p>
+Each input file can include data relative to several bio-markers but user has to keep in mind that all markers will have models learned with the same parameters. If the nature of bio-markers requires models with essentially different parameters they'd be better splitted into several files.
+</p>
+
+<p>Each column must have a name formatted according to one of the following pattern:
+<ul>
+    <li>'<i>BM-NAME</i> (test)': contains test samples (real numbers)</li>
+    <li>'<i>BM-NAME</i> (ref)': contains reference samples (real numbers)</li>
+    <li>'<i>BM-NAME</i> (<i>query-name</i>)': contains query samples which will be classified with a model learned on test sample (real numbers, optional).</li>
+    <li>'id (test)': contains identification for all test samples (characters, optional)</li>
+    <li>'id (ref)': contains identification for all ref samples (characters, optional)</li>
+    <li>'id (<i>query-id</i>)' contains identification for query samples located at the right of this column till the next 'id-query' column or the end of columns (characters, optional)</li>
+</ul>
+where <i>italicized</i> parts can be customized. 'BM-NAME' represents a bio-marker name and must be the same in all columns relative to one given bio-marker.
+</p>
+<p>Here are few examples of column names:<br>
+[column examples...]
+</p>

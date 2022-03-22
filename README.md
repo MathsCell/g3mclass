@@ -1,0 +1,41 @@
+**`G3Mclass`** is a software for Gaussian Mixture Model for Marker Classification. It has a complete set of help files that can be viewed after installation.
+
+# Installation instructions
+
+## Requirements
+
+`g3mclass` is multi-platform (MacOS, Linux, Windows, etc.) software. Depending on your platform it can be installed by different methods. The most universal one is using `pip` utility distributed with Python3 <https://www.python.org/>. So the first requirement is to have a recent Python3 installed. Its executable must be in your PATH variable, i.e. if you open a shell (CMD or PowerShell on Windows) and type `python`, this command should not end-up in an error message.
+
+## Installation with `pip`
+This is a universal installation method which is supposed to work on all platforms where Python3 is available but requires using a command line interface (signaled by `$` at the beginning of a line) both for installation and for launching `g3mclass` after installation. The installation itself is quite simple:  
+
+  `$ pip install --user -U g3mclass`
+
+This command will download and install the latest version of `g3mclass` as well as all necessary dependencies:  
+
+ - wxpython
+ - numpy
+ - pandas
+ - matplotlib
+ - xlsxwriter
+
+After a successful installation, the software can be launched with:  
+
+  `$ g3mclass`
+  
+If this command fails, it can be because of the installation directory is not in your PATH variable. Probably, you've got a warning about this fact from `pip` during installation step. To remedy, add the signaled directory to PATH and restart shell and `g3mclass`.
+
+To uninstall the software, run:  
+
+  `$ pip uninstall g3mclass`
+
+## Automatic installation on MacOS
+We have prepared a disk image [dmg](https://mathscell.github.io/download/g3mclass/macos/install.dmg) that you can download. Once opened, you will find two scripts on it: `install` and `uninstall`. Right click on `install` and chose `Open` from contextual menu. Confirm that you agree to execute this script provided by a unidentified (by Apple Co.) developer. The script will do nothing else that `pip` installation that was described in previous section but an advantage of this method is that a user does not have to manipulate shell windows. It will be opened automatically and a user will be able to survey installation process. This shell window can be safely closed after the installation.
+
+Another advantage of this method is that an icon will be created on user's desktop pointing to `g3mclass`. So that its launching can simply be done by a right-click/Open on this icon and confirming that this program can be executed. Thus a user does not have to open a shell window neither type any command to get `g3mclass` running.
+
+To uninstall `g3mclass` software, simply right-click on `unisntall` on dmg disk, choose `Open` from contextual menu and confirm that you want to execute this script.
+
+## Automatic installation on Windows
+
+We have prepared [`install.bat`](https://mathscell.github.io/download/g3mclass/win/install.bat) and [`unistall.bat`](https://mathscell.github.io/download/g3mclass/win.uninstall.bat) that must be downloaded on user's disk and executed with administrative privileges. If your Python is coming from [Anaconda](https://anaconda.org) distribution than thees scripts should be run from a shell where `conda` is activated. Otherwise `python` executable won't be found.

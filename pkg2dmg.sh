@@ -2,18 +2,7 @@
 
 mydir=$(dirname $(realpath $0))
 cd $mydir
-#url="https://drive.google.com/uc?export=download&id=DRIVE_FILE_ID"
-# 0.17.1 url="https://drive.google.com/uc?export=download&id=1l7PFMERfYSU7zAt6sBMEiyehnknH4WMM"
-# 0.17.2 url="https://drive.google.com/uc?export=download&id=1NSD1OjePwkQjaDSb_CcSSnViN9UsJhG5"
-# 0.17.3 url="https://drive.google.com/uc?export=download&id=16-MD-qVyZrxWTPNbwlXkqprKc0_RthYY"
-# 0.17.4 url="https://drive.google.com/uc?export=download&id=15aWd055dCaZIxlzNNcLfqyvCak97zWT8"
-# 0.17.6 url="https://drive.google.com/uc?export=download&id=15lZG3W8OQccUk0RFyGBs6Drb3IVhM98s"
-# 0.17.7 url="https://drive.google.com/uc?export=download&id=1c29CXniyLcpH5XN05jrebl6gtsFLpBfB"
-# 0.17.8 url="https://drive.google.com/uc?export=download&id=1hgp9wNoo34XLP1SZYJv8WGwbmH5E1Oor"
-# 0.17.9 url="https://drive.google.com/uc?export=download&id=1xjZTyAxVc5MnAXco5oTzO20ZQ_zQ9MWp"
-# 0.17.10 url="https://drive.google.com/uc?export=download&id=13c0MUGEoeIVaGaL_y8Jwifjx6uGR2FBA"
-# 0.17.11
-url="https://drive.google.com/uc?export=download&id=1tSpcdIFuI3vn9JwxXvFpeVAJC291czl6"
+url=g3mclass
 # create macos g3mclass.app
 python3 setup.py sdist
 v=$(cat g3mclass/version.txt)
