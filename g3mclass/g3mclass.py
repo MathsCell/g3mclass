@@ -1346,6 +1346,12 @@ def usage():
 def make_gui():
     "create GUI"
     global gui, bg_grey, ID_OPEN_KVH, ID_SAVE_KVH, bg_sys, fg_sys, is_dark;
+    import ctypes
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(True)
+    except:
+        pass
+
     ID_OPEN_KVH=wx.Window.NewControlId();
     ID_SAVE_KVH=wx.Window.NewControlId();
     gui=wx.Object();

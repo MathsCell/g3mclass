@@ -3,7 +3,7 @@ rem create a launching script on user's Desktop
 
 rem author: Serguei Sokol
 @echo on
-url=g3mclass
+set url=g3mclass
 for /F "tokens=*" %%g in ('where python') do set pexe=%%g
 if "%pexe%"=="" (@echo Python3 was not found on this system. && pause && exit)
 for /F "tokens=*" %%g in ('%pexe% -m site --user-base') do set pbase=%%g
