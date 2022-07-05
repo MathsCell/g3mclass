@@ -22,9 +22,9 @@ setup(
    author_email='sokol@insa-toulouse.fr',
    url='https://github.com/MathsCell/g3mclass',
    packages=['g3mclass'],
-   py_modules=['g3mclass', 'tools_g3m'],
+   py_modules=['g3mclass', 'tools_g3m', 'png2icon'],
    package_data={
-        'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'welcome.html', 'help/*', 'example/*'],
+        'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'welcome.html', 'help/*', 'example/*', 'coldb.tsv', 'g3m.*'],
    },
    install_requires=['wxpython', 'numpy', 'pandas', 'matplotlib>=3.5.1', 'xlsxwriter'],
    entry_points={

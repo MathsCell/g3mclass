@@ -841,6 +841,8 @@ def em1(x, par=None, imposed=pa.DataFrame(index=["a", "mean", "sd"]), G=range(1,
             elif g==G[0] and par.shape[1] != g+gimp:
                 raise Exception("at starting point, par.shape[1] must be equal to G[0]+imposed.shape[1]")
             else:
+                #print("g=",g, "; gimp=", gimp)
+                #import pdb; pdb.set_trace()
                 par.loc["a", np.isnan(par.loc["a",:])]=1./(g+gimp);
                 m_na=np.isnan(par.loc["mean",:]);
                 par.loc["mean", m_na]=np.random.choice(xv, sum(m_na), False);
@@ -1014,7 +1016,7 @@ def rt2model(ref, test, par_mod):
     #plt.plot(hcnt);
     #plt.show(block=False);
     ip=ipeaks(hcnt);
-    iv=ipeaks(-hcnt); # valles
+    iv=ipeaks(-hcnt); # valleys
     # estimate cardinal of each peak and eliminate too low populated ones
     ip.sort();
     iv.sort();
@@ -1028,7 +1030,15 @@ def rt2model(ref, test, par_mod):
             #import pdb; pdb.set_trace();
             ipeaks(-hcnt);
             raise Exception("cardinal of peaks has not the same length as peak list");
-    ip=ip[pcnt>=3]; # too rare groups are eliminated
+    else:
+        raise Exception("no peak detected in histogram")
+    # too rare groups are eliminated
+    if sum(pcnt>=3) != 0:
+        ip=ip[pcnt>=3];
+    elif sum(pcnt != pcnt.min()) != 0:
+        ip=ip[pcnt != pcnt.min()];
+    else:
+        raise Exception("histogram peaks are too sparsely populated")
     #print("ip=", ip);
     par=pa.DataFrame(np.array([[nan]*len(ip), np.sort(h[1][ip]), [(tmax-tmin)/30/4]*len(ip)]), index=["a", "mean", "sd"]);
     # learn gmm without imposed class
@@ -1039,7 +1049,7 @@ def rt2model(ref, test, par_mod):
     di=di.T;
     di.index=["dist_to_ref"];
     par_hist=pari.copy();
-    par_hist=par_hist.append(di);
+    par_hist=pa.concat([par_hist, di]);
     i_imp= di <= par_mod["thr_di"]; #0.5;
     if np.any(i_imp):
         i_imp=which(i_imp);

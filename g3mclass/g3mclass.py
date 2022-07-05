@@ -41,28 +41,18 @@ import tempfile;
 import zipfile;
 
 try:
-    import wx;
     import matplotlib as mpl;
     import numpy as np;
     import pandas as pa;
     import xlsxwriter;
 except ModuleNotFoundError:
     import subprocess
-    res=subprocess.run([sys.executable, "-m", "pip", "install", "--user", 'wxpython', 'numpy', 'pandas', 'matplotlib', 'xlsxwriter'], capture_output=True)
-    print("res=", res)
-    import wx;
+    res=subprocess.run([sys.executable, "-m", "pip", "install", "--user", 'numpy', 'pandas', 'matplotlib', 'xlsxwriter'], capture_output=True)
+    #print("res=", res)
     import matplotlib as mpl;
     import numpy as np;
     import pandas as pa;
 
-import wx.grid;
-import wx.adv;
-import wx.html;
-from wx.lib.wordwrap import wordwrap;
-import wx.lib.mixins.inspection as wit;
-import wx.lib.colourdb;
-#from wx.lib.agw.flatnotebook import FlatNotebook as wx_nb;
-wx_nb=wx.Notebook;
 
 from matplotlib.backends.backend_wxagg import (
     FigureCanvasWxAgg as FigureCanvas,
@@ -94,160 +84,6 @@ def timeme(s="", dig=2):
 
 TIMEME=False;
 
-## custom classes
-class wx_nbl(wx.Panel):
-    "replace notebook with pages selected in a list"
-    def __init__(self, *args, **kwargs):
-        wx.Panel.__init__(self, *args, **kwargs);  # main container for list and pages
-        self.lbox=wx.ListBox(self, style=wx.LB_SINGLE);
-        self.lbox.Hide();
-        self.Bind(wx.EVT_LISTBOX, self.OnLbox, self.lbox);
-        self.panel=wx.Panel(self);
-        #self.panel.SetPosition((0, self.lbox.GetSize()[1]));
-        self.pages=[];
-        sizer=wx.BoxSizer(wx.VERTICAL);
-        sizer.Add(self.lbox, 0, wx.ALL | wx.ALIGN_CENTER, border=5);
-        sizer.Add(self.panel, 1, wx.EXPAND);
-        self.SetSizer(sizer);
-        self.panel.Bind(wx.EVT_SIZE, self.OnSize);
-        self.panel.SetBackgroundColour(bg_sys);
-        self.Fit();
-        w,h=self.GetSize();
-        self.SetSize(w,h+1);
-        self.SetSize(w,h);
-    def OnLbox(self, evt):
-        isel=self.lbox.GetSelection();
-        w,h=self.GetSize();
-        self.SetSize(w,h+1);
-        self.SetSize(w,h);
-        #print("lbox: selected", isel);
-        #print("pos=", self.panel.GetPosition());
-        #print("sz=", self.panel.GetSize());
-        # update pos and size then hide
-        [(pg.SetPosition(self.panel.GetPosition()), pg.SetSize(self.panel.GetSize()), pg.Hide()) for pg in self.pages];
-        # show selected page
-        self.pages[isel].Show();
-    def AddPage(self, pg, nm):
-        self.lbox.InsertItems([nm], self.lbox.Count);
-        self.pages.append(pg);
-        self.lbox.SetSelection(self.lbox.Count-1);
-        self.lbox.Show();
-        self.OnLbox(None);
-    def OnSize(self, evt):
-        evt.Skip();
-        sz=self.panel.GetSize();
-        [pg.SetSize(sz) for pg in self.pages];
-    def GetPageCount(self):
-        return self.lbox.Count;
-    def DeletePage(self, i):
-        if i < self.lbox.Count:
-            self.pages[i].Destroy();
-            del(self.pages[i]);
-            self.lbox.Delete(i);
-        if self.lbox.Count == 0:
-            self.lbox.Hide();
-class df2grid(wx.grid.Grid):
-    def __init__(self, parent, df, *args, **kwargs):
-        #import pdb; pdb.set_trace();
-        global bg_grey;
-        parent.df=df;
-        self._grid=super(type(self), self);
-        self._grid.__init__(parent, *args, **kwargs);
-        nrow, ncol=df.shape;
-        nmc=df.columns;
-        # destroy previous grid
-        if "grid" in dir(parent):
-            parent.grid.Destroy();
-        self.CreateGrid(nrow, ncol);
-        self.EnableEditing(False);
-        if bg_grey is None:
-            bg_grey=self.GetLabelBackgroundColour();
-        self.SetDefaultCellBackgroundColour(bg_sys);
-        parent.grid=self;
-        bg=wx.grid.GridCellAttr();
-        bg.SetBackgroundColour(bg_sys);
-        #import pdb; pdb.set_trace();
-        for j in range(ncol):
-            self.SetColLabelValue(j, str(nmc[j]));
-            vcol=df.iloc[:,j].to_numpy();
-            empty=np.all(tls.is_na(vcol)) or np.all(vcol.astype(str)=="");
-            empty_end=tls.is_empty_end(vcol) | tls.is_na_end(vcol);
-            if empty:
-                self.SetColAttr(j, bg);
-                bg.IncRef();
-                continue;
-            if vcol.dtype == float:
-                vcol=np.round(vcol, 3);
-            for k in range(nrow):
-                if empty or empty_end[k]:
-                    pass;
-                    #self.SetCellBackgroundColour(k, j, bg_grey);
-                    #break;
-                    #self.SetCellValue(k, j, "");
-                else:
-                    #self.SetCellBackgroundColour(k, j, bg_null);
-                    val=vcol[k];
-                    val=str(val) if val == val else "";
-                    self.SetCellValue(k, j, val);
-        self.AutoSizeColumns(setAsMin=False);
-        if not parent.GetSizer():
-            parent.SetSizer(wx.BoxSizer(wx.VERTICAL));
-        parent.GetSizer().Add(self, 1, wx.EXPAND);
-class wx_FloatSlider(wx.Slider):
-    def __init__(self, parent, value=0, minValue=0., maxValue=1., scale=100, frmt="%.2f", **kwargs):
-        self._value = value;
-        self._min = minValue;
-        self._max = maxValue;
-        self._scale = scale;
-        ival, imin, imax = [round(v*scale) for v in (value, minValue, maxValue)];
-        self.frmt=frmt;
-        self._islider = super(type(self), self);
-        #pnl=wx.Panel(parent, -1);
-        pnl=parent;
-        self._islider.__init__(pnl, value=ival, minValue=imin, maxValue=imax, **kwargs);
-        self.Bind(wx.EVT_SLIDER, self._OnSlider);
-        self.txt = wx.StaticText(pnl, label=self.frmt%self._value, style = wx.ALIGN_RIGHT);
-        self.hbox = wx.BoxSizer(wx.HORIZONTAL);
-        self.hbox.Add(self.txt, 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, border=10);
-        self.hbox.Add(self, 1, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, border=10);
-        #import pdb; pdb.set_trace();
-        #pnl.SetSizer(hbox);
-    def _OnSlider(self, event):
-        #import pdb; pdb.set_trace()
-        #print("event=", event);
-        ival = self._islider.GetValue();
-        imin = self._islider.GetMin();
-        imax = self._islider.GetMax();
-        if ival == imin:
-            self._value = self._min;
-        elif ival == imax:
-            self._value = self._max;
-        else:
-            self._value = ival / self._scale;
-        if self._scale <= 1:
-            self._value=int(self._value);
-        self.txt.SetLabel(self.frmt%self._value);
-        #print("ival=", ival);
-        #print("_val=", self._value);
-    def GetSizer(self):
-        return self.hbox;
-    def GetValue(self):
-        return self._value;
-    def SetValue(self, val):
-        self._islider.SetValue(round(val*self._scale));
-        self._value=val;
-        if self._scale <= 1:
-            self._value=int(self._value);
-        self.txt.SetLabel(self.frmt%self._value);
-class wx_ColourPickerCtrl(wx.ColourPickerCtrl):
-    def __init__(self, *args, label="", label_size=wx.DefaultSize, **kwargs):
-        wx.ColourPickerCtrl.__init__(self, *args, **kwargs);
-        self.hbox=wx.BoxSizer(wx.HORIZONTAL);
-        self.label=wx.StaticText(args[0], label=label, style=wx.ALIGN_LEFT, size=label_size);
-        if label_size != wx.DefaultSize:
-            self.label.Wrap(label_size[0]);
-        self.hbox.Add(self.label, 0, wx.ALL | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, border = 5);
-        self.hbox.Add(self, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=5);
 ## config constants
 with (diri/"version.txt").open() as fp:
     version=fp.read().strip();
@@ -265,7 +101,7 @@ LOCAL_TIMEZONE=datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo;
 nan=np.nan;
 Inf=np.inf;
 nproc=os.cpu_count();
-gui=wx.Object();
+gui=None;
 dogui=False;
 fdata=""; # name of data file
 data=None;
@@ -276,6 +112,7 @@ prev_res_saved=True;
 prev_par_saved=True;
 dcols={};
 resdf=None; # dict for formatted output in .tsv
+wx_nb=None;
 par_mod={
     "k": 25,
     "k_hlen": 3,
@@ -306,8 +143,8 @@ par_def={
 };
 wd=""; # working dir
 bg_grey=None;
-bg_white=wx.WHITE;
-bg_null=wx.NullColour;
+bg_white=None;
+bg_null=None;
 hcl2item={
     "hcl_proba": ("proba", "cl"),
     "hcl_cutoff": ("cutoff", "cutnum"),
@@ -315,6 +152,12 @@ hcl2item={
 };
 ID_OPEN_KVH=None;
 ID_SAVE_KVH=None;
+# read color db
+coldb=dict();
+with (diri/"coldb.tsv").open() as fp:
+    for l in fp.readlines():
+        li=l.split("\t");
+        coldb[li[0]]=tuple(int(v) for v in li[1:]);
 ## call back functions
 def OnExit(evt):
     """
@@ -585,6 +428,7 @@ def OnRemodel(evt):
                 if dtype == "qry":
                     for nmq,dq in d[dtype].items():
                         vnm=nm+" ("+nmq+")";
+                        #print((nmq, ids))
                         resdf[dtype][vnm]=tls.tcol2df(class2tcol(dq, ucl, ids["m,q2id"].get(nm+"\t"+nmq) if ids is not None else None));
                 else:
                     idh=None if ids is None else ids.get(dtype);
@@ -1010,6 +854,29 @@ def nb_rmpg(nb):
     "Remove pages from wx.notebook 'nb'"
     for i in range(nb.GetPageCount()-1, -1, -1):
         nb.DeletePage(i);
+def col2hex(col):
+    "Convert 'col' to hex string starting with '#'"
+    global coldb;
+    if isinstance(col, list) or isinstance(col, tuple):
+        return '#%02x%02x%02x' % col[:3];
+    if isinstance(col, str):
+        if col[0]=="#":
+            return col;
+        else:
+            return '#%02x%02x%02x' % coldb[col.upper()];
+def col2rgb(col):
+    "Convert color to 3-tuple rgb (0:255)"
+    if isinstance(col, list) or isinstance(col, tuple):
+        return col;
+    if isinstance(col, str):
+        if col[0] == "#":
+            col=col[1:];
+            lv=len(col);
+            lvs=lv // 3;
+            return tuple(int(col[i:i + lvs], 16)
+                for i in range(0, lv, lvs));
+        else:
+            return col2rgb(col2hex(col));
 ## working functions
 def file2par(fpar):
     "Read parameters from fpar file"
@@ -1030,21 +897,33 @@ def file2data(fn):
         err_mes("file '"+str(fn)+"' could not be read");
         return;
     cols=[str(v).strip() if v==v else "" for v in data.iloc[0, :]];
-    data.columns=cols;
-    data=data.iloc[1:,:];
-    iparse=[]; # collect parsed columns
-    # search for (ref) and (test)
+    # decide which colname format is used:
+    ## fcn1: id (ref), geneA (ref), id (test), geneA (test), id (qry1), gene1 (qry1), ...
+    ## fcn2: id,  geneA, id,   geneA, id,   gene1, ...
+    ##       ref, ref,   test, test,  qry1, qry1, ...
+    # search for '(ref)' and '(test)'
+    fcn=1
     suff=r"(ref)";
-    dcols=dict((i, re.sub(tls.escape(suff, "()")+"$", "", v).strip()) for i,v in enumerate(cols) if v.endswith(suff) and not re.match("^id *\(ref\)$", v));
+    dcols=dict((i, re.sub(tls.escape(suff, "()")+"$", "", v).strip()) for i,v in enumerate(cols) if v.lower().endswith(suff) and not re.match("^id *\(ref\)$", v.lower()));
     #import pdb; pdb.set_trace();
     if not dcols:
-        err_mes("not found markers '"+suff+"' in column names");
-        return;
+        # try fcn2
+        dcols=dict((i, v) for i,v in enumerate(cols) if v != "" and v.lower() != "id" and str(data.iloc[1, i]).strip().lower() == suff[1:-1]);
+        if not dcols:
+            #import pdb; pdb.set_trace()
+            err_mes("not found markers '"+suff+"' in column names");
+            return;
+        fcn=2
+        # reformat colnames to fcn1
+        cols=["%s (%s)"%(str(v).strip(),str(w).strip()) if v==v and w==w else "" for v,w in zip(data.iloc[0, :], data.iloc[1, :])];
+    data.columns=cols;
+    data=data.iloc[1:,:] if fcn==1 else data.iloc[2:,:];
+    iparse=[]; # collect parsed columns
     # check that varnames are unique and non empty
     cnt=tls.list2count(dcols.values());
     if len(cnt) != len(dcols):
         vbad=[v for v,i in cnt.items() if i > 1];
-        err_mes("following column name is not unique in '(ref)' set: '"+vbad[0]+"'");
+        err_mes("following column name is not unique in 'ref' set: '"+vbad[0]+"'");
         return;
     iparse += list(dcols.keys());
     
@@ -1052,7 +931,7 @@ def file2data(fn):
     dcols=dict((v,k) for k,v in dcols.items());
     for nm in dcols.keys():
         # check that every ref has its test pair
-        itest=[i for i,v in enumerate(cols) if v.startswith(nm) and v.endswith("(test)") and re.match("^ *$", v[len(nm):-7])];
+        itest=[i for i,v in enumerate(cols) if v.startswith(nm) and v.lower().endswith("(test)") and re.match("^ *$", v[len(nm):-7])];
         if not itest:
             err_mes("column '"+nm+" (ref)' has not its counter part '"+nm+" (test)'");
             return;
@@ -1065,7 +944,7 @@ def file2data(fn):
             dcols[nm]={"iref": iref, "itest": itest};
         iparse.append(itest);
         # get query (if any)
-        dqry=dict((i,v[len(nm):].strip("( )")) for i,v in enumerate(cols) if (v.startswith(nm+" ") or v.startswith(nm+"(")) and not (v.endswith("(test)") or v.endswith("(ref)")));
+        dqry=dict((i,v[len(nm):].strip("( )")) for i,v in enumerate(cols) if (v.startswith(nm+" ") or v.startswith(nm+"(")) and not (v.lower().endswith("(test)") or v.lower().endswith("(ref)")));
         #print(nm+" dqry=", dqry);
         # check that qry names are unique
         cnt=tls.list2count(dqry.values());
@@ -1087,7 +966,7 @@ def file2data(fn):
     ids=dict();
     #import pdb; pdb.set_trace();
     for suff in ("ref", "test"):
-        ids[suff]=dict((i, None) for i,v in enumerate(cols) if re.match("id *\("+suff+"\)$", str(v)));
+        ids[suff]=dict((i, None) for i,v in enumerate(cols) if re.match("id *\("+suff+"\)$", str(v).lower()));
         if len(ids[suff]) > 1:
             err_mes("Column 'id ("+suff+") is not unique, cf. columns: "+", ".join(str(i+1) for i in ids[suff].keys()));
         if ids[suff]:
@@ -1105,7 +984,7 @@ def file2data(fn):
             ids[suff]=idh;
             
     # each id (name) is relative to next qrys till next 'id (smth)' is found
-    ids["qry"]=dict((v[3:].strip("( )"), i) for i,v in enumerate(cols) if v.startswith("id ") and not (v.endswith("(ref)") or v.endswith("(test)")));
+    ids["qry"]=dict((v[3:].strip("( )"), i) for i,v in enumerate(cols) if v.lower().startswith("id ") and not (v.lower().endswith("(ref)") or v.lower().endswith("(test)")));
     ids["m,q2id"]=dict();
     # collect qry icols for each block
     ib=list(ids["qry"].values());
@@ -1191,7 +1070,11 @@ def data2model(data, dcols):
                         res_loc=list(pool.map(tls.starfun, ((tls.rt2model, ref, test, d) for d in par_loc)));
                 history=pa.DataFrame(None, columns=["k", "BIC", "classes"]);
                 for tmp in res_loc:
-                    history=history.append(pa.Series([tmp["par_mod"]["k"], tmp["BIC"], ",".join(tmp["par"].columns.astype(str))], index=history.columns), ignore_index=True);
+                    try:
+                        history=pa.concat([history, pa.DataFrame([tmp["par_mod"]["k"], tmp["BIC"], ",".join(tmp["par"].columns.astype(str))], index=history.columns).T], ignore_index=True);
+                    except:
+                        #import pdb; pdb.set_trace()
+                        raise;
                     #print("nbin=", nbin, "; bic=", tmp["BIC"], "par_mod=", tmp["par_mod"]);
                 ibest=np.argmin([v["BIC"] for v in res_loc]);
                 #print("ibest=", ibest, "bic=", res_loc[ibest]["BIC"], "vbic=", [v["BIC"] for v in res_loc]);
@@ -1243,7 +1126,10 @@ def class2tcol(d, ucl, idh=None):
             ix=tls.which(vcl==icl);
             xcl=x[ix];
             if idh is not None:
-                tcol.append(("id", idh.iloc[ix]));
+                #try:
+                    tcol.append(("id", idh.iloc[ix]));
+                #except:
+                #    import pdb; pdb.set_trace()
             tcol.append((str(icl), np.round(xcl, 3)));
             dstat[str(icl)]=np.round(xcl.describe(), 3).astype(object);
         dstat=pa.DataFrame(dstat);
@@ -1288,7 +1174,7 @@ def lab2ip(nb, lab):
     return((None,None));
 def wxc2mplc(c):
     "Convert wx.Colour to matplotlib colour"
-    return mpl.colors.to_rgb(np.asarray(wx.Colour(c))/255.);
+    return mpl.colors.to_rgb(np.asarray(col2rgb(c))/255.);
 def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
     c1=np.asarray(wxc2mplc(c1));
     c2=np.asarray(wxc2mplc(c2));
@@ -1345,12 +1231,186 @@ def usage():
     print(__doc__);
 def make_gui():
     "create GUI"
-    global gui, bg_grey, ID_OPEN_KVH, ID_SAVE_KVH, bg_sys, fg_sys, is_dark;
+    global wx, wx_nbl, df2grid, wx_FloatSlider, wx_ColourPickerCtrl;
+    global wx_nb, bg_white, bg_null, gui, bg_grey, ID_OPEN_KVH, ID_SAVE_KVH;
+    global bg_sys, fg_sys, is_dark, gui, wordwrap, wit;
     import ctypes
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(True)
     except:
         pass
+    try:
+        import wx;
+    except ModuleNotFoundError:
+        import subprocess
+        res=subprocess.run([sys.executable, "-m", "pip", "install", "--user", 'wxpython'], capture_output=True)
+        #print("res=", res)
+        import wx;
+    import wx.grid;
+    import wx.adv;
+    import wx.html;
+    from wx.lib.wordwrap import wordwrap;
+    import wx.lib.mixins.inspection as wit;
+    import wx.lib.colourdb;
+    ## custom classes
+    class wx_nbl(wx.Panel):
+        "replace notebook with pages selected in a list"
+        def __init__(self, *args, **kwargs):
+            wx.Panel.__init__(self, *args, **kwargs);  # main container for list and pages
+            self.lbox=wx.ListBox(self, style=wx.LB_SINGLE);
+            self.lbox.Hide();
+            self.Bind(wx.EVT_LISTBOX, self.OnLbox, self.lbox);
+            self.panel=wx.Panel(self);
+            #self.panel.SetPosition((0, self.lbox.GetSize()[1]));
+            self.pages=[];
+            sizer=wx.BoxSizer(wx.VERTICAL);
+            sizer.Add(self.lbox, 0, wx.ALL | wx.ALIGN_CENTER, border=5);
+            sizer.Add(self.panel, 1, wx.EXPAND);
+            self.SetSizer(sizer);
+            self.panel.Bind(wx.EVT_SIZE, self.OnSize);
+            self.panel.SetBackgroundColour(bg_sys);
+            self.Fit();
+            w,h=self.GetSize();
+            self.SetSize(w,h+1);
+            self.SetSize(w,h);
+        def OnLbox(self, evt):
+            isel=self.lbox.GetSelection();
+            w,h=self.GetSize();
+            self.SetSize(w,h+1);
+            self.SetSize(w,h);
+            #print("lbox: selected", isel);
+            #print("pos=", self.panel.GetPosition());
+            #print("sz=", self.panel.GetSize());
+            # update pos and size then hide
+            [(pg.SetPosition(self.panel.GetPosition()), pg.SetSize(self.panel.GetSize()), pg.Hide()) for pg in self.pages];
+            # show selected page
+            self.pages[isel].Show();
+        def AddPage(self, pg, nm):
+            self.lbox.InsertItems([nm], self.lbox.Count);
+            self.pages.append(pg);
+            self.lbox.SetSelection(self.lbox.Count-1);
+            self.lbox.Show();
+            self.OnLbox(None);
+        def OnSize(self, evt):
+            evt.Skip();
+            sz=self.panel.GetSize();
+            [pg.SetSize(sz) for pg in self.pages];
+        def GetPageCount(self):
+            return self.lbox.Count;
+        def DeletePage(self, i):
+            if i < self.lbox.Count:
+                self.pages[i].Destroy();
+                del(self.pages[i]);
+                self.lbox.Delete(i);
+            if self.lbox.Count == 0:
+                self.lbox.Hide();
+    class df2grid(wx.grid.Grid):
+        def __init__(self, parent, df, *args, **kwargs):
+            #import pdb; pdb.set_trace();
+            global bg_grey;
+            parent.df=df;
+            self._grid=super(type(self), self);
+            self._grid.__init__(parent, *args, **kwargs);
+            nrow, ncol=df.shape;
+            nmc=df.columns;
+            # destroy previous grid
+            if "grid" in dir(parent):
+                parent.grid.Destroy();
+            self.CreateGrid(nrow, ncol);
+            self.EnableEditing(False);
+            if bg_grey is None:
+                bg_grey=self.GetLabelBackgroundColour();
+            self.SetDefaultCellBackgroundColour(bg_sys);
+            parent.grid=self;
+            bg=wx.grid.GridCellAttr();
+            bg.SetBackgroundColour(bg_sys);
+            #import pdb; pdb.set_trace();
+            for j in range(ncol):
+                self.SetColLabelValue(j, str(nmc[j]));
+                vcol=df.iloc[:,j].to_numpy();
+                empty=np.all(tls.is_na(vcol)) or np.all(vcol.astype(str)=="");
+                empty_end=tls.is_empty_end(vcol) | tls.is_na_end(vcol);
+                if empty:
+                    self.SetColAttr(j, bg);
+                    bg.IncRef();
+                    continue;
+                if vcol.dtype == float:
+                    vcol=np.round(vcol, 3);
+                for k in range(nrow):
+                    if empty or empty_end[k]:
+                        pass;
+                        #self.SetCellBackgroundColour(k, j, bg_grey);
+                        #break;
+                        #self.SetCellValue(k, j, "");
+                    else:
+                        #self.SetCellBackgroundColour(k, j, bg_null);
+                        val=vcol[k];
+                        val=str(val) if val == val else "";
+                        self.SetCellValue(k, j, val);
+            self.AutoSizeColumns(setAsMin=False);
+            if not parent.GetSizer():
+                parent.SetSizer(wx.BoxSizer(wx.VERTICAL));
+            parent.GetSizer().Add(self, 1, wx.EXPAND);
+    class wx_FloatSlider(wx.Slider):
+        def __init__(self, parent, value=0, minValue=0., maxValue=1., scale=100, frmt="%.2f", **kwargs):
+            self._value = value;
+            self._min = minValue;
+            self._max = maxValue;
+            self._scale = scale;
+            ival, imin, imax = [round(v*scale) for v in (value, minValue, maxValue)];
+            self.frmt=frmt;
+            self._islider = super(type(self), self);
+            #pnl=wx.Panel(parent, -1);
+            pnl=parent;
+            self._islider.__init__(pnl, value=ival, minValue=imin, maxValue=imax, **kwargs);
+            self.Bind(wx.EVT_SLIDER, self._OnSlider);
+            self.txt = wx.StaticText(pnl, label=self.frmt%self._value, style = wx.ALIGN_RIGHT);
+            self.hbox = wx.BoxSizer(wx.HORIZONTAL);
+            self.hbox.Add(self.txt, 0, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, border=10);
+            self.hbox.Add(self, 1, wx.ALIGN_CENTRE_VERTICAL | wx.ALL, border=10);
+            #import pdb; pdb.set_trace();
+            #pnl.SetSizer(hbox);
+        def _OnSlider(self, event):
+            #import pdb; pdb.set_trace()
+            #print("event=", event);
+            ival = self._islider.GetValue();
+            imin = self._islider.GetMin();
+            imax = self._islider.GetMax();
+            if ival == imin:
+                self._value = self._min;
+            elif ival == imax:
+                self._value = self._max;
+            else:
+                self._value = ival / self._scale;
+            if self._scale <= 1:
+                self._value=int(self._value);
+            self.txt.SetLabel(self.frmt%self._value);
+            #print("ival=", ival);
+            #print("_val=", self._value);
+        def GetSizer(self):
+            return self.hbox;
+        def GetValue(self):
+            return self._value;
+        def SetValue(self, val):
+            self._islider.SetValue(round(val*self._scale));
+            self._value=val;
+            if self._scale <= 1:
+                self._value=int(self._value);
+            self.txt.SetLabel(self.frmt%self._value);
+    class wx_ColourPickerCtrl(wx.ColourPickerCtrl):
+        def __init__(self, *args, label="", label_size=wx.DefaultSize, **kwargs):
+            wx.ColourPickerCtrl.__init__(self, *args, **kwargs);
+            self.hbox=wx.BoxSizer(wx.HORIZONTAL);
+            self.label=wx.StaticText(args[0], label=label, style=wx.ALIGN_LEFT, size=label_size);
+            if label_size != wx.DefaultSize:
+                self.label.Wrap(label_size[0]);
+            self.hbox.Add(self.label, 0, wx.ALL | wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL, border = 5);
+            self.hbox.Add(self, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=5);
+
+    gui=wx.Object();
+    wx_nb=wx.Notebook;
+    bg_white=wx.WHITE;
+    bg_null=wx.NullColour;
 
     ID_OPEN_KVH=wx.Window.NewControlId();
     ID_SAVE_KVH=wx.Window.NewControlId();
@@ -1366,7 +1426,7 @@ def make_gui():
     gui.help=wx.html.HtmlHelpController();
 ## take arguments
 def main():
-    global fdata, wd, gui, dogui, TIMEME, nproc, par_mod, par_plot;
+    global wx, fdata, wd, gui, dogui, TIMEME, nproc, par_mod, par_plot;
     try:
         opts,args=getopt.getopt(sys.argv[1:], "hwvt", ["help", "DEBUG", "np="]);
     except getopt.GetoptError as err:
@@ -1402,8 +1462,10 @@ def main():
             assert False, "unhandled option";
     if dogui:
         make_gui();
-    else:
-        gui.app=wx.App(False); # for wx.Colour converters in pdf
+    #else:
+        #import wx;
+        #gui=wx.Object();
+        #gui.app=wx.App(False); # for wx.Colour converters in pdf
     fdata=Path(args[0]).resolve() if len(args) else Path();
     if fdata != Path() and (not fdata.is_file() and fdata.suffix != ".tsv"):
         fdata=fdata.with_suffix(".tsv");
@@ -1417,7 +1479,7 @@ def main():
         err_mes(me+": file '"+str(fdata)+"' does not exist.\n");
     # convert colors to hexa
     for k in [v for v in par_plot.keys() if v.startswith("col_")]:
-        par_plot[k]=wx.Colour(par_plot[k]).GetAsString(wx.C2S_HTML_SYNTAX);
+        par_plot[k]=col2hex(par_plot[k]);#wx.Colour(par_plot[k]).GetAsString(wx.C2S_HTML_SYNTAX);
     if fdata != Path():
         file2data(fdata);
         if dogui:

@@ -2,9 +2,11 @@
 
 mydir=$(dirname $(realpath $0))
 cd $mydir
-url=g3mclass
+#v 1.1
+url="https://drive.google.com/uc?export=download&id=14lF33cGSWP1jlemmWYd-i8ewxFXwr4H8"
+#url="dev/dist/g3mclass-1.1.tar.gz"
 # create macos g3mclass.app
-python3 setup.py sdist
+#python3 setup.py sdist
 v=$(cat g3mclass/version.txt)
 rm -rf dmg/ # clean up before
 mkdir dmg
@@ -14,9 +16,13 @@ mkdir dmg
 
 # create install script
 cat <<EOF >dmg/install
-#!/bin/sh
+#!/usr/bin/env bash
 pexe=\$(python3 -m site --user-base)/bin/g3mclass
 python3 -m pip install --user -U "$url"
+diri=\$(python3 -c "import os; import g3mclass; print(os.path.dirname(g3mclass.__file__))")
+# change the icon
+python3 \$diri/../png2icon.py \$diri/g3m.png \$pexe
+# make the symlink on the desktop
 ln -sf \$pexe \$HOME/Desktop/
 EOF
 chmod 755 dmg/install
