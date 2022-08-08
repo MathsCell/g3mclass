@@ -23,6 +23,7 @@ setup(
    url='https://github.com/MathsCell/g3mclass',
    packages=['g3mclass'],
    py_modules=['g3mclass', 'tools_g3m', 'png2icon'],
+   include_package_data=True,
    package_data={
         'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'welcome.html', 'help/*', 'example/*', 'coldb.tsv', 'g3m.*'],
    },

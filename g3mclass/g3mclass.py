@@ -81,7 +81,7 @@ with (diri/"version.txt").open() as fp:
 # program name
 me="g3mclass";
 # message in welcome tab
-with (diri/"welcome.html").open() as fp:
+with (diri/"help"/"g3mclass.htm").open() as fp: #"welcome.html")
     welc_text=fp.read();
 welc_text=re.sub("\n\n", "<br>\n", welc_text);
 with (diri/"licence_en.txt").open() as fp:
