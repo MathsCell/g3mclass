@@ -3,17 +3,8 @@
 
 usage: g3mclass.py [-h|--help] [--DEBUG] [-w] [data[.tsv]]
 """
-#Todo:
-# + data parsing
-# + test and query classification
-# + plots
-# + write results
-# + GUI
-# - doc
-# - packaging
-
 # 2021-03-19 sokol
-# Copyright 2021, INRAE/INSA/CNRS, Marina GUVAKOVA
+# Copyright 2022, INRAE/INSA/CNRS, Marina GUVAKOVA
 
 # This file content:
 # -imports
@@ -26,6 +17,8 @@ usage: g3mclass.py [-h|--help] [--DEBUG] [-w] [data[.tsv]]
 # -GUI layout (from *_lay.kvh)
 
 ## imports
+#import pdb;
+
 import sys;
 import os;
 from pathlib import Path;
@@ -60,8 +53,6 @@ from matplotlib.backends.backend_wxagg import (
 from matplotlib.backends.backend_pdf import PdfPages as mpdf;
 import matplotlib.pyplot as plt;
 
-import numpy as np;
-import pandas as pa;
 import webbrowser;
 
 import g3mclass
@@ -119,6 +110,12 @@ par_mod={
     "k_var": True,
     "thr_di": 0.5,
     "thr_w": 1.,
+    "resamp": False,
+    "resamp_frac": 0.9,
+    "resamp_numb": 5,
+    "resamp_what": "ref",
+    "resamp_use_seed": False,
+    "resamp_seed": 7,
 };
 par_plot={
     "hcl_proba": True,
@@ -554,6 +551,28 @@ def OnCheckHcl(evt):
     prev_par_saved=False;
     win=evt.GetEventObject();
     par_plot[win.GetName()]=win.IsChecked();
+def OnCheckResamp(evt):
+    "a checkbox of re-sampling section checked/unchecked"
+    global prev_par_saved;
+    prev_par_saved=False;
+    win=evt.GetEventObject();
+    key,val=win.GetName(),win.IsChecked();
+    #pdb.set_trace()
+    if key.startswith("resamp_what_"):
+        li=[];
+        if key == "resamp_what_ref":
+            if val:
+                li.append("ref")
+            if gui.chk_resamp_what_test.IsChecked():
+                li.append("test")
+        if key == "resamp_what_test":
+            if val:
+                li.append("test")
+            if gui.chk_resamp_what_ref.IsChecked():
+                li.append("ref")
+        par_mod["resamp_what"]=",".join(li)
+    else:
+        par_mod[key]=val;
 def OnTabChange(evt):
     #import pdb; pdb.set_trace();
     win=evt.GetEventObject();
@@ -818,6 +837,11 @@ def par2gui(par_mod, par_plot):
     gui.sl_hbin_hlen.SetValue(par_mod["k_hlen"]);
     gui.sl_thr_di.SetValue(par_mod["thr_di"]);
     gui.sl_thr_w.SetValue(par_mod["thr_w"]);
+    gui.chk_resamp.SetValue(par_mod["resamp"]);
+    gui.sl_resamp_frac.SetValue(par_mod["resamp_frac"]);
+    gui.sl_resamp_numb.SetValue(par_mod["resamp_numb"]);
+    gui.chk_resamp_what_ref.SetValue("ref" in par_mod["resamp_what"]);
+    gui.chk_resamp_what_test.SetValue("test" in par_mod["resamp_what"]);
     # heatmap
     gui.chk_hcl_proba.SetValue(par_plot["hcl_proba"]);
     gui.chk_hcl_cutoff.SetValue(par_plot["hcl_cutoff"]);
@@ -1081,10 +1105,17 @@ def data2model(data, dcols):
                 history.index=list(range(1, tls.nrow(history)+1));
                 res_loc[ibest]["history"]=history;
                 res[nm]=res_loc[ibest];
+                
             else:
                 res[nm]=tls.rt2model(ref, test, par_mod);
             timeme("model "+nm);
+    if par_mod["resamp"]:
+        drt=dict((nm, (data.iloc[:,dc["iref"]].values, data.iloc[:,dc["itest"]].values)) for nm,dc in dcols.items());
     for k,v in res.items():
+        if par_mod["resamp"]:
+            ref,test=drt[k];
+            #pdb.set_trace();
+            v["resample"]=tls.mod_resamp(ref, test, par_mod);
         v["creator"]={"name": me, "version": version, "data": str(fdata), "date": datetime.datetime.now(LOCAL_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S %Z %z')};
     return(res);
 def dclass(data, dcols, model):

@@ -1,3 +1,5 @@
+import pdb
+
 import sys;
 from pathlib import Path;
 import pandas as pa;
@@ -1167,6 +1169,48 @@ def rt2model(ref, test, par_mod):
     cpar["par_mod"]=par_mod.copy();
     #import pdb; pdb.set_trace();
     return(cpar);
+def mod_resamp(ref, test, par_mod):
+    "Re-sample ref and/or test and re-learn model. Return a dict with some stats of model parameters"
+    if not par_mod["resamp"] or par_mod["resamp_numb"] < 1 or par_mod["resamp_frac"] == 0 or not par_mod["resamp_what"]:
+        return None;
+    if par_mod["resamp_use_seed"]:
+        rng=np.random.default_rng(par_mod["resamp_seed"]);
+    else:
+        rng=np.random.default_rng(par_mod["resamp_seed"]);
+    ref=ref[ref==ref]
+    test=test[test==test]
+    nref=int(np.round(len(ref)*par_mod["resamp_frac"]));
+    ntest=int(np.round(len(test)*par_mod["resamp_frac"]));
+    if nref < 3:
+        raise Exception("mod_resamp: re-sample size for 'ref' is too small %d."%nref);
+    if ntest < 3:
+        raise Exception("mod_resamp: re-sample size for 'test' is too small %d."%ntest);
+    li_res=[];
+    for isamp in range(par_mod["resamp_numb"]):
+        ref_i=rng.choice(ref, size=nref, replace=False) if "ref" in par_mod["resamp_what"] else ref;
+        test_i=rng.choice(test, size=ntest, replace=False) if "test" in par_mod["resamp_what"] else test;
+        li_res.append(rt2model(ref_i, test_i, par_mod));
+    dres=dict();
+    dres["fraction"]=par_mod["resamp_frac"];
+    dres["resampling_number"]=par_mod["resamp_numb"];
+    dres["what"]=par_mod["resamp_what"];
+    cl_nb=[r["par"].shape[1] for r in li_res];
+    cl_min=min(min(r["par"].columns) for r in li_res)
+    cl_max=max(max(r["par"].columns) for r in li_res)
+    #dres["stats"]={
+    #    "class_number": "\t".join(str(i) for i in cl_nb),
+    #};
+    df=pa.DataFrame();
+    for icl in range(cl_min, cl_max+1):
+        df["class "+str(icl)]=np.array([r["par"].loc["mean", icl] if icl in r["par"].columns else np.nan for r in li_res]);
+    #pdb.set_trace()
+    dres["stats"]={"class means": df.describe()};
+    # add thresholds
+    df=pa.DataFrame();
+    for thr in ("down_left", "down-1", "up-1", "up_right"):
+        df[thr]=np.array([r["cutoff"].get(thr, np.nan) for r in li_res]);
+    dres["stats"]["thresholds"]=df.describe();
+    return dres;
 def xmod2class(x, cpar):
     "cpar is a model dict from rt2model(). It is used to classify a vector x. Return a 'classification' DataFrame"
     cla=gmmcl(x, cpar["par"]);

@@ -75,7 +75,7 @@ wx.Frame
 					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.CheckBox
 				varname	chk_hbin
-				param	.parent, label="varying k"
+				param	.parent, label=" varying k"
 				callmeth
 					Bind(wx.EVT_CHECKBOX, OnCheck)
 					SetValue(par_mod["k_var"])
@@ -96,6 +96,65 @@ wx.Frame
 			wx_FloatSlider
 				varname	sl_thr_w
 				param	.parent, value=par_mod["thr_w"], minValue=0, maxValue=10,  scale=100, name="thr_w"
+				callmeth
+					Bind(wx.EVT_SCROLL, OnSlider)
+			wx.StaticText
+				varname	txt_resamp
+				param	.parent, label="Re-sampling for evaluating parameter stability", style=wx.ALIGN_LEFT
+				callmeth
+					SetFont(wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL))
+			wx.CheckBox
+				varname	chk_resamp
+				param	.parent, label="do re-sampling", name="resamp"
+				callmeth
+					Bind(wx.EVT_CHECKBOX, OnCheckResamp)
+					SetValue(par_mod["resamp"])
+			wx.StaticText
+				varname	txt_resamp_frac
+				param	.parent, label="Fraction of original sample to re-sample", style=wx.ALIGN_LEFT
+			wx_FloatSlider
+				varname	sl_resamp_frac
+				param	.parent, value=par_mod["resamp_frac"], minValue=0.1, maxValue=1, scale=100, frmt="%.2f", style=wx.SL_HORIZONTAL, name="resamp_frac"
+				callmeth
+					Bind(wx.EVT_SCROLL, OnSlider)
+			wx.StaticText
+				varname	txt_resamp_numb
+				param	.parent, label="Number of re-sampling to do", style=wx.ALIGN_LEFT
+			wx_FloatSlider
+				varname	sl_resamp_numb
+				param	.parent, value=par_mod["resamp_numb"], minValue=1, maxValue=100, scale=1, frmt="%3.0f", style=wx.SL_HORIZONTAL, name="resamp_numb"
+				callmeth
+					Bind(wx.EVT_SCROLL, OnSlider)
+			wx.StaticText
+				varname	txt_resamp_what
+				param	.parent, label="What to re-sample?", style=wx.ALIGN_LEFT
+			wx.CheckBox
+				varname	chk_resamp_what_ref
+				param	.parent, label=" ref", name="resamp_what_ref"
+				callmeth
+					Bind(wx.EVT_CHECKBOX, OnCheckResamp)
+					SetValue("ref" in par_mod["resamp_what"])
+			wx.CheckBox
+				varname	chk_resamp_what_test
+				param	.parent, label=" test", name="resamp_what_test"
+				callmeth
+					Bind(wx.EVT_CHECKBOX, OnCheckResamp)
+					SetValue("test" in par_mod["resamp_what"])
+			wx.StaticText
+				varname	txt_resamp_use_seed
+				param	.parent, label="Use seed for reproducibility/debugging?", style=wx.ALIGN_LEFT
+			wx.CheckBox
+				varname	chk_resamp_use_seed
+				param	.parent, label=" use seed", name="resamp_use_seed"
+				callmeth
+					Bind(wx.EVT_CHECKBOX, OnCheckResamp)
+					SetValue(par_mod["resamp_use_seed"])
+			wx.StaticText
+				varname	txt_resamp_seed
+				param	.parent, label="Seed value", style=wx.ALIGN_LEFT
+			wx_FloatSlider
+				varname	sl_resamp_seed
+				param	.parent, value=par_mod["resamp_seed"], minValue=1, maxValue=1000, scale=1, frmt="%4.0f", style=wx.SL_HORIZONTAL, name="resamp_seed"
 				callmeth
 					Bind(wx.EVT_SCROLL, OnSlider)
 			wx.Button
@@ -209,19 +268,19 @@ wx.Frame
 					SetFont(wx.Font(18, wx.DECORATIVE, wx.ITALIC, wx.NORMAL))
 			wx.CheckBox
 				varname	chk_hcl_proba
-				param	.parent, label="probabilistic", name="hcl_proba"
+				param	.parent, label=" probabilistic", name="hcl_proba"
 				callmeth
 					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
 					SetValue(par_plot["hcl_proba"])
 			wx.CheckBox
 				varname	chk_hcl_cutoff
-				param	.parent, label="cutoff", name="hcl_cutoff"
+				param	.parent, label=" cutoff", name="hcl_cutoff"
 				callmeth
 					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
 					SetValue(par_plot["hcl_cutoff"])
 			wx.CheckBox
 				varname	chk_hcl_scutoff
-				param	.parent, label="stringent cutoff", name="hcl_scutoff"
+				param	.parent, label=" stringent cutoff", name="hcl_scutoff"
 				callmeth
 					Bind(wx.EVT_CHECKBOX, OnCheckHcl)
 					SetValue(par_plot["hcl_scutoff"])
@@ -262,6 +321,19 @@ wx.Frame
 					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
 					Add(gui.txt_thr_w, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)
 					Add(gui.sl_thr_w.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.txt_resamp, 0, wx.ALIGN_LEFT | wx.ALL, border = 5)
+					Add(gui.chk_resamp, 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.txt_resamp_frac, 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.sl_resamp_frac.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.txt_resamp_numb, 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.sl_resamp_numb.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.txt_resamp_what, 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.chk_resamp_what_ref, 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.chk_resamp_what_test, 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.txt_resamp_use_seed, 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.chk_resamp_use_seed, 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.txt_resamp_seed, 0, flag = wx.EXPAND | wx.ALL, border = 5)
+					Add(gui.sl_resamp_seed.GetSizer(), 0, flag = wx.EXPAND | wx.ALL, border = 5)
 					Add(gui.hbox_defmod, 0, flag=wx.ALIGN_CENTER)
 					Add(wx.StaticLine(.parent, -1), 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 5)
 					Add(gui.txt_par_plot, 0, wx.ALL | wx.ALIGN_LEFT, border = 5)

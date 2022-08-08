@@ -26,7 +26,7 @@ setup(
    package_data={
         'g3mclass': ['version.txt', 'licence_en.txt', 'g3mclass_lay.kvh', 'welcome.html', 'help/*', 'example/*', 'coldb.tsv', 'g3m.*'],
    },
-   install_requires=['wxpython', 'numpy', 'pandas', 'matplotlib>=3.5.1', 'xlsxwriter'],
+   install_requires=['wxpython', 'numpy>=1.17', 'pandas', 'matplotlib>=3.5.1', 'xlsxwriter'],
    entry_points={
         'gui_scripts': [
         'g3mclass = g3mclass.g3mclass:main',
