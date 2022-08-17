@@ -56,7 +56,6 @@ import matplotlib.pyplot as plt;
 import webbrowser;
 
 import g3mclass
-dirx=Path(sys.argv[0]).resolve().parent; # execution dir
 diri=Path(g3mclass.__file__).resolve().parent; # install dir
 import tools_g3m as tls;
 
@@ -842,6 +841,8 @@ def par2gui(par_mod, par_plot):
     gui.sl_resamp_numb.SetValue(par_mod["resamp_numb"]);
     gui.chk_resamp_what_ref.SetValue("ref" in par_mod["resamp_what"]);
     gui.chk_resamp_what_test.SetValue("test" in par_mod["resamp_what"]);
+    gui.chk_resamp_use_seed.SetValue(par_mod["resamp_use_seed"]);
+    gui.sl_resamp_seed.SetValue(par_mod["resamp_seed"]);
     # heatmap
     gui.chk_hcl_proba.SetValue(par_plot["hcl_proba"]);
     gui.chk_hcl_cutoff.SetValue(par_plot["hcl_cutoff"]);

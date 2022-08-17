@@ -63,7 +63,7 @@ an advanced analytical tool</span>,<span style="background: #ffffff">
 it is more informed than t</span>he rule-based classification <span style="background: #ffffff">and
 thus may </span>improve statistical analysis of the data from
 quantitative molecular assays. <span style="background: #ffffff">Focused
-on Bayesian statistics, </span><code>g3mclass</code>>offers three
+on Bayesian statistics, </span><code>g3mclass</code> offers three
 classification approaches.
 </p>
 
@@ -89,9 +89,6 @@ may be classified.
 
 <h2><font color="#3465a4">How does <code>g3mclass</code> work?</font>
 </h2>
-<p><br/>
-
-</p>
 <p>After
 uploading a file with the reference, test and optional queries
 datasets, User may set up the model parameters (defaults or
@@ -131,6 +128,10 @@ performs classification in 3 consecutive steps:
 	increases specificity 
 	</p>
 </ul>
+<h2><font color="#3465a4">How stable <code>g3mclass</code>'s parameter estimations?</font>
+</h2>
+<p>Data contained in 'ref', 'test' and 'query' samples are noised. If we redo the same measurements, the results can be different to various extent. So the answer to this question will depend on the signal/noise ratio in any given experiment. To help user to asses parameter stability in any given case, <code>g3mclass</code> implements resampling technique. If asked, the software can generate new 'ref' (or 'test' or both) samples by random resampling. Then for each of them, it recalculates GMM fitting as if it were an independent experiment. Summary statistics calculated over resamples are presented for some key parameters including class means and thresholds.
+</p>
 <br/>
 <br/>
 </body>

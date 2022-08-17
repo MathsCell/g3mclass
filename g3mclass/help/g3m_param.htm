@@ -53,6 +53,16 @@
 	</ul>
 </ul>
 
+<h2><font color="#3465a4">Evaluating parameter stability: controlling resampling</font></h2>
+
+<ul>
+	<li>'<i>Resample</i>': checkbox to say if resampling should be done or not (default: no). Note that the resampling is done without replacement.</li>
+	<li>'<i>Fraction of sample</i>': a slider for setting a real number between 0 and 1 indicating the fraction which will be present in new samples (default: 0.9).</li>
+	<li>'<i>Number of resamples</i>': a slider for setting an integer number between 1 and 100 (default: 5). The larger this value, the more time consumed by resampling but the more reliable the statistics are.</li>
+	<li>'<i>What to resample?</i>': checkboxes to choose between 'ref', 'test' or both (default: 'ref').</li>
+	<li>'<i>use seed</i>': checkbox to say if a seed (i.e. reproducible resampling) should be used (default: no). This option activation can be helpful only for debugging or bug reporting.</li>
+	<li>'<i>Seed value</i>': a slider for setting an integer value used as a seed (default: 7).</li>
+</ul>
 <h2><font color="#3465a4">Plots: plots and heatmaps visualization control tools</font></h2>
 <ul>
 	<li><p>Histogram

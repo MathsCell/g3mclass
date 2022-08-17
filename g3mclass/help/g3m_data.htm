@@ -34,21 +34,31 @@ the same parameters except when the model parameter 'k' is not
 fixed, and the model is selected based on the lowest BIC. If the
 nature of the analyte data requires models with essentially different
 parameters they'd be better split into several files.</p>
+
+<h3><font color="#3465a4">Column names in one-row format</font></h3>
+<p>Column names can be given in two different formats that should
+not be mixed in the same file:</p>
+<ul>
+	<li>1-row format
+	</li>
+	<li>2-row format
+	</li>
+</ul>
+
 <p>
-Each
-column must have a name formatted according to one of the following
+Each column in '1-row format' must have a name formatted according to one of the following
 patterns:</p>
 <ul>
 	<li><p>
 	'<i>NAME</i>&nbsp;(test)':
-	contains test samples (real numbers)</p>
+	contains test samples (real numbers) for analyte <i>NAME</i></p>
 	<li><p>
 	'<i>NAME</i>&nbsp;(ref)':
-	contains reference samples (real numbers)</p>
+	contains reference samples (real numbers) for analyte <i>NAME</i></p>
 	<li><p>
 	'<i>NAME</i>
 	(<i>query-name</i>)':
-	contains query samples which will be classified with a model learned
+	contains query samples of analyte <i>NAME</i> which will be classified with a model learned
 	on test sample (real numbers, optional).</p>
 	<li><p>
 	'id
@@ -69,6 +79,42 @@ patterns:</p>
 can be customized. 'NAME' represents the analyte name and must be the
 same in all columns related to a given analyte (for more info, see
 'Workflow examples')</p>
+<h3><font color="#3465a4">Column names in 2-row format</font></h3>
+<p>In '2-row format', the analyte identification and type of sample ('ref', 'test', ...) are split in two rows. The first row contains names and the second contains the types, e.g.</p>
+<p><br/></p>
+<table border=1 cellspacing=0 cellpadding=3>
+<tbody>
+  <tr>
+    <td>id</td>
+    <td>gene&nbsp;A</td>
+    <td>gene&nbsp;B</td>
+    <td></td>
+    <td>id</td>
+    <td>gene&nbsp;A</td>
+    <td>gene&nbsp;B</td>
+    <td></td>
+    <td>id </td>
+    <td>gene&nbsp;A</td>
+    <td>gene&nbsp;B</td>
+  </tr>
+  <tr>
+    <td>ref</td>
+    <td>ref</td>
+    <td>ref</td>
+    <td></td>
+    <td>test</td>
+    <td>test</td>
+    <td>test</td>
+    <td></td>
+    <td>Query&nbsp;1</td>
+    <td>Query&nbsp;1</td>
+    <td>Query&nbsp;1</td>
+  </tr>
+</tbody>
+</table>
+<br/>
+<p>
+As you can see, the part that was between parenthesis in 1-row format was put on the second row in 2-row format.</p>
 <p>
 <br/>
 <br/>

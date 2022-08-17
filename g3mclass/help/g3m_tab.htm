@@ -209,6 +209,28 @@
 		</p>
 	</ul>
 	<li><p>software
+	records 'history', present only if 'k' was set to be varying. It represents a matrix with following columns</p>
+	<ul>
+		<li><p>'row_col',
+		row number in the matrix
+		</p>
+		<li><p>'k',
+		number of histogram bins 'k' used in a given run</p></li>
+		<li><p>'BIC',
+		Value of the BIC criterion obtained in a given run</p></li>
+		<li><p>'classes',
+		list of classes in GMM model obtained in a given run
+		</p></li>
+	</ul>
+	<li><p>software
+	records 'resample', present only if resampling was asked in 'Parameters' tab</p>
+	<ul>
+		<li><p>'fraction', real number between 0 and 1 giving the fraction of initial sample that was used in resampling</p></li>
+		<li><p>'resampling_number', integer number indicating how many resamples were generated and used.</p></li>
+		<li><p>'what', string 'ref' or 'test' or 'ref,test' indicating what samples were resampled.</p></li>
+		<li><p>'stats', matrices with summary statistics calculated over new samples. They are calculated on 'class means' and 'thresholds'. Row and column names in these matrices are self-explanatory.</p></li>
+	</ul>
+	<li><p>software
 	records 'creator ', information 
 	</p>
 	<ul>
