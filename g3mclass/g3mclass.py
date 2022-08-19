@@ -524,7 +524,7 @@ def OnSliderPlot(evt):
     par_plot[win.GetName()]=win.GetValue();
     win._OnSlider(evt);
 def OnCheck(evt):
-    "a checkbox was checked/unchecked"
+    "a checkbox in model section was checked/unchecked"
     global prev_par_saved;
     prev_par_saved=False;
     if evt is None:
@@ -572,6 +572,8 @@ def OnCheckResamp(evt):
         par_mod["resamp_what"]=",".join(li)
     else:
         par_mod[key]=val;
+    if data is not None :
+        gui.btn_remod.Enable();
 def OnTabChange(evt):
     #import pdb; pdb.set_trace();
     win=evt.GetEventObject();

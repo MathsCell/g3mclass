@@ -1129,6 +1129,7 @@ def rt2model(ref, test, par_mod):
     io=o.copy();
     io[o]=np.arange(len(o));
     cpar["par"].columns=io-io[0];
+    cpar["par"]=cpar["par"][sorted(cpar["par"].columns)]
     #print("classes=", cpar["par"].columns);
     #if -2 in cpar["par"].columns:
     #    import pdb; pdb.set_trace();
@@ -1205,11 +1206,11 @@ def mod_resamp(ref, test, par_mod):
         df["class "+str(icl)]=np.array([r["par"].loc["mean", icl] if icl in r["par"].columns else np.nan for r in li_res]);
     #pdb.set_trace()
     dres["stats"]={"class means": df.describe()};
-    # add thresholds
+    # add cutoffs
     df=pa.DataFrame();
     for thr in ("down_left", "down-1", "up-1", "up_right"):
         df[thr]=np.array([r["cutoff"].get(thr, np.nan) for r in li_res]);
-    dres["stats"]["thresholds"]=df.describe();
+    dres["stats"]["cutoffs"]=df.describe();
     return dres;
 def xmod2class(x, cpar):
     "cpar is a model dict from rt2model(). It is used to classify a vector x. Return a 'classification' DataFrame"
