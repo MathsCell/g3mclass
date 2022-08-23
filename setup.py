@@ -30,7 +30,10 @@ setup(
    install_requires=['wxpython', 'numpy>=1.17', 'pandas', 'matplotlib>=3.5.1', 'xlsxwriter'],
    entry_points={
         'gui_scripts': [
-        'g3mclass = g3mclass.g3mclass:main',
+                'g3mclass = g3mclass.g3mclass:main',
+        ],
+        'console_scripts': [
+                'png2icon=png2icon:main',
         ],
    },
    classifiers=[

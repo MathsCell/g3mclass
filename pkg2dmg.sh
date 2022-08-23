@@ -2,13 +2,14 @@
 
 mydir=$(dirname $(realpath $0))
 cd $mydir
-#v 1.1
-url="https://drive.google.com/uc?export=download&id=14lF33cGSWP1jlemmWYd-i8ewxFXwr4H8"
+#v 1.4
+url="https://github.com/MathsCell/g3mclass/archive/main.zip"
+#url="https://drive.google.com/uc?export=download&id=14lF33cGSWP1jlemmWYd-i8ewxFXwr4H8"
 #url="dev/dist/g3mclass-1.1.tar.gz"
 # create macos g3mclass.app
 #python3 setup.py sdist
 v=$(cat g3mclass/version.txt)
-rm -rf dmg/ # clean up before
+rm -rf dmg/ # clean up first
 mkdir dmg
 #mkdir -p dmg/install.app/Contents/MacOS
 #mkdir -p dmg/install.app/Contents/Resources
