@@ -2,8 +2,9 @@
 
 mydir=$(dirname $(realpath $0))
 cd $mydir
-#v 1.4
-url="https://github.com/MathsCell/g3mclass/archive/main.zip"
+# current version
+url=g3mclass
+#url="https://github.com/MathsCell/g3mclass/archive/main.zip"
 #url="https://drive.google.com/uc?export=download&id=14lF33cGSWP1jlemmWYd-i8ewxFXwr4H8"
 #url="dev/dist/g3mclass-1.1.tar.gz"
 # create macos g3mclass.app
