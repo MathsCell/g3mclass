@@ -38,4 +38,4 @@ To uninstall `g3mclass` software, simply right-click on `unisntall` on dmg disk,
 
 ## Automatic installation on Windows
 
-We have prepared [`install.bat`](https://mathscell.github.io/download/g3mclass/win/install.bat) and [`unistall.bat`](https://mathscell.github.io/download/g3mclass/win.uninstall.bat) that must be downloaded on user's disk and executed with administrative privileges. If your Python is coming from [Anaconda](https://anaconda.org) distribution than thees scripts should be run from a shell where `conda` is activated. Otherwise `python` executable won't be found.
+We have prepared [`install.ps1`](https://mathscell.github.io/download/g3mclass/win/install.ps1) and [`unistall.bat`](https://mathscell.github.io/download/g3mclass/win/uninstall.bat) that must be downloaded on user's disk and executed with administrative privileges. If your Python is coming from [Anaconda](https://anaconda.org) distribution than thees scripts should be run from a shell where `conda` is activated. Otherwise `python` executable won't be found.
